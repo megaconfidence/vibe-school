@@ -17,12 +17,12 @@ script/build-assets > /dev/null
 status=0
 for z in "${ZIPS[@]}"; do
   if ! diff -u "$BEFORE/$(basename "$z").txt" <(listing "$z"); then
-    echo "::error::$z is out of date. Run script/build-assets and commit the result."
+    echo "$z is out of date. Run script/build-assets and commit the result."
     status=1
   fi
 done
 if ! git diff --quiet -- src/examples; then
-  echo "::error::src/examples/ is out of date. Run script/build-assets and commit the result."
+  echo "src/examples/ is out of date. Run script/build-assets and commit the result."
   git diff --stat -- src/examples
   status=1
 fi

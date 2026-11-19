@@ -5,7 +5,7 @@
 #   ../agents-skills-instructions -> public/examples/agents-skills-instructions.zip
 #                                    (+ copy in src/examples/ for the example page)
 # Zips are reproducible (fixed file times, sorted entries, no extra fields),
-# so CI can check they match their sources.
+# so script/check-assets can check they match their sources.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

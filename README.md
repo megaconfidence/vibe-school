@@ -68,7 +68,7 @@ See [plan.md](plan.md) for the full curriculum.
 | `script/lint` | Biome + `astro check` |
 | `script/test` | Vitest |
 | `script/build-assets` | Rebuild the plugin, starter and example zips in `public/` |
-| `script/check-assets` | Fail if those zips are out of date (runs in CI) |
+| `script/check-assets` | Fail if those zips are out of date (`script/deploy` runs it) |
 | `script/fetch-brand-fonts` | Copy the licensed ALT Mistral font in (git-ignored) |
 | `script/deploy` | Build a clean copy of the current commit and deploy it to Cloudflare |
 
