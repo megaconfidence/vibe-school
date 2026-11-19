@@ -1,0 +1,127 @@
+---
+// Copyright (c) 2026 Zeke Sikelianos
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+// Modified for Vibe School.
+export const prerender = true;
+
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Disenroll" description="Reset your progress or disenroll from Vibe School.">
+  <div class="mb-8 rise" style="--d:0">
+    <a href="/" class="label hover:text-[var(--text)]">&larr; Course</a>
+  </div>
+
+  <header class="mb-8 rise" style="--d:1">
+    <h1 class="font-display text-4xl sm:text-5xl leading-[1.02] tracking-[-0.02em]">Disenroll</h1>
+  </header>
+
+  <div id="no-enrollment" class="hidden">
+    <p class="text-[var(--text-muted)]">You are not currently enrolled. <a href="/" class="underline">Go to the homepage</a> to enroll.</p>
+  </div>
+
+  <div id="enrolled-options" class="hidden">
+    <!-- Reset progress (primary action) -->
+    <div class="mb-8 p-6 panel">
+      <h2 class="font-display text-2xl mb-2">Reset progress</h2>
+      <p class="text-[var(--text-muted)] mb-4">Clear all your lesson and exercise completions so you can redo them. Your student ID and profile are kept.</p>
+      <div id="reset-confirm">
+        <button
+          id="reset-button"
+          class="btn btn-primary px-4 py-2 text-sm"
+        >
+          Reset my progress
+        </button>
+      </div>
+      <div id="reset-done" class="hidden">
+        <p class="text-[var(--text-muted)]">Progress has been reset. Your student ID is unchanged. <a href="/" class="underline">Go to the homepage</a> to start over.</p>
+      </div>
+      <div id="reset-error" class="hidden">
+        <p class="text-[var(--accent-text)]">Something went wrong resetting your progress. Try again or disenroll instead.</p>
+      </div>
+    </div>
+
+    <!-- Disenroll (secondary/destructive action) -->
+    <div class="p-6 panel">
+      <h2 class="font-display text-2xl mb-2">Disenroll completely</h2>
+      <p class="text-[var(--text-muted)] mb-4">Remove your student ID, progress, and preferences from this browser. Your data on the server is not affected. You will need to re-enroll to use Vibe School again.</p>
+      <div id="disenroll-confirm">
+        <button
+          id="disenroll-button"
+          class="btn btn-ghost px-4 py-2 text-sm text-[var(--accent-text)]"
+        >
+          Disenroll from Vibe School
+        </button>
+      </div>
+      <div id="disenroll-done" class="hidden">
+        <p class="text-[var(--text-muted)]">You have been disenrolled. Redirecting to the home page&hellip;</p>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    (function () {
+      // Go through window.school so this works when localStorage is blocked.
+      var school = window.school;
+      function readStorage(key) { return school.read(key); }
+      function writeStorage(key, value) { school.write(key, value); }
+      function removeStorage(key) { school.remove(key); }
+
+      var studentId = readStorage("studentId");
+      if (!studentId) {
+        document.getElementById("no-enrollment").classList.remove("hidden");
+        return;
+      }
+
+      document.getElementById("enrolled-options").classList.remove("hidden");
+
+      // Reset progress
+      document.getElementById("reset-button").addEventListener("click", function () {
+        var btn = this;
+        btn.disabled = true;
+        btn.textContent = "Resetting\u2026";
+
+        fetch("/api/progress/" + encodeURIComponent(studentId), {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reset: true }),
+        })
+          .then(function (res) {
+            if (!res.ok) throw new Error("Reset failed");
+            return res.json();
+          })
+          .then(function (progress) {
+            writeStorage("progress", JSON.stringify(progress));
+            removeStorage("visitedLessons");
+            document.getElementById("reset-confirm").classList.add("hidden");
+            document.getElementById("reset-done").classList.remove("hidden");
+          })
+          .catch(function () {
+            btn.disabled = false;
+            btn.textContent = "Reset my progress";
+            document.getElementById("reset-error").classList.remove("hidden");
+          });
+      });
+
+      // Disenroll
+      document.getElementById("disenroll-button").addEventListener("click", function () {
+        removeStorage("studentId");
+        removeStorage("school:role");
+        removeStorage("school:path");
+        removeStorage("school:surface");
+        removeStorage("progress");
+        removeStorage("visitedLessons");
+        document.getElementById("disenroll-confirm").classList.add("hidden");
+        document.getElementById("disenroll-done").classList.remove("hidden");
+        setTimeout(function () {
+          window.location.replace("/");
+        }, 1500);
+      });
+    })();
+  </script>
+
+  <noscript>
+    <p>JavaScript is required to use this page. Please enable it and try again.</p>
+  </noscript>
+</Base>

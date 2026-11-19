@@ -1,0 +1,180 @@
+---
+title: "Code Web"
+slug: code-web
+description: "Run Vibe in a cloud sandbox against a GitHub repository and get a pull request back."
+order: 7
+track: surfaces
+surfaces: [code-web, desktop]
+quiz: true
+goals:
+  - "Connect GitHub and create a Code Web project"
+  - "Start a cloud session with a scoped prompt"
+  - "Follow a session from sandbox to pull request"
+  - "Keep the sandbox safe from secrets and prompt injection"
+minutes: 20
+checklist:
+  - "Open chat.mistral.ai and switch to the Code tab at the top of the sidebar"
+  - "Click New Project next to Projects and pick Using GitHub"
+  - "Install the Mistral GitHub App on only the repository you want to use (a small or throwaway repo is fine)"
+  - "Select the repository and click Create project"
+  - "Start a session with: Fix any typos in README.md and open a pull request. Don't change anything else."
+  - "Watch the activity stream until the pull request link appears"
+  - "Open the pull request on GitHub and check that you are the author"
+agentInstructions: |
+  Cover these four topics:
+
+  1. What Vibe Code Web is: a control plane for remote coding agents.
+     Each session runs the Vibe engine in a managed, isolated cloud
+     sandbox against GitHub or GitLab repositories (this lesson uses
+     GitHub), and ends in a branch or pull request reviewed there. It fits tasks that don't need local
+     files, services, or secrets. It's opened from the Code tab at
+     chat.mistral.ai, and cloud sessions in Vibe Desktop work the same
+     way.
+
+  2. GitHub and projects: the Mistral GitHub App is installed on an
+     account or organization, ideally for selected repositories only.
+     Git work uses the user's own access token, so commits and PRs are
+     authored by the student, and branch protections, required reviews,
+     CODEOWNERS and status checks still apply. A project groups one or
+     more repositories from the same GitHub owner; access is managed or
+     revoked at github.com/settings/installations.
+
+  3. Session lifecycle: Start (sandbox created), Clone, Run (the agent
+     reads, plans, edits, runs commands, reports, asks), Review, End.
+     While alive a session is Active, Waiting for input, Idle, or
+     Stopped; it ends as Completed, Timed out, or Error. A pushed PR
+     doesn't end the session: follow-up prompts, review comments, and CI
+     output reuse the same sandbox and branch. Once the sandbox is gone
+     the session can't be resumed. Documented limits: 24 hours maximum,
+     3 hours inactivity while waiting for a reply, 2 sessions per day for
+     free users where enabled and 100 for paid users.
+
+  4. Sandbox and security: a default Linux image with Git and common
+     runtimes, outbound internet managed by Mistral, no inbound access,
+     no access to the student's machine. Only the repository branch or
+     PR survives the session. Anything the agent reads (repo files,
+     command output, web pages, pasted comments) could carry a prompt
+     injection, so watch the activity stream, keep prompts focused,
+     never give the sandbox production secrets, and review in GitHub
+     before merging. Mention that teams can also start sessions from a
+     Slack thread by mentioning @Vibe (in progressive rollout).
+
+  Then have the student pick a small repository they own (or create a
+  throwaway one on GitHub), create a Vibe Code Web project for it,
+  connecting GitHub if prompted, and start a session with a scoped
+  prompt such as: "Fix any typos in README.md and open a pull request.
+  Don't change anything else." Have them watch the activity stream until
+  the pull request link appears.
+
+  Verify completion by finding the pull request. Ask the student for the
+  repository (owner/name). If gh is installed and authenticated (gh auth
+  status succeeds), run gh pr list --repo <owner/name> --state all and
+  look for a recent PR that matches the task. Otherwise ask the student
+  to paste the PR URL. Either way, ask them who GitHub shows as the PR
+  author (it should be their own account).
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Vibe Code Web runs the Vibe agent in a cloud sandbox instead of on your machine. You point it at a GitHub or GitLab repository (this lesson uses GitHub), describe the task, and it clones the code, makes the change, runs commands, and opens a pull request for you to review. Close your laptop, and it keeps going. It's the same engine as the CLI, reached from any browser.
+
+## When to use it
+
+Code Web fits tasks that:
+
+- run without your local files, services, or secrets,
+- take long enough that you don't want to keep your machine open,
+- should end in a branch or pull request.
+
+If the task needs local files, local secrets, or direct access to your machine, use the [CLI](/lessons/cli), [VS Code](/lessons/vscode), or a local session in [Desktop](/lessons/desktop).
+
+<SurfaceTabs>
+<SurfaceTab surface="code-web">
+
+Open [chat.mistral.ai](https://chat.mistral.ai) and select the **Code** tab.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Switch to **Code** and choose a cloud session. Cloud sessions in Desktop follow the same projects, sessions, and sandbox rules described here.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+## Connect GitHub
+
+The first time you create a project, you install the **Mistral GitHub App**:
+
+1. Choose the GitHub account or organization where the repository lives.
+2. Select **all repositories** or **only the repositories** the App should access. Pick the narrowest option that works.
+3. Confirm the installation, then authorize the App on your user account.
+
+Organization owners may need to approve the install first. You can change or revoke access any time at [github.com/settings/installations](https://github.com/settings/installations).
+
+Git work uses **your** user access token, so commits and pull requests are authored by you. The agent can clone, branch, commit, push, and open pull requests on authorized repositories. It can't bypass branch protections, required reviews, `CODEOWNERS`, or required status checks.
+
+## Projects
+
+A **project** groups one or more repositories from the **same GitHub owner**, plus the sessions you run against them. To work across owners, create separate projects.
+
+1. Switch to the **Code** tab at the top of the sidebar, then click **New Project** next to **Projects**.
+2. In **Create a project**, pick **Using GitHub** (GitLab and a blank project are also offered).
+3. Select your GitHub account or organization and click **Next**. Organizations that require SSO are listed separately with a **Reconnect GitHub** button.
+4. Search for the repository, select it, and click **Next**. A new repository can take a few seconds to appear.
+5. Check the **Project name**, optionally add **Project instructions**, and click **Create project**.
+
+The new project is selected in the prompt box ("…in **your-project**"), so you can type your first task right away. Labels can shift as the app evolves. If yours differ, follow what you see on screen.
+
+Open **View project details** to rename the project, add or detach repositories (changes apply to new sessions), or delete it from the **Danger zone**. Deleting a project or session removes Vibe's history only; your branches and pull requests stay in GitHub.
+
+## Sessions
+
+Type a prompt in the project view, or click **New Session** next to the project in the sidebar. Be specific: name the file, failing test, stack trace, or expected behavior. Vibe names the session after your task (for example *README typos PR*), and the sidebar shows the pull request status next to it, such as **#1: Draft · 1 pull request**.
+
+| Phase | What happens |
+|---|---|
+| Start | Vibe creates an isolated sandbox |
+| Clone | The repository and branch are cloned into it |
+| Run | The agent reads, plans, edits, runs commands, and asks questions |
+| Review | You inspect the branch or pull request in GitHub |
+| End | The sandbox is deleted when the session stops, times out, or errors |
+
+The session view shows an **activity stream** (every command and its output), the files changed, the branch, a link to the pull request, and a prompt box. A live session is **Active**, **Waiting for input**, **Idle**, or **Stopped**. It ends as **Completed**, **Timed out**, or **Error**.
+
+Vibe typically opens the pull request as a **draft** on a `vibe/…` branch, authored by you. Mark it ready for review in GitHub when you're happy with it.
+
+A pull request doesn't end the session. While the sandbox is alive, send follow-ups: paste a reviewer comment or a failing CI log and ask Vibe to fix it. It reuses the same sandbox and branch.
+
+<div class="callout">
+Once the sandbox is deprovisioned, a session <strong>can't be resumed</strong>. You can still reopen it to read its history; start a new session to continue the work.
+</div>
+
+## Sandbox and limits
+
+Each session gets its own single-tenant sandbox: a default Linux image maintained by Mistral, with a shell, Git, common language runtimes, and CLI utilities. If your project needs something else, the agent installs it during the session. Outbound internet is available (managed by Mistral); nothing can reach the sandbox from outside, and it can't see your machine. Only what's pushed to GitHub survives.
+
+| Limit | Value |
+|---|---|
+| Maximum session duration | 24 hours |
+| Inactivity timeout while waiting for your reply | 3 hours |
+| Concurrent sessions per user | Plan-dependent |
+| Sessions per day, free users | 2, where access is enabled |
+| Sessions per day, paid users | 100 |
+
+Sessions are personal; share the pull request to collaborate. Check [Limits and lifecycle](https://docs.mistral.ai/vibe/code/web/limits-and-lifecycle) for the current values.
+
+## Security
+
+Anything the agent reads (repository files, command output, web pages, comments you paste) can try to redirect it. This is [prompt injection](/glossary#prompt-injection). To stay safe:
+
+- Watch the activity stream as the session runs.
+- Keep prompts focused, so off-task actions stand out.
+- Treat the sandbox like a CI job: never give it production secrets.
+- Review the code in GitHub and rely on branch protections before merging.
+
+## Start from Slack
+
+Teams can also start a session from a Slack thread by mentioning `@Vibe`. The app reads the thread, picks the project and repository (or asks), and posts a link to the web session. An organization admin connects Slack first. This is in progressive rollout. See [Vibe Code Web for Slack](https://docs.mistral.ai/vibe/code/web/slack-integration).
+
+Learn more in the [Vibe Code Web docs](https://docs.mistral.ai/vibe/code/web/get-started).

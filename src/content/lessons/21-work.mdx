@@ -1,0 +1,189 @@
+---
+title: "Work"
+slug: work
+description: "Delegate a multi-step task to Vibe Work, follow its todos, and check its sources."
+order: 21
+track: work
+surfaces: [work, desktop]
+quiz: true
+goals:
+  - "Know when to use Work instead of Code"
+  - "Start a task and follow its todos"
+  - "Approve, always allow, or decline sensitive steps"
+  - "Check the sources behind an answer"
+minutes: 15
+checklist:
+  - "Open chat.mistral.ai and select the Work tab at the top of the sidebar"
+  - "Switch to think, with the fast/think toggle or a reasoning level in the model menu"
+  - "Ask for a multi-step research task, for example: Research three open-source tools for a topic you care about, compare them in a table, and cite a source for each row"
+  - "Watch the steps and todos while Work runs, and expand one tool call"
+  - "Open the Sources button and check at least one cited web page"
+  - "Open Temporary Chat once to see how an unsaved chat looks"
+agentInstructions: |
+  This lesson happens in the browser at chat.mistral.ai (or Work in Vibe
+  Desktop), so the student doesn't need Vibe Code installed. Students
+  without a local Vibe follow the checklist on {origin}/lessons/work and
+  mark it complete there. If you are tutoring, guide them through it and
+  wait while they do each step in Work themselves.
+
+  Cover these four topics:
+
+  1. What Work is and how it differs from Code: Work is Vibe's
+     productivity mode at chat.mistral.ai (web, mobile, and Desktop) for
+     conversations and multi-step tasks across files, the web, and
+     connected tools. Code is for tasks that depend on a codebase,
+     terminal, or IDE. Legacy Chat is merged into Work: a fast/think
+     toggle, or a reasoning level in the model menu, depending on the
+     account, replaces the Chat vs Work choice (and Think mode), Agents
+     become Skills (type / in the input to pick one, or mention a skill
+     by name), Memories become Knowledge, and Deep Research is a Skill.
+
+  2. Starting and following a task: describe the outcome, sources,
+     audience, and constraints. Work may ask clarifying questions, then
+     shows a live todos panel on the right for longer tasks, a reasoning
+     summary per step, and every tool call with its inputs, outputs, and
+     status. The stop button (black square) halts it; a follow-up message
+     redirects it. Outputs are drafts until reviewed.
+
+  3. Approvals and privacy: before anything that creates, modifies,
+     sends, posts, or deletes in an external tool, Work asks with
+     Continue (this action only), Always allow (this function for the
+     session), or Decline. Per-function Always allow toggles live under
+     Connectors > My connectors > a connector (per-function menus) and are
+     per-user. Temporary Chat starts a conversation that isn't saved to
+     history or used for training.
+
+  4. Context tools: web search runs on its own when a task needs
+     current information (there is no Tools entry in the live + menu, so
+     don't send the student looking for one); responses then show a
+     globe icon, inline links, and a Sources button. Pasting
+     a URL with web search on uses Open URL (one page, no logins or
+     paywalls). Voice mode is the microphone icon. Organization and
+     Workspace switching is in the bottom-left; everything is scoped per
+     Workspace. In Vibe Desktop, Work can also use local folders as
+     context via + > Folders > Add a folder. To switch modes in Desktop
+     on macOS, Shift+Cmd+1 opens Work and Shift+Cmd+2 opens Code (1 is
+     Work, 2 is Code; don't swap them).
+
+  Then have the student open Work at chat.mistral.ai (or Work in Vibe
+  Desktop), choose think (toggle or reasoning level in Choose model),
+  and run a multi-step research task, for example: "Research three
+  open-source tools for <a topic they care about>, compare them in a
+  table with license, last release date, and main tradeoff, and cite a
+  source for each row." Have them watch the todos as it works.
+
+  Verify completion by asking the student to paste or summarize the
+  result. Then ask one or two questions about what Work showed: which
+  steps it showed (for example "Ran 3 searches", or todos in the
+  right-hand panel on longer tasks), and which sources it cited
+  (from the Sources button or inline links). Confirm the answer has at
+  least one cited web source. This is a web-only task, so rely on the
+  student's report.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Vibe Work is the other half of Vibe: the mode for everything that isn't a codebase. You describe an outcome, and Work gathers context from files, the web, and your connected tools, breaks the job into steps, shows you each one, and asks before it does anything you'd want to check. It lives at chat.mistral.ai, on mobile, and in Vibe Desktop.
+
+## Work or Code
+
+| Pick | When the task |
+|---|---|
+| **Work** | Needs several steps or sources, actions in tools like Gmail, Slack, or Notion, or a document you'll review |
+| **Code** | Depends on a codebase, terminal, IDE, or coding session (see the [Surfaces](/lessons/surfaces) lesson) |
+
+Work is also where quick conversations happen now. You choose how deep Vibe goes: **fast** for quick replies, **think** for deeper, agentic work. Depending on your account, this is a fast/think toggle or a reasoning level in the **Choose model** menu next to the input.
+
+## Open Work
+
+<SurfaceTabs>
+<SurfaceTab surface="work">
+
+1. Open [chat.mistral.ai/work](https://chat.mistral.ai/work).
+2. If the sidebar is closed, click the drawer icon or press `Cmd+Shift+B` (macOS) or `Ctrl+Shift+B` (Windows, Linux).
+3. Select the **Work** tab at the top of the sidebar (next to **Code**).
+
+Vibe remembers the last tab you used, so if **Code** opens, switch back to **Work**.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Switch to **Work**, or press `Shift+Cmd+1` on macOS. Work on Desktop shares the web app's conversations, projects, skills, connected tools, and scheduled tasks.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+## Start a task
+
+A good prompt says what you want, which sources to use, who it's for, and any limits:
+
+```text
+Research this topic and create a one-page brief I can share with my team.
+```
+
+```text
+Compare these two documents and highlight the main differences.
+```
+
+Work picks tools and context from your prompt. You can also point it at a source yourself: [connectors](/lessons/connectors), [Libraries](/lessons/projects), [skills](/lessons/automations), uploaded [files](/lessons/canvas), or the web.
+
+## Follow the todos
+
+For longer tasks, Work shows a live **todos panel** on the right: a checklist of steps it has done or is about to do. There's no plan to approve upfront; it starts right away. Alongside, you see:
+
+- **Clarifying questions** when your prompt is ambiguous. Pick an answer and it continues.
+- A **reasoning summary** for each step: what it's reading, comparing, and ruling out.
+- Every **tool call** (for example `Web Search` or `Gmail: List Messages`) with its inputs, outputs, and status. Expand one to check it used the right source.
+
+Click **stop** (the black square) if it goes the wrong way, then redirect with a follow-up message. Quick one-shot tasks skip the todos panel and answer directly.
+
+## Approvals
+
+Before Work creates, modifies, sends, posts, or deletes anything in an external tool, it stops and asks:
+
+| Option | What it does |
+|---|---|
+| **Continue** | Approve this one action. It asks again next time. |
+| **Always allow** | Pre-authorize this function for the session |
+| **Decline** | Cancel the action; Work skips it or asks how to proceed |
+
+Read recipients, content, and destination before you click `Continue`. Stop may not catch an action that already reached the other system.
+
+For finer control, open `Connectors` in the sidebar, then the `My connectors` tab and a connector. Its page lists each function with a permission menu (such as `Ask` or `Allow`). Pre-allow read-only ones you use often, and keep sends and deletes on manual approval. These choices are per user. The [Connectors](/lessons/connectors) lesson goes deeper.
+
+<div class="callout">
+<strong>Temporary Chat</strong> starts a conversation that isn't saved to your history or used to train models. Open it from the icon at the top right of a new Work chat (or go to <code>chat.mistral.ai/work/temporary-chat</code>). Use it for one-off questions you don't want kept; <strong>Convert to real chat</strong> saves it after all.
+</div>
+
+## Web search and Open URL
+
+Web search is built in: ask for current information and Work searches on its own, showing **Ran a web search** steps you can expand. When Work uses it, the answer shows a **globe icon**, inline links, and a `Sources` button listing every reference. News queries draw on AFP and AP.
+
+With web search on, paste a URL (or several) into your message and Work reads the page; you'll see an `Opened Page` mention. It reads only that page, and can't get past logins or paywalls. For a long, cited report, use the **Deep Research** skill.
+
+## Voice
+
+Click the microphone icon at the bottom right of the chat and speak. With `Autosend` on, your words are sent straight away; with it off, the transcript lands in the message box so you can edit it first.
+
+## Organizations and workspaces
+
+Click your **Organization name** in the bottom-left corner to switch Workspace or Organization. Chat history, projects, skills, scheduled tasks, custom instructions, and connector sign-ins are all scoped per Workspace, and switching affects every open tab.
+
+## Local folders in Desktop
+
+In Vibe Desktop, Work can use folders on your machine. In the composer, click **+**, open **Folders**, and choose **Add a folder**. Add as many as you need, then explain what to do with them. **+ → Folders → Remove all** clears them. Adding a folder makes it available; it doesn't mean every file has been read.
+
+## Coming from Chat
+
+Chat and Work are now one experience. Here's where the old features went:
+
+| Chat (legacy) | Now |
+|---|---|
+| Agents | [Skills](/lessons/automations): type `/` in the input to pick one, or mention it by name |
+| Think mode | The fast/think toggle, or a reasoning level in the model menu, depending on your account |
+| Deep Research | The Deep Research skill |
+| Code Interpreter | Native [Code Interpreter](/lessons/canvas) in Work (paid plans) |
+| Memories | [Knowledge](/lessons/projects) |
+
+Learn more in [Get started with Work](https://docs.mistral.ai/vibe/work/web/get-started) and [Safety and approvals](https://docs.mistral.ai/vibe/work/web/safety-and-approvals).

@@ -1,0 +1,15 @@
+---
+export const prerender = true;
+
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Page not found" description="This page doesn't exist.">
+  <header class="mb-8 rise" style="--d:0">
+    <h1 class="font-display text-4xl sm:text-5xl leading-[1.02] tracking-[-0.02em]">Page not found</h1>
+    <p class="text-[var(--text-muted)] mt-2 text-lg">There's nothing at this address. It may have moved when lessons were reordered.</p>
+  </header>
+  <article class="prose dark:prose-invert max-w-none">
+    <p><a href="/">Back to all lessons</a></p>
+  </article>
+</Base>

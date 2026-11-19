@@ -1,0 +1,134 @@
+---
+title: "Package a team setup"
+slug: package-a-team-setup
+description: "Bring the setup you built in vibe-todo to one of your own repositories, so every teammate gets the same agents, skills, instructions, and hooks."
+order: 7
+surfaces: [cli, vscode, desktop]
+agentInstructions: |
+  Guide the student through giving one of their own repositories the
+  kind of shared Vibe setup they built in the course project, vibe-todo
+  (Configuration through Plugins lessons, reviewed in Team rollout).
+  The goal is transfer: the same pieces, adapted to a real codebase and
+  a real team. Adapt depth to their profile. If they never built
+  vibe-todo, use the reference at
+  {origin}/examples/agents-skills-instructions (vibe-todo as it stands
+  after the Agents lesson: instructions, skills and agents; zip at
+  {origin}/examples/agents-skills-instructions.zip) as the model and
+  read its README.md together first.
+
+  Steps:
+
+  1. Pick the repository: a real project they work on, ideally one a
+     teammate also uses. Ask before writing into it, work on a branch
+     (`git switch -c vibe-setup`), and never overwrite existing files:
+     if AGENTS.md or .vibe/ already exists, add to it.
+
+  2. Build the layout, one piece at a time, asking what their team
+     actually needs. Use vibe-todo as the pattern, not as text to copy:
+     - AGENTS.md at the root: stack, how to run the tests, conventions,
+       things to never do. Read the project and draft it (there is no
+       /init). Add a folder AGENTS.md (like tests/AGENTS.md) only where
+       a folder has its own rules.
+     - .vibe/config.toml: project choices only, such as default_agent,
+       a [tools.bash] allowlist for the real test command (it replaces
+       the defaults, so keep the read-only commands they want), or an
+       [[mcp_servers]] entry the team uses. Never put secrets in it; use
+       api_key_env so each teammate keeps the key in their own env.
+     - .vibe/skills/<name>/SKILL.md: one or two repeatable workflows
+       from this team, such as "add an endpoint" or a review checklist.
+       name must match the folder.
+     - .vibe/agents/<name>.toml: optional, for example a read-only
+       reviewer with agent_type = "subagent", or a builder-style agent
+       with its own instructions and tool permissions.
+     - .vibe/hooks.toml: optional, one small hook, for example a
+       post_tool hook that runs the project's formatter or fast tests
+       after edit or write_file, with its script under .vibe/hooks/.
+
+  3. Test it like a teammate would: start a fresh session in the folder.
+     The CLI asks to trust the folder (Trust folder / Trust full repo /
+     Don't trust); project files only load once it's trusted. Check that
+     a custom agent shows up with Shift+Tab (or the Session mode menu in
+     VS Code), the skills show up in the / picker, and the hook runs. In
+     the CLI, /reload picks up config, instructions, and skill changes. A
+     good smoke test is `vibe --trust -p "List the skills and agents
+     available in this project" --max-turns 3`.
+
+  4. Commit it. Make sure no .env or credentials are staged
+     (`git status`, `git diff --cached`). Add a short README note
+     telling teammates to review .vibe/ and trust the folder. Optionally
+     open a pull request so the team reviews the setup like code.
+
+  5. Optional: move the parts that are useful across repositories into
+     a plugin (plugin.json with the Agent Plugins 1.0 schema, skills/,
+     and with the ai.mistral.vibe extension, ai.mistral.vibe/agents/
+     for subagents and ai.mistral.vibe/hooks.toml), in
+     ~/.vibe/plugins/<plugin>/ or a shared repo. Check with /plugins;
+     /reload-plugins picks up changes (/reload doesn't).
+
+  The exercise is complete when the repository (not vibe-todo) has a
+  committed shared setup with at least AGENTS.md plus two of:
+  .vibe/config.toml, a skill in .vibe/skills/, an agent in
+  .vibe/agents/, or .vibe/hooks.toml, and the student has confirmed a
+  fresh session in the trusted folder picks them up. Verify with
+  `git ls-files AGENTS.md .vibe` (the files are tracked) and by checking
+  each SKILL.md has name and description frontmatter and each agent
+  TOML parses. Then mark the exercise complete with exerciseSlug
+  "package-a-team-setup".
+---
+
+
+In the Code lessons you built a full Vibe setup for `vibe-todo`, one piece at a time. In this exercise you bring that setup to a repository you actually work on, adapted to its stack and its team, so anyone who clones it and trusts the folder gets the same agents, skills, instructions, and hooks.
+
+## The layout
+
+The same shape as `vibe-todo`, in your own repository:
+
+```text
+my-project/
+├── AGENTS.md              # instructions for every session in this project
+└── .vibe/
+    ├── config.toml        # project choices (default_agent, tool permissions, MCP servers)
+    ├── hooks.toml         # project hooks
+    ├── hooks/             # scripts your hooks call
+    ├── agents/
+    │   └── reviewer.toml  # custom agent or subagent
+    └── skills/
+        └── add-endpoint/
+            └── SKILL.md   # a workflow from your team, also a /add-endpoint command
+```
+
+| Piece | What it gives your team | Lesson |
+|---|---|---|
+| `AGENTS.md` | Shared rules: stack, test command, conventions | [Instructions](/lessons/instructions) |
+| `.vibe/config.toml` | Project settings that override each user's `~/.vibe/config.toml` | [Configuration](/lessons/configuration) |
+| `.vibe/skills/` | Workflows anyone can run with `/skill-name` | [Skills](/lessons/skills) |
+| `.vibe/agents/` | Custom agents and subagents with their own tools and permissions | [Agents](/lessons/agents) |
+| `.vibe/hooks.toml` | Commands that run at points in the session, like a formatter after each edit | [Hooks](/lessons/hooks) |
+
+<div class="callout">
+All of this loads only in a <a href="/glossary#trusted-folder">trusted folder</a>. The first time a teammate starts Vibe in the repo, the CLI asks them to trust it. Tell them in your README, and remind them to review <code>.vibe/</code> like any other code before trusting it.
+</div>
+
+## Adapt, don't copy
+
+`vibe-todo` is a pattern. Your repository needs its own test command, its own conventions, and workflows your team already repeats. Start small: `AGENTS.md` plus one skill is often enough for a first pull request. If you skipped the course project, the [agents, skills, and instructions example](/examples/agents-skills-instructions) shows the same layout, with a README that explains how each piece points to the others.
+
+## Keep secrets out
+
+`.vibe/config.toml` is committed, so never put a key in it. For an MCP server that needs one, point at an environment variable with `api_key_env`, and let each teammate set it themselves.
+
+## Test it like a teammate
+
+Start a fresh session in the folder and check that:
+
+- the custom agent shows up when you press `Shift+Tab` (or in the **Session mode** menu in VS Code),
+- the skill appears in the `/` picker,
+- the hook runs when it should.
+
+The CLI and VS Code extension read the same project files. Desktop local sessions share the CLI's core engine, but their tools and prompts can differ, so test there too.
+
+## Going further: a plugin
+
+When the same skills and subagents are useful across many repositories, package them as a [plugin](/glossary#plugin): a folder with a `plugin.json` manifest, a `skills/` folder, and Vibe-specific parts under `ai.mistral.vibe/`. Project plugins go in `.vibe/plugins/<plugin>/`, user plugins in `~/.vibe/plugins/<plugin>/`. Run `/plugins` to check what loaded and `/reload-plugins` to pick up changes. See the [Plugins](/lessons/plugins) lesson.
+
+For the bigger picture (admin config, the Admin Panel, and a rollout checklist), see the [Team rollout](/lessons/team-rollout) lesson. More in the docs on [configuration](https://docs.mistral.ai/vibe/code/cli/configuration), [trusted folders](https://docs.mistral.ai/vibe/code/safety-approvals-permissions#trusted-folders), and [plugins](https://docs.mistral.ai/vibe/code/cli/plugins).

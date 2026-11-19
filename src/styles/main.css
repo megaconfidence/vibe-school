@@ -1,0 +1,870 @@
+/* Copyright (c) 2026 Zeke Sikelianos
+   Licensed under the Apache 2.0 license found in the LICENSE file or at:
+       https://opensource.org/licenses/Apache-2.0
+   Modified for Vibe School. */
+
+/* Vibe School styles: Mistral paper and ink, hairlines, sunset used sparingly. */
+
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ALT Mistral is Mistral's licensed display face (internal use only, see
+   README). Every heading falls back to Inter 500 if it is missing. */
+@font-face {
+  font-family: "ALT Mistral";
+  src: url("/fonts/ALTMistral-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "ALT Mistral";
+  src: url("/fonts/ALTMistral-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Mono";
+  src: url("/fonts/SpaceMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "ALT Mistral", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-label: "Space Mono", ui-monospace, Menlo, monospace;
+  --font-mono:
+    ui-monospace, "SF Mono", "Cascadia Code", Menlo, Monaco, Consolas, monospace;
+
+  --color-paper: #fbfbf8;
+  --color-cream: #f5f4ef;
+  --color-cream-200: #ebe9e0;
+  --color-ink: #171722;
+  --color-ink-2: #242433;
+  --color-ink-3: #343446;
+  --color-muted: #58586f;
+  --color-label: #6f6f84;
+  --color-orange: #fa500f;
+  --color-tangerine: #ff8204;
+  --color-sun: #ffaf01;
+  --color-red: #e51300;
+  --color-crimson: #c4001d;
+}
+
+/* Semantic tokens. Light = paper and ink, dark = ink navy and cream. */
+:root {
+  /* Motion: one easing family (Mistral's power4), short durations. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-1: 120ms;
+  --dur-2: 220ms;
+  --dur-3: 420ms;
+
+  --bg: #fbfbf8;
+  --bg-raised: #ffffff;
+  --bg-sunk: #f5f4ef;
+  --text: #171722;
+  --text-muted: #58586f;
+  --text-label: #5e5e74;
+  --hair: rgba(23, 23, 34, 0.12);
+  --hair-strong: rgba(23, 23, 34, 0.22);
+  --grid-line: rgba(23, 23, 34, 0.05);
+  /* Text-safe orange on paper (4.7:1). Pure #FA500F is decorative only. */
+  --accent-text: #c93a00;
+  --accent: #fa500f;
+  --accent-soft: #fff1e8;
+  --btn-bg: #171722;
+  --btn-text: #fbfbf8;
+  --btn-hover: #343446;
+}
+
+.dark {
+  --bg: #171722;
+  --bg-raised: #1d1d2a;
+  --bg-sunk: #242433;
+  --text: #f5f4ef;
+  --text-muted: #b8b8cc;
+  --text-label: #9a9ab0;
+  --hair: rgba(245, 244, 239, 0.1);
+  --hair-strong: rgba(245, 244, 239, 0.2);
+  --grid-line: rgba(245, 244, 239, 0.035);
+  --accent-text: #ff9a4d;
+  --accent-soft: rgba(250, 80, 15, 0.12);
+  --btn-bg: #f5f4ef;
+  --btn-text: #171722;
+  --btn-hover: #ebe9e0;
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 500;
+  }
+
+  .prose {
+    --tw-prose-body: #343446;
+    --tw-prose-headings: #171722;
+    --tw-prose-links: var(--accent-text);
+    --tw-prose-bold: #171722;
+    --tw-prose-code: #171722;
+    --tw-prose-pre-bg: #f5f4ef;
+    --tw-prose-pre-code: #171722;
+    --tw-prose-counters: #6f6f84;
+    --tw-prose-bullets: #b8b8cc;
+    --tw-prose-hr: rgba(23, 23, 34, 0.12);
+    --tw-prose-th-borders: rgba(23, 23, 34, 0.22);
+    --tw-prose-td-borders: rgba(23, 23, 34, 0.1);
+    --tw-prose-quote-borders: #fa500f;
+  }
+  .dark .prose {
+    --tw-prose-body: #d6d6e0;
+    --tw-prose-headings: #f5f4ef;
+    --tw-prose-links: var(--accent-text);
+    --tw-prose-bold: #f5f4ef;
+    --tw-prose-code: #f5f4ef;
+    --tw-prose-pre-bg: #242433;
+    --tw-prose-pre-code: #f5f4ef;
+    --tw-prose-counters: #9a9ab0;
+    --tw-prose-bullets: #6f6f84;
+    --tw-prose-hr: rgba(245, 244, 239, 0.1);
+    --tw-prose-quotes: #f5f4ef;
+    --tw-prose-th-borders: rgba(245, 244, 239, 0.2);
+    --tw-prose-td-borders: rgba(245, 244, 239, 0.08);
+  }
+
+  .prose :is(h2, h3, h4) {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    scroll-margin-top: 6rem;
+  }
+  .prose h2 {
+    font-size: 1.75em;
+    padding-top: 1.25em;
+    border-top: 1px solid var(--hair);
+  }
+  .prose a {
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  /* Heading anchors. !important beats Typography's link styles, which live
+     in @layer utilities. */
+  .prose .heading-anchor,
+  .prose .heading-anchor:hover {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+  .prose .heading-anchor::after {
+    content: "#";
+    margin-left: 0.35em;
+    font-size: 0.6em;
+    color: var(--accent);
+    visibility: hidden;
+  }
+  .prose :is(h2, h3, h4):hover .heading-anchor::after {
+    visibility: visible;
+  }
+}
+
+@layer components {
+  /* ---------- Building blocks ---------- */
+
+  .label {
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-label);
+  }
+
+  .hairline {
+    border-color: var(--hair);
+  }
+
+  .panel {
+    background: var(--bg-raised);
+    border: 1px solid var(--hair);
+    border-radius: 6px;
+  }
+
+  .sunk {
+    background: var(--bg-sunk);
+  }
+
+  .sunset-bar {
+    display: flex;
+    height: 4px;
+  }
+  .sunset-bar > span {
+    flex: 1;
+  }
+  .sunset-bar > span:nth-child(1) {
+    background: #ffaf01;
+  }
+  .sunset-bar > span:nth-child(2) {
+    background: #ff8204;
+  }
+  .sunset-bar > span:nth-child(3) {
+    background: #fa500f;
+  }
+  .sunset-bar > span:nth-child(4) {
+    background: #e51300;
+  }
+  .sunset-bar > span:nth-child(5) {
+    background: #c4001d;
+  }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .pixel {
+    image-rendering: pixelated;
+    shape-rendering: crispEdges;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-primary,
+  .theme-button {
+    background: var(--btn-bg);
+    color: var(--btn-text);
+  }
+  .btn-primary:hover,
+  .theme-button:hover {
+    background: var(--btn-hover);
+  }
+  .btn-primary .arrow {
+    color: var(--accent);
+  }
+  .btn-ghost {
+    border: 1px solid var(--hair-strong);
+    color: var(--text);
+  }
+  .btn-ghost:hover {
+    border-color: var(--text);
+  }
+
+  /* Inline links are underlined so they don't rely on colour alone. */
+  .theme-link {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    color: var(--accent-text);
+  }
+  .theme-link:hover {
+    text-decoration: underline;
+  }
+  .theme-banner {
+    background: var(--accent-soft);
+    color: var(--text);
+    border-left: 3px solid var(--accent);
+  }
+
+  .chip,
+  .surface-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: var(--font-label);
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.12rem 0.45rem;
+    border-radius: 2px;
+    border: 1px solid var(--hair-strong);
+    color: var(--text-muted);
+  }
+
+  .btn:focus-visible,
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  summary:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Surface tabs ---------- */
+
+  .surface-tab-button {
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-label);
+    border-bottom: 2px solid transparent;
+  }
+  .surface-tab-button:hover {
+    color: var(--text);
+  }
+  .surface-tab-button.surface-tab-active {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ---------- Lesson lists ---------- */
+
+  .lesson-link:hover .lesson-title {
+    color: var(--accent-text);
+  }
+  .lesson-row--next {
+    background: var(--accent-soft);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .lesson-status--complete {
+    border-color: var(--text) !important;
+    background: var(--text) !important;
+    color: var(--bg) !important;
+  }
+  /* Off-path lessons stay readable (AA); only the status box fades. */
+  .lesson-row.off-path .lesson-status {
+    opacity: 0.5;
+  }
+  .lesson-row.off-path .lesson-title {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .progress-track {
+    height: 4px;
+    background: var(--hair);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0;
+    transition: width 700ms var(--ease-out);
+  }
+
+  /* ---------- Pixel M build (Vibe Pass reveal) ---------- */
+
+  @keyframes cell-fall {
+    0% {
+      transform: translateY(-14px);
+      opacity: 0;
+    }
+    70% {
+      transform: translateY(0) scaleY(0.9);
+      opacity: 1;
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  .m-build rect {
+    transform-box: fill-box;
+    transform-origin: bottom;
+  }
+  .m-build.is-building rect {
+    animation: cell-fall 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--i) * 60ms);
+  }
+
+  @keyframes stairs {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+  .sunset-stairs > span {
+    display: block;
+    height: 6px;
+    transform-origin: left;
+  }
+  .sunset-stairs.is-on > span {
+    animation: stairs 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--i) * 80ms);
+  }
+
+  /* ---------- Prompt launch bar ---------- */
+
+  .launch {
+    border: 1px solid var(--hair-strong);
+    border-radius: 6px;
+    background: var(--bg-raised);
+    overflow: hidden;
+  }
+  .launch-head {
+    border-bottom: 1px solid var(--hair);
+    background: var(--bg-sunk);
+  }
+  .launch-tab {
+    font-family: var(--font-label);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-label);
+    padding: 0.6rem 0.75rem;
+    border-bottom: 2px solid transparent;
+  }
+  .launch-tab[aria-selected="true"] {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+  .launch pre {
+    font-family: var(--font-mono);
+  }
+
+  /* ---------- Setup tree ---------- */
+
+  .tree-row {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-label);
+  }
+  .tree-row.is-done {
+    color: var(--text);
+  }
+  .tree-row .tick {
+    visibility: hidden;
+    color: var(--accent);
+  }
+  .tree-row.is-done .tick {
+    visibility: visible;
+  }
+
+  /* Unused surfaces: fade the icon, keep the label at full contrast. */
+  .surface-dot img {
+    opacity: 0.3;
+    filter: grayscale(1);
+    transition:
+      opacity 200ms ease,
+      filter 200ms ease;
+  }
+  .surface-dot.is-used img {
+    opacity: 1;
+    filter: none;
+  }
+  .surface-dot.is-used .label {
+    color: var(--text);
+  }
+
+  /* ---------- Choice cards (onboarding, widgets) ---------- */
+
+  .choice {
+    border: 1px solid var(--hair-strong);
+    border-radius: 4px;
+    background: var(--bg-raised);
+    text-align: left;
+    transition:
+      border-color 120ms ease,
+      box-shadow 120ms ease;
+  }
+  .choice:hover {
+    border-color: var(--text);
+  }
+  .choice[aria-pressed="true"],
+  .choice[aria-checked="true"] {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+}
+
+/* ---------- Code ---------- */
+
+.prose pre.astro-code {
+  border: 1px solid var(--hair);
+  border-radius: 4px;
+  background: var(--bg-sunk) !important;
+  color: var(--text) !important;
+  padding: 0.85rem 1rem;
+  font-size: 0.85em;
+}
+.prose pre.astro-code span {
+  color: inherit !important;
+}
+.prose :where(code):not(:where(pre code))::before,
+.prose :where(code):not(:where(pre code))::after {
+  content: none;
+}
+.prose :where(code):not(:where(pre code)) {
+  background: var(--bg-sunk);
+  border: 1px solid var(--hair);
+  padding: 0.05em 0.35em;
+  border-radius: 3px;
+  font-weight: 500;
+  font-size: 0.85em;
+}
+
+/* Wide tables scroll horizontally instead of overflowing on mobile */
+.prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.prose thead th {
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-label);
+}
+
+/* Callout box used in lesson MDX: <div class="callout">...</div> */
+.prose .callout {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+  padding: 0.75rem 1rem;
+  border-radius: 0 4px 4px 0;
+  margin: 1.5rem 0;
+  font-size: 0.95em;
+}
+.prose .callout p {
+  margin: 0.25rem 0;
+}
+
+/* Collapsible panels: no native marker, a small chevron instead */
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details.track-group > summary::after,
+details#exercises-panel > summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(-45deg);
+  transition: transform 150ms ease;
+  flex-shrink: 0;
+}
+details[open].track-group > summary::after,
+details[open]#exercises-panel > summary::after {
+  transform: rotate(45deg);
+}
+
+/* Lesson notes toggle */
+details.notes > summary .notes-toggle::before {
+  content: "Show";
+}
+details.notes[open] > summary .notes-toggle::before {
+  content: "Hide";
+}
+
+/* Copy button on code blocks */
+.copy-code {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-family: var(--font-label);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--hair-strong);
+  border-radius: 3px;
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.code-wrap:hover .copy-code,
+.copy-code:focus-visible,
+.copy-code.is-copied {
+  opacity: 1;
+}
+@media (hover: none) {
+  .copy-code {
+    opacity: 1;
+  }
+}
+
+/* Widgets: grid children may shrink, form controls fill their column. */
+.widget :where(form, label, fieldset, div) {
+  min-width: 0;
+}
+.widget :where(input:not([type="checkbox"]), select, textarea, pre) {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* ---------- Motion ---------- */
+
+/* Page-to-page: a quick cross-fade (browsers with cross-document view
+   transitions; others just navigate). */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--dur-2);
+  animation-timing-function: var(--ease-out);
+}
+/* The header and its progress meter stay put while the page changes. */
+.site-header {
+  view-transition-name: site-header;
+}
+
+/* Content rises in on load, in a short stagger. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* backwards, not both: hidden until its turn, then hover transforms work. */
+.rise {
+  animation: rise var(--dur-3) var(--ease-out) backwards;
+  animation-delay: calc(var(--d, 0) * 60ms);
+}
+
+/* Accordions open smoothly where supported (::details-content). */
+details::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition:
+    block-size var(--dur-2) var(--ease-out),
+    content-visibility var(--dur-2) allow-discrete;
+}
+details[open]::details-content {
+  block-size: auto;
+}
+:root {
+  interpolate-size: allow-keywords;
+}
+
+/* Buttons and cards respond to the pointer. */
+.btn {
+  transition:
+    background-color var(--dur-1) ease,
+    color var(--dur-1) ease,
+    border-color var(--dur-1) ease,
+    transform var(--dur-1) var(--ease-out);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+.btn-primary .arrow {
+  display: inline-block;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.btn-primary:hover .arrow {
+  transform: translateX(3px);
+}
+.lift {
+  transition:
+    border-color var(--dur-2) ease,
+    transform var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) ease;
+}
+.lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -16px rgba(23, 23, 34, 0.35);
+}
+.dark .lift:hover {
+  box-shadow: 0 8px 24px -16px rgba(0, 0, 0, 0.8);
+}
+
+.sunk-soft {
+  background: color-mix(in srgb, var(--bg-sunk) 45%, var(--bg-raised));
+}
+
+/* Lesson rows: a soft wash on hover. */
+.lesson-row {
+  transition: background-color var(--dur-1) ease;
+}
+a.lesson-row:hover {
+  background: var(--bg-sunk);
+}
+
+/* Checkmarks pop when a lesson becomes done. */
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.lesson-status--complete {
+  animation: pop var(--dur-3) var(--ease-out);
+}
+
+/* Completion banner slides in. */
+@keyframes banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.banner-in {
+  animation: banner-in var(--dur-3) var(--ease-out) both;
+}
+
+/* A short confetti of sunset squares when you finish a lesson. */
+.burst {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  overflow: hidden;
+}
+.burst i {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  animation: burst 900ms var(--ease-out) forwards;
+}
+@keyframes burst {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--x), var(--y)) scale(0.6);
+    opacity: 0;
+  }
+}
+
+/* Toast for small confirmations ("Copied"). */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translate(-50%, 12px);
+  opacity: 0;
+  z-index: 70;
+  pointer-events: none;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  font-size: 0.85rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 4px;
+  transition:
+    opacity var(--dur-2) ease,
+    transform var(--dur-2) var(--ease-out);
+}
+.toast.is-on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Checklist steps: hover wash, done steps fade back. */
+.check-step {
+  transition:
+    background-color var(--dur-1) ease,
+    color var(--dur-2) ease;
+}
+.check-step:hover {
+  background: var(--bg-sunk);
+}
+.check-step:has(input:checked) > span {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--hair-strong);
+}
+
+/* A gentle nudge toward the next action. */
+@keyframes nudge {
+  0%,
+  100% {
+    transform: none;
+  }
+  30% {
+    transform: translateY(-3px);
+  }
+  60% {
+    transform: translateY(1px);
+  }
+}
+.nudge {
+  animation: nudge 600ms var(--ease-out) 2;
+  border-color: var(--accent) !important;
+}
+
+/* Theme toggle: the icon turns as it swaps. */
+#theme-toggle svg {
+  transition: transform var(--dur-3) var(--ease-out);
+}
+#theme-toggle:active svg {
+  transform: rotate(90deg);
+}
+
+/* Homepage: visitor sections or the dashboard, decided before first paint
+   (school.js adds .is-enrolled), so neither flashes. */
+#dashboard {
+  display: none;
+}
+.is-enrolled #dashboard {
+  display: block;
+}
+.is-enrolled #visitor,
+.is-enrolled #start,
+.is-enrolled #explainer {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .burst {
+    display: none;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}

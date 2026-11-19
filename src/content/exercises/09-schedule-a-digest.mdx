@@ -1,0 +1,132 @@
+---
+title: "Schedule a digest"
+slug: schedule-a-digest
+description: "Set up a scheduled task in Vibe Work that sends you a weekly digest from your connectors or the web."
+order: 9
+surfaces: [work]
+agentInstructions: |
+  Guide the student through creating a recurring scheduled task in Vibe
+  Work that produces a digest. You are the tutor running locally; the
+  work happens in their browser at chat.mistral.ai (or Work in Vibe
+  Desktop). Explain each step, then ask them to confirm or paste what
+  they see. Adapt depth to their profile.
+
+  Steps:
+
+  1. Pick the digest. Ideas: a weekly summary of new and stale GitHub
+     issues in one repository (GitHub App connector), a daily rundown of
+     unread email from specific people (Gmail or Outlook), a Monday
+     roll-up of Slack channels, or a weekly news watch on a topic (web
+     search, no connector needed). Read-only digests are the right
+     start.
+
+  2. Connect what it needs. Open the Connectors page from the sidebar,
+     find the card, click Connect, and complete the sign-in (usually
+     OAuth). A green Connected indicator confirms it. Skip this for a
+     web-only digest.
+
+  3. Write and test the prompt manually first, in a normal Work chat
+     (pick the connector from + > Connectors if Work doesn't use it on
+     its own; web search runs automatically). Make it
+     self-contained: which repo or channel, which time window ("since
+     last Monday"), the format (headings, bullet points, links), and the
+     length. Run it once and refine until the output is what they'd
+     want in their inbox.
+
+  4. Plan approvals. A scheduled task runs unattended, so any action
+     that needs approval would stall it. Keep the digest read-only. If
+     it must call a function that asks for approval, pre-authorize just
+     that function: Connectors > the My connectors tab > the connector >
+     set that function's permission menu to allow (for example Allow).
+     When creating the task, its Permissions section can also let
+     specific connectors run without asking for that task. Recommend allowing read-only functions
+     only (get, list, search) and keeping interactive ones (send, post,
+     delete) on manual approval.
+
+  5. Schedule it. Either ask in the chat ("Schedule this to run every
+     Monday at 9am.") and confirm Work's proposal, or click Scheduled in
+     the sidebar, then New task, and paste the prompt. Under Model and
+     reasoning, keep the default or pick a model. Under Schedule, pick a
+     frequency (Once, Daily, Weekly, Monthly, Yearly) and a time. Under
+     Permissions, keep Follow connector settings (the safe default) or
+     choose connectors that may run without asking. Save it and check
+     the confirmation card (for example "Every Monday at 9:00"). Recurring
+     tasks may start up to 60 minutes after their scheduled time.
+
+  6. Explain what happens next: at the scheduled time Work runs the
+     prompt and the result appears in the sidebar with an unread dot.
+     From the Scheduled page they can edit, pause, or delete it. The
+     number of scheduled tasks depends on the plan. Scheduled tasks are
+     in Public Preview, so labels may change; if something on screen
+     differs, follow what the student sees.
+
+  The exercise is complete when a recurring scheduled task exists and
+  its prompt has produced at least one good result (the manual test run
+  counts). Ask the student to confirm the task appears on the Scheduled
+  page and paste its schedule summary (for example "Every Monday at
+  9:00") and the first lines of the test output. Then mark the exercise
+  complete with exerciseSlug "schedule-a-digest".
+---
+
+
+Some questions come back every week: what changed in the repo, what's in my inbox, what's new in my field. In this exercise, you'll write that question once and let Vibe Work answer it on a schedule.
+
+## Pick a digest
+
+| Digest | Uses |
+|---|---|
+| Weekly summary of new and stale issues in one repository | GitHub App [connector](/glossary#connector) |
+| Daily rundown of unread email from your manager and key clients | Gmail or Outlook connector |
+| Monday roll-up of what happened in two Slack channels | Slack connector |
+| Weekly news watch on a topic | Web search, no connector needed |
+
+Start read-only. A digest that summarizes is safe to run unattended. One that sends or posts needs more care.
+
+## Connect and test
+
+1. Open the `Connectors` page from the sidebar, find the card, click `Connect`, and sign in. A green `Connected` indicator confirms it.
+2. In a normal Work chat, run your prompt by hand. If Work doesn't pick the connector on its own, click `+`, open `Connectors`, and choose it. Web search runs automatically.
+
+Make the prompt self-contained, because nobody will be there to clarify it:
+
+```text
+Summarize GitHub issues in acme/website opened or updated in the last 7 days.
+Group them as: new, needs triage (no labels), and stale (no activity in 30 days).
+For each, give the title, a link, and one line on what it's about. Keep it under 300 words.
+```
+
+Iterate until the output is what you'd want to read on a Monday morning.
+
+## Schedule it
+
+Either ask in the chat:
+
+```text
+Schedule this to run every Monday at 9am.
+```
+
+Work proposes a schedule and you confirm. Or create it from the sidebar:
+
+1. Click `Scheduled`, then `New task`, and write the prompt.
+2. Under **Model and reasoning**, keep the default or pick a model.
+3. Under **Schedule**, pick a frequency (`Once`, `Daily`, `Weekly`, `Monthly`, or `Yearly`) and a time.
+4. Under **Permissions**, keep `Follow connector settings` (the safe default), or pick connectors that may run without asking for this task.
+5. Save the task.
+
+Recurring tasks may start up to 60 minutes after their scheduled time.
+
+<div class="callout">
+A scheduled task runs while you're away, so an action that waits for approval would stall it. Keep digests read-only. To pre-authorize a specific function, open <code>Connectors</code>, then the <code>My connectors</code> tab, click the connector, and set the permission menu for that function only (for example <code>Allow</code>).
+</div>
+
+## After it runs
+
+The result shows up in the sidebar with an **unread dot**. Open it to read the digest, ask follow-up questions, or jump to the associated chat to refine the prompt. From the `Scheduled` page you can edit, pause, or delete the task.
+
+## Tips
+
+- **Name the time window.** "In the last 7 days" beats "recently".
+- **Fix the format.** The same headings every week make the digest skimmable.
+- **Watch your plan.** The number of scheduled tasks you can have at once depends on your plan.
+
+Scheduled tasks are in Public Preview, so names and options may change. More in the [Automations](/lessons/automations) and [Connectors](/lessons/connectors) lessons, and the [scheduled tasks docs](https://docs.mistral.ai/vibe/work/web/scheduled-tasks).

@@ -1,0 +1,175 @@
+---
+title: "Automations"
+slug: automations
+description: "Turn repeatable methods into Work skills, run workflows, and schedule prompts."
+order: 25
+track: work
+surfaces: [work]
+quiz: true
+goals:
+  - "Turn a refined task into a Work skill"
+  - "Know when to use a skill and when to use a workflow"
+  - "Schedule a prompt to run on its own"
+  - "Keep unattended tasks read-only"
+minutes: 20
+checklist:
+  - "Open chat.mistral.ai in Work and ask for a short news digest on a topic you care about"
+  - "Refine the format once or twice until you like it"
+  - "Ask Work to save this as a skill, and check the description says when to use it"
+  - "Open Context, then Skills, and find your new skill"
+  - "Click Scheduled in the sidebar, then New task"
+  - "Write a read-only prompt that uses your skill, pick Weekly, Monday, 9:00, and save"
+  - "Check the task shows on the Scheduled page"
+agentInstructions: |
+  Cover these four topics:
+
+  1. Work skills: reusable instructions and resources (a SKILL.md plus
+     optional files) following the open Agent Skills standard, the same
+     format Vibe Code uses (see {origin}/lessons/skills). Work loads only
+     each skill's name and description at first, and reads the full
+     SKILL.md when a task matches, so the description should say when to
+     use the skill. Built-in skills include deep-research, data-analysis,
+     and meeting-prep. Skills activate automatically or explicitly: type /
+     and pick one, type /skill-name, or mention it by name. Manage them in
+     Context > Skills, with Personal and Workspace sections.
+
+  2. Creating skills: from Context > Skills > New skill > Create manually (Title,
+     Description, SKILL.md, optional files, then save), or, the
+     recommended way, by refining a real task and asking Work to "turn
+     this into a Skill". Edits apply to new chats only. Keep each skill
+     focused on one job and avoid near-duplicates. Share a skill with
+     the workspace from its details page.
+
+  3. Workflows: coded processes built and published by developers in
+     Mistral Studio. In Work, attach one with + > Workflows; its name
+     appears as a tag in the input. Unlike skills, workflows never
+     auto-trigger. Use a skill to make Work behave a certain way, a
+     workflow to call something that already exists. If none appear, ask
+     your workspace admin or Studio developer.
+
+  4. Scheduled tasks (Public Preview): run a prompt automatically, once
+     or on a cadence (Once, Daily, Weekly, Monthly, Yearly) at a set time.
+     Create them from Scheduled > New task in the sidebar, or by asking in
+     chat ("Schedule this to run every Monday at 9am"). They can use
+     skills, connectors, web search, Libraries, and projects. They run
+     unattended, so prefer read-only prompts; a write action needs
+     Always allow on that connector function first. Results appear in the
+     sidebar with an unread dot; edit, pause, or delete from the Scheduled
+     page. Compare with Vibe Code's /loop, which schedules recurring
+     prompts inside a CLI session (see {origin}/lessons/automation).
+
+  Then guide the hands-on part at https://chat.mistral.ai:
+  - Create a Work skill. Suggest the recommended path: ask Work for a
+    short news digest on a topic the student cares about, refine the
+    format once or twice, then ask Work to "save this as a Skill".
+    Review the description together and make sure it says when to use
+    it ("Use when ...").
+  - Create a scheduled task that runs a read-only prompt on a cadence,
+    for example a weekly digest of news on that topic every Monday at
+    9:00, either from Scheduled > New task or by asking in chat. Suggest
+    invoking the new skill by name in the prompt.
+
+  Verify completion by asking the student to paste the schedule summary
+  from the confirmation card (for example "Every Monday at 9:00") and
+  the prompt it runs, plus the name and description of their new skill.
+  Check that the prompt is read-only (no sending, posting, or modifying)
+  and that the skill description says when to use it. Ask them to
+  confirm the task appears on the Scheduled page.
+---
+
+
+Once Vibe Work does a task well, you shouldn't have to explain it again. This lesson covers three ways to make work repeatable: [skills](/glossary#skill) capture *how* to do a task, workflows call automations your team already built, and [scheduled tasks](/glossary#scheduled-task) run a prompt on their own while you're away.
+
+## Skills
+
+A Work skill is a folder with a `SKILL.md` file (instructions plus metadata) and any files that support it, such as templates, examples, or brand guides. Work skills follow the open [Agent Skills](https://agentskills.io/home) standard, the same format Vibe Code uses (see the [Skills](/lessons/skills) lesson).
+
+Work loads skills in stages. At the start it reads only each skill's name and description. When a task matches a description, it reads the full `SKILL.md` and any files it needs. So you can enable many skills without filling the context, but the **description decides when a skill activates**. Write it as a trigger:
+
+```text
+Use when reviewing customer contracts for renewal risks.
+```
+
+not *"Helps with contracts."*
+
+### Built-in skills
+
+Work ships with skills for common tasks, including `deep-research`, `data-analysis`, `meeting-prep`, `doc-coauthoring`, `internal-comms`, and `skill-creator`. Try one:
+
+```text
+/deep-research What are the main approaches to long-context LLMs in 2026?
+```
+
+### Using skills
+
+Enabled skills activate automatically when a task matches. To pick one yourself, type `/` and choose from the list, type `/skill-name`, or mention it: *"Use the contract-review skill on this PDF."* Work shows in the chat which skill it's applying.
+
+Manage skills in `Context` then `Skills`. **Personal** skills are yours only; **Workspace** skills are shared with everyone in the workspace. Toggle each on or off. Admins can force-enable skills for the workspace.
+
+### Creating a skill
+
+The recommended way is from a real task: refine an approach in a chat until it works, then ask Work to *"turn this into a Skill"*. Work drafts the `SKILL.md` for you to review and save.
+
+Or build one by hand:
+
+1. Open `Context` then `Skills`, click `New skill`, and pick `Create manually` (or `Create in Chat` to have Work draft it with you). You can also `Import` an existing skill.
+2. Fill in **Title**, **Description** (when to use it), and **SKILL.md** (the instructions).
+3. Optionally add files or folders.
+4. Save the skill.
+
+Edits take effect in new chats. Keep each skill focused on one job, and edit an existing skill instead of saving a near-duplicate. An active skill's instructions take precedence over your [custom instructions](/lessons/projects).
+
+## Workflows
+
+Workflows are coded processes (a data pipeline, a report generator, a ticketing flow) that developers build in Mistral Studio and publish to your workspace. To run one, click `+`, select `Workflows`, and pick it. Its name appears as a tag in the input; then prompt as usual.
+
+| | Skills | Workflows |
+|---|---|---|
+| What it is | Instructions and resources | A coded process built in Studio |
+| Who creates it | Any user, often from a chat | Developers in Studio |
+| Triggered by | Description match, `/`, or name | Explicit selection via `+` then `Workflows` |
+
+Use a skill to make Work *behave a certain way*. Use a workflow to *call something that already exists*. No workflows in the menu? Ask your workspace admin.
+
+## Scheduled tasks
+
+A scheduled task runs a prompt at a set time, once or on repeat, and notifies you when the result is ready. Think weekly digests, daily inbox triage, or a one-off reminder.
+
+<div class="callout">
+Scheduled tasks are in <strong>Public Preview</strong>, so the UI and options may change. The number you can have at once depends on your plan.
+</div>
+
+Create one from the sidebar:
+
+1. Click `Scheduled` in the sidebar, then `New task` (or start from one of the **Suggested** tasks).
+2. Write the prompt and, under **Model and reasoning**, keep the default or pick a model.
+3. Under **Schedule**, pick a frequency (for example `Daily`) and a time.
+4. Under **Permissions**, keep `Follow connector settings` (the safe default) or choose `Run connectors automatically`; you can also select specific connectors that may run without asking for this task.
+5. Save the task.
+
+Recurring tasks may start up to 60 minutes after their scheduled time. The `Scheduled` page has `Scheduled`, `Paused`, and `Completed` tabs.
+
+Or ask in a chat: *"Schedule this to run every Monday at 9am."* Work proposes a schedule and you confirm. Either way, a confirmation card sums it up, for example *"Every Monday at 9:00"*.
+
+| Frequency | What you pick |
+|---|---|
+| `Once` | A date and time |
+| `Daily` | A time of day |
+| `Weekly` | One or more days, plus a time |
+| `Monthly` | A day of the month, plus a time |
+| `Yearly` | A day and month, plus a time |
+
+Scheduled tasks can use everything a normal task can: skills, connectors, web search, Libraries, and projects. Results land in the sidebar with an unread dot. From the `Scheduled` page you can edit, pause, or delete a task.
+
+<div class="callout">
+Nobody is watching when a scheduled task runs. Stick to read-only prompts (summarize, brief, monitor). A write action like sending an email needs <code>Always allow</code> on that connector function first (see <a href="/lessons/connectors">Connectors</a>), so only do that for prompts you've reviewed.
+</div>
+
+## Compared with Vibe Code
+
+| Vibe Work | Vibe Code |
+|---|---|
+| Skills in `Context` then `Skills` | `SKILL.md` folders in `~/.vibe/skills` or a project (see [Skills](/lessons/skills)) |
+| Scheduled tasks, run by Work at the set time | `/loop` schedules a recurring prompt that runs only while the CLI session is open (see [Automation](/lessons/automation)) |
+
+Learn more in the docs: [Skills](https://docs.mistral.ai/vibe/work/web/skills), [Workflows](https://docs.mistral.ai/vibe/work/web/workflows), and [Scheduled tasks](https://docs.mistral.ai/vibe/work/web/scheduled-tasks).

@@ -1,0 +1,288 @@
+---
+title: "Agents"
+slug: agents
+description: "Define your own agents and subagents in TOML, with their own instructions, tools, and model."
+order: 15
+track: code
+surfaces: [cli, vscode, desktop]
+quiz: true
+goals:
+  - "Compare the built-in agents"
+  - "Write a custom agent in TOML"
+  - "Give an agent its own instructions, tools, and model"
+  - "Delegate work to a subagent"
+minutes: 25
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. What an agent is: a configuration override applied on top of the
+     global config, bundling instructions, an active model, a tool set,
+     and approval rules. Briefly recap the built-in agents covered in the
+     Permissions lesson ({origin}/lessons/permissions): ask, accept-edits
+     (the default), smart-approve, auto-approve, plus the installable
+     lean. Vibe has no built-in plan agent.
+
+  2. Custom agents: a TOML file in ~/.vibe/agents/ (user) or
+     .vibe/agents/ in a trusted project. The file name is the agent name
+     (builder.toml is selected with vibe --agent builder or Shift+Tab);
+     main is reserved. Key fields: display_name, description, safety
+     (safe, neutral, destructive, smart, yolo: colors the mode label and
+     grants no permissions; with enable_auto_approve = false, Vibe hides
+     agents marked yolo), agent_type, instructions (appended to
+     the system prompt), enabled_tools / disabled_tools, [tools.<name>]
+     permission blocks, enabled_skills / disabled_skills, and
+     active_model. A custom agent's instructions only apply if it is
+     selected before the first message (or after /clear). default_agent
+     in config.toml sets the agent new sessions start with.
+
+  3. Subagents: agent_type = "subagent" makes an agent the model spawns
+     to delegate work; users can't select it. It returns a text-only
+     result, can't ask the user questions, only uses built-in tools its
+     file allows, and can never have broader permissions than the parent.
+     The description tells the model when to use it, and is required.
+     Vibe ships a read-only explore subagent for codebase exploration.
+
+  4. Agents on other surfaces: the VS Code extension reads the same
+     agent files and lists custom agents in the Session mode menu at the
+     bottom of the Mistral Vibe panel; Shift+Tab cycles there too.
+     Desktop local sessions share the CLI's core engine, but tools and
+     prompts can differ, so use the CLI or VS Code to try custom agents.
+
+  Then the hands-on part, in vibe-todo. Check prerequisites first: the
+  folder (else fetch the starter as in the Configuration lesson),
+  AGENTS.md and tests/AGENTS.md (Instructions lesson), and both skills
+  in .vibe/skills/new-command and .vibe/skills/code-review (Skills
+  lesson). Create any that are missing, briefly, before going on. Back
+  up any agent file that already exists before changing it.
+
+  1. vibe-todo/.vibe/agents/reviewer.toml, a read-only subagent:
+       display_name = "Reviewer"
+       description = "Read-only reviewer. Checks the todo CLI against the project rules with the code-review skill and returns PASS/FAIL findings."
+       safety = "safe"
+       agent_type = "subagent"
+       instructions = """
+       You are a strict, read-only code reviewer for this todo CLI.
+       Load the `code-review` skill and follow its checklist and output format exactly.
+       Never edit files.
+       """
+       enabled_tools = ["read_file", "skill"]
+       enabled_skills = ["code-review"]
+
+  2. vibe-todo/.vibe/agents/builder.toml, the agent the student picks:
+       display_name = "Builder"
+       description = "Adds features to the todo CLI using the new-command skill, then asks the reviewer subagent to check the work."
+       safety = "neutral"
+       agent_type = "agent"
+       instructions = """
+       You are the Builder for this todo CLI.
+       1. When the user asks for a new command, load the `new-command` skill and follow it.
+       2. When the tests pass, spawn the `reviewer` subagent (agent type `reviewer`) and ask it to review the files you changed.
+       3. If the reviewer says CHANGES NEEDED, fix the findings and run the tests again.
+       4. Finish with a short summary: files changed, test result, reviewer verdict.
+       """
+       enabled_skills = ["new-command", "code-review"]
+       [tools.write_file]
+       permission = "always"
+       [tools.edit]
+       permission = "always"
+       [tools.bash]
+       allowlist = ["python3 -m unittest", "python3 -m todo", "ls", "cat", "git status", "git diff", "git log"]
+     Explain that agent settings rank above the project config, so while
+     builder is active its [tools.bash] allowlist replaces the one from
+     the Permissions lesson; that's why it repeats git status, git diff
+     and git log, so the builder can inspect its changes without a
+     prompt (on Windows, adapt the command names and
+     table as there).
+
+  3. Make it the default for this project: in vibe-todo/.vibe/config.toml
+     change default_agent from "accept-edits" to "builder". Keep the
+     other keys, including the [tools.bash] allowlist from the
+     Permissions lesson (the reference project doesn't have it, so a
+     diff against it shows that table, and possibly an
+     applied_migrations key Vibe adds; both are expected).
+
+  4. Run it end to end. CLI: exit and start a new `vibe` in vibe-todo
+     (or `vibe --agent builder`); the mode label should show Builder.
+     VS Code: start a new conversation and check the Session mode menu.
+     Desktop: start a New Session on vibe-todo; custom agents may not
+     show there, so prefer the CLI or VS Code for this step. Before the
+     first message, ask: "Add a clear command that deletes all completed
+     tasks." Watch the builder load the new-command skill, edit
+     todo/cli.py and tests/test_cli.py, run the tests, spawn the reviewer
+     subagent, and finish with the verdict. Check `git diff` and
+     `python3 -m unittest` together.
+
+  5. Commit: `git add -A && git commit -m "Add builder and reviewer agents, clear command"`.
+     Then point the student to the reference answer at
+     {origin}/examples/agents-skills-instructions: their vibe-todo now
+     has the same two instruction files, two skills, two agents and
+     default_agent = "builder". Suggest they compare the files.
+
+  Verify completion by parsing both agent files and the project config,
+  for example
+  python3 -c 'import tomllib;[print(p,tomllib.load(open(p,"rb"))) for p in [".vibe/agents/builder.toml",".vibe/agents/reviewer.toml",".vibe/config.toml"]]'
+  run in vibe-todo (tomllib needs Python 3.11+; if it's missing run the
+  same code with `uv run --python 3.12 python -c`, and use `python` on
+  Windows). Confirm reviewer.toml has agent_type = "subagent", a
+  non-empty description, and no edit, write_file or bash in
+  enabled_tools; builder.toml has a description and instructions that
+  name the reviewer; and config.toml has default_agent = "builder". Then
+  ask the student to confirm the Builder showed in the mode label (or
+  Session mode menu) and that the reviewer subagent ran.
+  Report artifacts: agent builder, agent reviewer.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+An [agent](/glossary#agent) is a named bundle of settings: instructions, a model, the tools it may use, and how it asks for approval. You met the built-in ones in the [Permissions](/lessons/permissions) lesson, and picked them with `Shift+Tab`, the **Session mode** menu in [VS Code](/lessons/vscode), or **Select approval policy** in [Desktop](/lessons/desktop). In this lesson you'll write your own: a `builder` that adds features with your skills, and a read-only `reviewer` subagent that checks its work.
+
+## In your project
+
+This lesson adds two agents to `vibe-todo` and makes the builder the project's default. After it, your project has the same setup as the [reference project](/examples/agents-skills-instructions): two instruction files, two skills, and two agents.
+
+```text
+vibe-todo/
+├── AGENTS.md
+├── tests/AGENTS.md
+└── .vibe/
+    ├── config.toml                # default_agent changes to "builder"
+    ├── agents/
+    │   ├── builder.toml           # new: you pick it, it builds and asks for a review
+    │   └── reviewer.toml          # new: read-only subagent the builder spawns
+    └── skills/
+        ├── new-command/SKILL.md
+        └── code-review/SKILL.md
+```
+
+The builder then adds a `clear` command end to end: skill, code, tests, review.
+
+## Built-in agents
+
+| Agent | Behavior |
+|---|---|
+| `ask` | Asks before running any tool |
+| `accept-edits` | **Default.** Edits files in the working directory without asking, asks for everything else |
+| `smart-approve` | Runs the tool calls it judges safe, asks before risky ones |
+| `auto-approve` | Approves everything. Only in a trusted, sandboxed environment |
+| `lean` | Lean 4 proof assistant. Install it with `/leanstall` |
+
+Vibe has no built-in `plan` agent. A custom agent with `disabled_tools = ["edit", "write_file"]` makes a read-only planner if you want one.
+
+## Write a custom agent
+
+Create a `.toml` file in `~/.vibe/agents/` (for you) or `.vibe/agents/` in a trusted project (for your team). **The file name is the agent name**: `builder.toml` becomes `vibe --agent builder`. Don't name a file `main.toml`; that name is reserved.
+
+```toml
+# vibe-todo/.vibe/agents/builder.toml
+display_name = "Builder"
+description = "Adds features to the todo CLI using the new-command skill, then asks the reviewer subagent to check the work."
+safety = "neutral"
+agent_type = "agent"
+
+instructions = """
+You are the Builder for this todo CLI.
+1. When the user asks for a new command, load the `new-command` skill and follow it.
+2. When the tests pass, spawn the `reviewer` subagent (agent type `reviewer`) and ask it to review the files you changed.
+3. If the reviewer says CHANGES NEEDED, fix the findings and run the tests again.
+4. Finish with a short summary: files changed, test result, reviewer verdict.
+"""
+
+enabled_skills = ["new-command", "code-review"]
+
+[tools.write_file]
+permission = "always"
+
+[tools.edit]
+permission = "always"
+
+[tools.bash]
+allowlist = ["python3 -m unittest", "python3 -m todo", "ls", "cat", "git status", "git diff", "git log"]
+```
+
+| Key | What it does |
+|---|---|
+| `display_name` | The label you see |
+| `description` | What the agent is for. Required for subagents |
+| `safety` | `safe`, `neutral`, `destructive`, `smart`, or `yolo`. Colors the mode label. Grants no permissions, but `yolo` agents are hidden when `enable_auto_approve = false` |
+| `agent_type` | `agent` (default, you pick it) or `subagent` (the model spawns it) |
+| `instructions` | Text added after Vibe's system prompt and your `AGENTS.md` files |
+| `enabled_tools`, `disabled_tools` | Allow-list and deny-list of tools |
+| `[tools.<name>]` | Per-tool `permission`, `allowlist`, and `denylist`, as in `config.toml` |
+| `enabled_skills`, `disabled_skills` | Which [skills](/lessons/skills) it can load |
+| `active_model` | A [model](/lessons/models) alias for this agent |
+
+Agent settings rank above `config.toml` (see [Configuration](/lessons/configuration)), so while the builder is active, its `[tools.bash]` allowlist replaces the project one from the Permissions lesson.
+
+<div class="callout">
+<code>safety</code> is a visual hint, not a guard (its one effect beyond color: an admin setting of <code>enable_auto_approve = false</code> hides agents marked <code>yolo</code>). What actually limits an agent is its tool list and its <code>[tools.*]</code> permissions.
+</div>
+
+## Use your agent
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+Start a session with it:
+
+```bash
+vibe --agent builder
+```
+
+Or press `Shift+Tab` until the mode label on the input box shows it. Select it **before your first message**: if you switch later, its tools and permissions apply, but its instructions only take effect after `/clear`.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The extension reads the same agent files. Click the **Session mode** menu at the bottom right of the input and pick your agent, or cycle with `Shift+Tab`.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Desktop local sessions share the CLI's core engine, but tools and prompts can differ. Use the CLI or VS Code to try your custom agent.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+To start every session in a project with it, set `default_agent` in that project's `.vibe/config.toml`:
+
+```toml
+# vibe-todo/.vibe/config.toml
+default_agent = "builder"
+```
+
+It applies to interactive and programmatic sessions. Put it in `~/.vibe/config.toml` instead to make an agent your personal default everywhere.
+
+## Subagents
+
+The agent can hand part of a job to a **subagent**, for example to search a big codebase without filling its own [context](/lessons/context). Vibe ships a read-only `explore` subagent for exactly that. Subagents return a text result to the agent that started them. You can't select them yourself.
+
+Make your own with `agent_type = "subagent"`. The `description` tells the model when to use it:
+
+```toml
+# vibe-todo/.vibe/agents/reviewer.toml
+display_name = "Reviewer"
+description = "Read-only reviewer. Checks the todo CLI against the project rules with the code-review skill and returns PASS/FAIL findings."
+safety = "safe"
+agent_type = "subagent"
+
+instructions = """
+You are a strict, read-only code reviewer for this todo CLI.
+Load the `code-review` skill and follow its checklist and output format exactly.
+Never edit files.
+"""
+
+enabled_tools = ["read_file", "skill"]
+enabled_skills = ["code-review"]
+```
+
+Subagents can't ask you questions, only use the built-in tools their file allows, and never get broader permissions than the agent that started them. To use a custom one, the main agent spawns it by its type, so name it in your instructions, as the builder does: "spawn the `reviewer` subagent".
+
+## Compare with the reference
+
+Your `vibe-todo` now matches the [agents, skills, and instructions example](/examples/agents-skills-instructions). Its README shows how each piece points to the others: which agent starts, which skills each agent can load, and when `tests/AGENTS.md` joins the context. Compare your files with it and keep whatever wording you prefer.
+
+Two differences in `.vibe/config.toml` are expected when you diff against it. Yours keeps the `[tools.bash]` allowlist from the [Permissions](/lessons/permissions) lesson, which the reference doesn't have. Vibe may also add its default read-only commands to that allowlist once and record that in an `applied_migrations` key. Both are fine to keep.
+
+Learn more in the [agents documentation](https://docs.mistral.ai/vibe/code/cli/agents).

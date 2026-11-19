@@ -1,0 +1,108 @@
+---
+title: "Research a topic"
+slug: research-a-topic
+description: "Research a topic in Vibe Work with think mode and web search, then save the brief to a Project and export it."
+order: 8
+surfaces: [work]
+agentInstructions: |
+  Guide the student through a real research task in Vibe Work. You are
+  the tutor running locally; the work happens in their browser at
+  chat.mistral.ai (or Work in Vibe Desktop). Explain each step, then ask
+  them to confirm or paste what they see. Adapt depth to their profile.
+
+  Steps:
+
+  1. Pick a topic the student genuinely needs: a tool or vendor
+     comparison, a regulation they must follow, a technology to evaluate,
+     a market or competitor scan. Help them narrow it (region, time
+     frame, audience, output length). Vague topics give vague briefs.
+
+  2. Open Work at chat.mistral.ai/work and select Work in the sidebar
+     mode selector. Switch to think, so Work reasons through the
+     task in steps: a fast/think toggle, or a reasoning level in the
+     model menu, depending on the account.
+
+  3. Web search: it's built in and runs when the task needs current
+     information (the live + menu has no Tools entry, so don't send the
+     student looking for one). Explain the knowledge cutoff: web search lets Work answer
+     past it, with sources.
+
+  4. Write the prompt together. Include the result (a one-page brief),
+     the sources to favor (official docs, news, specific URLs they paste,
+     which Work opens with Open URL), the audience, and constraints
+     (length, format, "cite every claim"). For a deeper, multi-source
+     report, they can invoke the built-in skill with `/deep-research`
+     followed by the question.
+
+  5. Follow the work: the todos panel on the right shows progress; Work
+     may ask follow-up questions. Answer them. Use the stop button (black
+     square) and redirect if it goes off track.
+
+  6. Review before trusting it. Check the globe icon, the inline links,
+     and the Sources panel. Have the student open at least two sources
+     and confirm the claims match. Ask Work to fix anything wrong.
+
+  7. Put the brief in Canvas (ask "open this in Canvas", or type
+     /canvas). Edit a section by
+     hand or with an inline prompt (select text, Ask Work).
+
+  8. Save it so it's findable later: create a Project (New Project next
+     to the Projects header, name, icon, Create) and move the chat into
+     it with the folder icon in the chat header. Optionally add project
+     instructions for future research on the same topic.
+
+  9. Export it: use the Canvas export button to save the brief as a
+     file. Optionally upload that file to a Library (Libraries > New
+     library > Upload) so future chats can search it.
+
+  The exercise is complete when the student has a reviewed, sourced
+  brief that lives in a Project (or a Library) and an exported file.
+  Ask them to confirm the Project name, paste the brief's first lines
+  and two source URLs, and, if the export landed on this machine, check
+  that the file exists (for example in ~/Downloads). Then mark the
+  exercise complete with exerciseSlug "research-a-topic".
+---
+
+
+Research is where Vibe Work earns its keep: it plans the search, reads the sources, and hands you a draft with citations. In this exercise, you'll research something you actually need to know, check the sources, and keep the result where you'll find it again.
+
+## Set up the chat
+
+1. Open [Work](https://chat.mistral.ai/work) and select **Work** in the sidebar's mode selector.
+2. Switch to **think** for multi-step reasoning: the **fast/think toggle**, or a reasoning level in the model menu, depending on your account.
+3. Ask for current information: Work searches the web on its own and shows **Ran a web search** steps you can expand.
+
+## Write a good research prompt
+
+Name the result, the sources, the audience, and the limits:
+
+```text
+Research the main open-source options for self-hosting a vector database in 2026.
+Compare licensing, scaling limits, and managed offerings.
+Write a one-page brief for an engineering manager. Cite a source for every claim.
+```
+
+Paste URLs into the message when you want Work to read specific pages. For a longer, multi-source report, use the built-in skill: type `/deep-research` followed by your question.
+
+## Check the sources
+
+When Work uses the web, you'll see a **globe icon** next to the response, **inline links** to each source, and a `Sources` button that lists them all. Open a couple and check that the claims match. Treat the brief as a draft until you have.
+
+<div class="callout">
+Web search can return outdated or incomplete content, and it can't read pages behind a login or paywall. For those, download the page and upload it as a file.
+</div>
+
+## Save and export
+
+- **Polish it in Canvas.** Ask Work to "open this in Canvas", then edit directly or select a passage and use `Ask Work` for targeted changes.
+- **Keep it in a Project.** Click `New Project` next to the `Projects` header, then move the chat into it with the **folder icon** in the chat header. Project instructions and files then apply to every future chat on this topic.
+- **Export it.** Use the export button in Canvas to save the brief as a file.
+- **Optional: add it to a Library.** Upload the exported file to a [Library](https://docs.mistral.ai/vibe/work/web/libraries) so later chats can search it.
+
+## Tips
+
+- **Narrow first.** "Solar energy" gets you a textbook. "Residential solar incentives in Germany since 2024" gets you an answer.
+- **Ask for disagreement.** "Where do sources disagree?" surfaces what a summary hides.
+- **Turn it into a habit.** If you'll ask the same question every week, the [Schedule a digest](/exercises/schedule-a-digest) exercise runs it for you.
+
+More in the [Work](/lessons/work) and [Projects](/lessons/projects) lessons, and the [web search docs](https://docs.mistral.ai/vibe/work/web/web-search-open-url).

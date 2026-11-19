@@ -1,0 +1,100 @@
+---
+title: "Build a website"
+slug: build-a-website
+description: "Build a small website with Vibe, preview it locally, and refine it from screenshots."
+order: 1
+surfaces: [cli, vscode, desktop]
+agentInstructions: |
+  Guide the student through building a small website with Vibe and
+  iterating on it visually. Adapt depth and pace to their profile
+  (codingExperience, terminalComfort, preferred surface).
+
+  Steps:
+
+  1. Ask what they want to build: a personal homepage, a landing page for
+     a side project, an event page, a recipe card. Keep the first version
+     to a single page.
+
+  2. Pick a stack. Default to plain HTML, CSS, and JavaScript in a new
+     folder (for example ~/vibe-site) with index.html, styles.css, and
+     script.js: no build step, nothing to install. If the student already
+     knows Node.js and wants components, offer Astro instead
+     (`npm create astro@latest`), and use its dev server for the preview.
+     Run `git init` in the folder so every change is easy to review and
+     undo.
+
+  3. Write the first version together. Ask for their content (name,
+     headline, sections, links, colors) and build the page with them.
+     Keep it accessible: semantic HTML, alt text, readable contrast.
+
+  4. Preview it locally. For plain HTML, start
+     `python3 -m http.server 8000` in the project folder as a background
+     process, and have the student open http://localhost:8000. If python3
+     is missing, help them install it or use any other static server they
+     have. In Vibe Desktop they can use the integrated browser (globe
+     icon) or their usual browser.
+
+  5. Iterate from screenshots. Have the student take a screenshot of the
+     page and save it in the project folder (for example
+     screenshot.png). In the CLI they can attach it with an @ mention
+     (`@screenshot.png what should we fix on mobile?`), or paste it with
+     Ctrl+V or /paste-image on macOS. In VS Code or Desktop, ask Vibe to
+     open the screenshot file. Images only reach the model when the active
+     model supports images or a vision_model is configured; if Vibe
+     reports `[Image]` instead of describing the screenshot, explain that
+     and switch to describing the problem in words. Do at least two
+     rounds of "look, critique, fix".
+
+  6. Commit the result with a clear message.
+
+  Suggest optional next steps without doing them: a second page, a dark
+  mode toggle, a contact form, or deploying to a static host of their
+  choice.
+
+  The exercise is complete when the site is served locally, the student
+  confirms they can see it in a browser, and at least one change was
+  made from a screenshot or a visual critique. Check that index.html (or
+  the Astro project) exists in the folder and that `git log` shows at
+  least one commit. Then mark the exercise complete with exerciseSlug
+  "build-a-website".
+---
+
+
+Time to build something you can see. In this exercise, you'll build a small website with Vibe, run it on your machine, and improve it by showing Vibe screenshots of what it made.
+
+## What you'll build
+
+A single page that's yours: a personal homepage, a landing page for a side project, or a page for an event. You'll start with plain HTML, CSS, and JavaScript, so there is nothing to install and no build step. If you already know Node.js, you can use [Astro](https://astro.build) instead.
+
+## Preview it locally
+
+Your browser can open `index.html` directly, but a local server behaves more like the real web. Python ships with a simple one:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then open http://localhost:8000. Vibe can start this server for you in the background while you keep chatting.
+
+## Iterate with screenshots
+
+Describing a layout problem in words is slow. A screenshot is faster. Save one into your project folder and show it to Vibe:
+
+```text
+@screenshot.png The header looks cramped on a phone. Fix the spacing and make the menu wrap.
+```
+
+In the CLI, `@` attaches the image to your prompt. On macOS you can also paste an image straight from the clipboard with `Ctrl+V` or `/paste-image`. In VS Code or Desktop, ask Vibe to open the screenshot file. See the [Context](/lessons/context) lesson for more on `@` mentions.
+
+<div class="callout">
+Images only reach the model when the active model supports them or a <code>vision_model</code> is configured. Otherwise Vibe sends <code>[Image]</code> and a link to the file. The <a href="/lessons/models">Models</a> lesson covers how to switch models.
+</div>
+
+## Tips
+
+- **Commit early.** Run `git init` before the first change. If an iteration goes wrong, `git diff` shows what changed and you can ask Vibe to restore the last commit.
+- **Be specific.** "Make it look better" gets you a guess. "Use a serif font for headings and add more space between sections" gets you what you want.
+- **Keep the server running.** Reload the browser after each change instead of restarting the server.
+- **Try the Desktop browser.** In [Vibe Desktop](/lessons/desktop), the globe icon opens an integrated browser beside the conversation.
+
+Learn more in the [CLI docs](https://docs.mistral.ai/vibe/code/cli/work-with-cli#reference-files).

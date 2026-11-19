@@ -1,0 +1,149 @@
+---
+title: "Sessions"
+slug: sessions
+description: "Resume past conversations, name them, rewind or branch them, and start fresh when you need to."
+order: 13
+track: code
+surfaces: [cli, vscode, desktop]
+quiz: true
+goals:
+  - "Find where sessions are stored"
+  - "Resume past conversations"
+  - "Name sessions so you can find them"
+  - "Rewind, branch, and retry a session"
+minutes: 10
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. What a session is and where it lives: every conversation is saved
+     as a session under ~/.vibe/logs/session/ (one folder per session,
+     with messages.jsonl and meta.json). Sessions are scoped to the folder
+     they ran in: /resume, vibe -c and vibe --resume without an ID only
+     list sessions started in the current directory. The CLI and the VS
+     Code extension share sessions, so you can start in one and resume in
+     the other. Desktop local sessions share the CLI's core engine and
+     session logs.
+
+  2. Getting back to a session: vibe -c (--continue) resumes this
+     terminal's last session in the current folder, else the folder's
+     most recent one. vibe --resume opens a picker; vibe --resume
+     SESSION_ID resumes a specific session from anywhere (full or
+     8-character short ID). /resume (or /continue) opens the picker inside
+     a session; press d twice to delete one. A resumed session keeps the
+     agent and model it last ran on.
+
+  3. Naming: Vibe titles interactive CLI sessions automatically in the
+     background. /rename <title> sets a manual title that automatic titles
+     never overwrite.
+
+  4. Changing history: /rewind (or Escape twice on an empty input) goes
+     back to an earlier message so you can edit it and continue. /branch
+     (alias /fork) copies the conversation into a new resumable session
+     and leaves the current one unchanged. /retry reruns a failed or
+     interrupted response, with optional extra instructions. /clear (or
+     /new) starts a new conversation; the old one stays saved.
+
+  Then have the student try it in their vibe-todo folder (if it's
+  missing, fetch the starter as in the Configuration lesson). Nothing is
+  written to the project. Sessions are scoped to the folder, so this
+  also shows that vibe-todo has its own history. CLI: run /rename with a
+  title starting with "vibe-todo:", for example "vibe-todo: learning
+  sessions", run /branch and note the vibe --resume command it shows,
+  then exit and run `vibe -c` from the vibe-todo folder to come back.
+  Optionally run `vibe --resume` from another folder to see that the
+  picker only lists that folder's sessions. In VS Code, have them rename
+  the session from the panel UI with the same kind of title and reopen
+  it from the panel's session list. In Vibe Desktop, have them find the
+  session in the Code tab's sidebar, pin it (hover, left button), and
+  reopen it; local sessions share the CLI's session logs, so a CLI or VS
+  Code session they renamed also shows up there.
+
+  Verify completion by listing ~/.vibe/logs/session (or the save_dir
+  set under [session_logging]) and confirming it contains session
+  folders. Then find the session whose meta.json has the title the
+  student chose (search for it with grep, or Select-String on Windows),
+  check its working directory is the vibe-todo folder, and confirm with
+  the student that the rename showed up. No artifacts to report for this
+  lesson.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Every conversation you have with Vibe Code is saved as a [session](/glossary#session). You can close the terminal, come back tomorrow, and pick up exactly where you left off. You can also rewind a session to fix a bad turn, or branch it to try a different approach without losing the original.
+
+## In your project
+
+No new files this time. You'll name your `vibe-todo` session (for example `vibe-todo: learning sessions`), branch it, and come back to it with `vibe -c` from the project folder.
+
+
+## Where sessions live
+
+Vibe saves each session as a folder under `~/.vibe/logs/session/`, with the messages and a `meta.json` that holds its title and working directory. Run `/log` to see the current session's log path.
+
+Sessions are **scoped to the folder** you started them in. The picker and `vibe -c` only show sessions from the current directory, so each project has its own history. Switch folders to see a different set.
+
+<div class="callout">
+The CLI and the VS Code extension <strong>share sessions</strong>. Start a task in the terminal and resume it in the editor, or the other way around. Desktop local sessions share the CLI's core engine and session logs too. Try it end to end in the <a href="/exercises/work-across-surfaces">Work across surfaces</a> exercise.
+</div>
+
+## Pick up where you left off
+
+| Command | What it does |
+|---|---|
+| `vibe -c` (`--continue`) | Resume this terminal's last session in the current folder, or the folder's most recent one |
+| `vibe --resume` | Open a picker of the folder's past sessions |
+| `vibe --resume SESSION_ID` | Resume a specific session, from any folder. The 8-character short ID works too |
+| `/resume` (`/continue`) | Open the same picker inside a session. Press `d` twice to delete a session |
+
+A resumed session keeps the agent and [model](/lessons/models) it last ran on, even if your defaults changed since.
+
+## Name your sessions
+
+Vibe gives interactive CLI sessions a title automatically, generated in the background from the conversation. Until then, the picker shows a preview of your first message.
+
+To choose your own, run `/rename`:
+
+```text
+/rename vibe-todo: learning sessions
+```
+
+A manual title is never overwritten by automatic titles. The title also shows in your terminal tab.
+
+## Rewind, branch, retry
+
+| Command | What it does |
+|---|---|
+| `/rewind` or `Escape` twice | Go back to an earlier message, edit it, and continue from there |
+| `/branch` (`/fork`) | Copy the conversation into a new session you can resume later. The current session stays unchanged |
+| `/retry` | Run again a response that failed or that you interrupted. Add instructions to steer it: `/retry use the existing helper` |
+| `/clear` (`/new`) | Start a new conversation. The old one stays saved |
+
+`/branch` shows the `vibe --resume <id>` command that opens the copy. Use it before an experiment: if the experiment goes badly, resume the branch and carry on from before it.
+
+<div class="callout">
+<code>Escape</code> twice only opens rewind on an <strong>empty</strong> input. With text in the input, it clears the text first.
+</div>
+
+## On each surface
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+Everything above works in the CLI. Run `vibe -c` from your project folder to continue your last session there.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The extension has no `/resume` or `/rename` commands. Load previous sessions and rename the current one from the panel UI instead. `/retry` works in the panel, and `Mod+N` starts a new conversation. Instead of `/rewind`, use the **Rewind conversation to this message** and **Fork conversation from this message** buttons on each assistant message.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Desktop lists sessions in the sidebar. Hover over a session to **pin** it or **archive** it, and group related work in projects. You saw this in the [Desktop](/lessons/desktop) lesson, and the docs explain how to [organize your conversations](https://docs.mistral.ai/vibe/code/desktop/organize-conversations).
+
+</SurfaceTab>
+</SurfaceTabs>
+
+Learn more in [Continue or resume sessions](https://docs.mistral.ai/vibe/code/cli/work-with-cli#resume).

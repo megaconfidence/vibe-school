@@ -1,0 +1,224 @@
+---
+title: "Skills"
+slug: skills
+description: "Write a reusable skill that Vibe loads on demand, and run it as your own slash command."
+order: 14
+track: code
+surfaces: [cli, vscode, desktop]
+quiz: true
+goals:
+  - "Write a SKILL.md with a clear description"
+  - "Know where user and project skills live"
+  - "Run a skill as your own slash command"
+  - "List and manage the skills Vibe has loaded"
+minutes: 20
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. What a skill is: a folder containing a SKILL.md file, with YAML
+     frontmatter and Markdown instructions. Vibe follows the Agent Skills
+     specification (agentskills.io), so skills are portable to other
+     agents. Unlike AGENTS.md, which loads in every session, the model only
+     sees a skill's name and description up front and loads the full
+     instructions when it needs them, or when the user runs /skill-name.
+     Custom Python tools are no longer supported: skills are the way to
+     add your own workflows and slash commands.
+
+  2. The frontmatter: name (lowercase letters, digits and hyphens, and it
+     should match the folder name) and description (what it does and when
+     to use it, up to 1,024 characters) are the core fields.
+     user-invocable (default true) exposes it as /skill-name;
+     disable-model-invocation: true stops the agent loading it on its own.
+     allowed-tools lists the tools it expects, but Vibe does not enforce
+     it: restrict tools through the agent instead.
+
+  3. Where skills live, in search order: skill_paths in config.toml, then
+     .vibe/skills/ and .agents/skills/ in a trusted project, then
+     ~/.vibe/skills/ and ~/.agents/skills/ for the user. Project skills
+     can be committed so the team shares them. Plugin skills are prefixed
+     with the plugin name, like /vibe:skill-creator.
+
+  4. Using and managing skills: type /skill-name followed by a request.
+     In the / menu each skill shows its scope (project, user, or vibe).
+     /skills lists installed skills; Space turns the highlighted one on or
+     off (Vibe updates disabled_skills). enabled_skills and
+     disabled_skills in config.toml filter by exact name, glob, or re:
+     regex. Running sessions pick up new skills on their own; /reload
+     forces it.
+
+  Then the hands-on part, in vibe-todo (if the folder is missing, fetch
+  the starter as in the Configuration lesson; if AGENTS.md or
+  tests/AGENTS.md are missing, write short versions first, as in the
+  Instructions lesson). Create two project skills, modelled on the
+  reference at {origin}/examples/agents-skills-instructions. Don't
+  overwrite existing files.
+
+  1. vibe-todo/.vibe/skills/new-command/SKILL.md. Frontmatter: name:
+     new-command; description: "Add a new subcommand to the todo CLI,
+     with its test. Use when the user asks for a new todo command such as
+     remove, clear, edit or stats."; user-invocable: true. Body, as
+     numbered steps: read todo/cli.py and tests/test_cli.py to see the
+     pattern; add a cmd_<name>(args: argparse.Namespace) -> int function
+     that loads with store.load() and saves with store.save(); register
+     it in build_parser() with sub.add_parser("<name>", help=...),
+     arguments, and set_defaults(func=cmd_<name>); add a success test
+     with the run_cli helper, plus an unknown-id test if it takes a task
+     id (reading the test file also loads tests/AGENTS.md); run
+     `python3 -m unittest` and fix failures; show an example call such
+     as `python3 -m todo <name> ...`.
+
+  2. Use it. Have the student run /reload (CLI, VS Code) or start a new
+     session (Desktop), then type `/new-command add a remove command
+     that deletes a task by id` (in Desktop, ask for the new-command
+     skill by name if / doesn't list it). Review the diff together
+     (`git diff`), check `python3 -m unittest` passes, then try
+     `python3 -m todo add "Test"` and `python3 -m todo remove 1` (on
+     Windows, use `python` wherever these steps say `python3`, including
+     inside the skill if that's the command that works there).
+
+  3. vibe-todo/.vibe/skills/code-review/SKILL.md. Frontmatter: name:
+     code-review; description: "Review the todo CLI code against this
+     project's rules and return a short list of findings. Use when asked
+     to review, check or audit code in this repo."; user-invocable:
+     true. Body: read the changed files (or all of todo/ and tests/ if
+     none are named), then check: only the standard library is
+     imported; each command is a cmd_<name> function registered in
+     build_parser(); only todo/store.py reads or writes files; commands
+     return 0 on success and 1 for an unknown task id; every command has
+     a success test, and commands taking a task id have an unknown-id
+     test; functions have type hints and stay short. Output: one line
+     per finding, `[PASS|FAIL] <check #> <file>:<line> <one sentence>`,
+     then a verdict line APPROVE or CHANGES NEEDED. Never edit files.
+     Have the student run `/code-review todo/cli.py` once.
+
+  4. Commit: `git add -A && git commit -m "Add new-command and code-review skills, remove command"`.
+
+  Verify completion by reading both SKILL.md files under
+  vibe-todo/.vibe/skills/ and checking that each frontmatter is valid
+  YAML between --- lines, has a name equal to its folder name and a
+  non-empty description, and that the body has real steps; and by
+  checking that todo/cli.py now has a cmd_remove function (or the
+  command the student chose) with a test in tests/test_cli.py, and that
+  `python3 -m unittest` passes. Then ask the student to confirm both
+  skills show up in /skills (CLI) or the / menu (CLI and VS Code) with
+  the project scope. Report artifacts: skill new-command, skill
+  code-review.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+A [skill](/glossary#skill) is a set of instructions for one job, like writing a commit message or reviewing a pull request, saved in a `SKILL.md` file. The model sees each skill's name and description, and loads the full instructions only when it needs them. Skills also become your own slash commands: write it once, then type `/new-command` whenever you want it.
+
+Vibe follows the [Agent Skills specification](https://agentskills.io/specification), so a skill you write here also works in other agents that use the same format.
+
+## In your project
+
+This lesson adds two project skills to `vibe-todo`, then uses the first one to add a `remove` command:
+
+```text
+vibe-todo/
+├── .vibe/
+│   └── skills/
+│       ├── new-command/SKILL.md   # new: how to add a subcommand and its test
+│       └── code-review/SKILL.md   # new: review checklist and output format
+├── todo/cli.py                    # gains cmd_remove
+└── tests/test_cli.py              # gains test_remove and test_remove_unknown_id
+```
+
+
+## The SKILL.md format
+
+A skill is a folder with a `SKILL.md` file inside. The file starts with YAML frontmatter, then the instructions in Markdown:
+
+```markdown
+---
+name: new-command
+description: Add a new subcommand to the todo CLI, with its test. Use when the user asks for a new todo command such as remove, clear, edit or stats.
+user-invocable: true
+---
+
+# Add a new todo subcommand
+
+1. Read `todo/cli.py` and `tests/test_cli.py` to see the existing pattern.
+2. Add a `cmd_<name>(args: argparse.Namespace) -> int` function. Load tasks with `store.load()`, save them with `store.save()`.
+3. Register it in `build_parser()` with `sub.add_parser("<name>", help="...")` and `set_defaults(func=cmd_<name>)`.
+4. Add a success test with the `run_cli` helper, plus an unknown-id test if the command takes a task id.
+5. Run `python3 -m unittest`. Fix anything that fails.
+```
+
+On Windows, write `python -m unittest` in the skill if `python3` isn't on your path.
+
+| Field | What it does |
+|---|---|
+| `name` | Lowercase letters, digits, and hyphens. Match the folder name |
+| `description` | What the skill does and when to use it, up to 1,024 characters. The model reads this to decide when to load it |
+| `user-invocable` | Defaults to `true`, which makes it a `/skill-name` command. `false` hides it from the `/` menu; the agent can still load it |
+| `disable-model-invocation` | `true` stops the agent loading it on its own. You can still run it with `/skill-name` |
+| `allowed-tools` | Lists the tools the skill expects. Vibe reads it but **doesn't enforce it** |
+
+<div class="callout">
+<code>allowed-tools</code> doesn't restrict anything. To limit what a skill can do, restrict the tools and permissions of the agent that runs it (see <a href="/lessons/permissions">Permissions</a> and <a href="/lessons/agents">Agents</a>).
+</div>
+
+## Where skills live
+
+Vibe searches these locations, in order:
+
+1. Paths in `skill_paths` in `config.toml`
+2. `.vibe/skills/` and `.agents/skills/` in your project, when the folder is [trusted](/glossary#trusted-folder)
+3. `~/.vibe/skills/` and `~/.agents/skills/`, for every project
+
+Put personal skills in `~/.vibe/skills/`. Put project skills in `.vibe/skills/` and commit them, so your team reviews and shares them. Both `vibe-todo` skills are project skills: they only make sense in that repository.
+
+[Plugins](/lessons/plugins) can ship skills too. Their names get the plugin's prefix, like `/vibe:skill-creator`.
+
+## Use a skill
+
+Type `/` and pick the skill, then add your request:
+
+```text
+/new-command add a remove command that deletes a task by id
+```
+
+In the `/` menu, each skill's description starts with its scope: `project`, `user`, or `vibe`. A skill named like a built-in command isn't listed.
+
+You don't always have to call it: if your request matches a skill's description, the agent can load it on its own.
+
+## Manage skills
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+Run `/skills` to list your installed skills with their scope and source, and to read the highlighted one. Press `/` to search and `Space` to turn a skill on or off. Vibe updates `disabled_skills` for you.
+
+A running session picks up new or edited skills on its own. If a change doesn't show up, run `/reload`.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The extension reads the same skill folders as the CLI. Skills that are `user-invocable` appear in the extension's `/` picker. Type `/reload` in the Vibe panel after adding one.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Local sessions in Vibe Desktop share the CLI's core engine, but tools and prompts can differ. After you add or edit a skill, start a **New Session** in the **Code** tab, then ask for the skill by name (or type `/` if your version lists skills there). To manage skills, edit the folders above or run `/skills` from the CLI.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+To filter skills in `config.toml`, use patterns (exact names, globs, or `re:` regex):
+
+```toml
+enabled_skills = ["new-command", "code-review"]
+disabled_skills = ["experimental-*"]
+```
+
+If `enabled_skills` isn't empty, only matching skills load. Otherwise every skill loads except those matching `disabled_skills`.
+
+<div class="callout">
+Vibe no longer loads custom Python tools. To teach Vibe a new workflow, write a skill. To connect it to an outside service, add an <a href="/lessons/mcp">MCP server</a>.
+</div>
+
+Learn more in the [skills documentation](https://docs.mistral.ai/vibe/code/cli/skills).

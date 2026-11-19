@@ -1,0 +1,145 @@
+---
+title: "Run parallel agents"
+slug: run-parallel-agents
+description: "Run two Vibe agents on the same repository at once, each in its own git worktree, then merge the results."
+order: 4
+surfaces: [desktop, cli]
+agentInstructions: |
+  Guide the student through running two independent tasks in parallel
+  on the same repository, each in its own git worktree, then bringing
+  the results together. Adapt depth to their profile and surface
+  (Vibe Desktop or CLI).
+
+  Steps:
+
+  1. Pick a repository and two independent tasks that touch different
+     files, for example "add a --verbose flag" and "write tests for the
+     parser", or "update the README" and "fix a lint warning". The repo
+     must be a git repository with a clean working tree (`git status`).
+     The Parallel work lesson already did this on the course project,
+     vibe-todo, so prefer one of the student's own repositories here. If
+     they have none, reuse vibe-todo with two new, independent tasks
+     (for example "add a --done flag to list" and "write a CONTRIBUTING.md"),
+     or the student's site from "Build a website".
+
+  2. Explain the key idea: two conversations in the same checkout still
+     share files. A git worktree is a separate checkout on its own
+     branch, sharing the same history, so parallel edits don't collide.
+     Worktrees isolate files, not everything: dependencies, env vars,
+     and server ports still need separate setup (two dev servers can't
+     share a port).
+
+  3a. CLI path: open two terminals in the repository. In the first run
+      `vibe --worktree task-a`, in the second `vibe --worktree task-b`.
+      Vibe creates each worktree under ~/.vibe/worktrees/ (or
+      $VIBE_HOME/worktrees/) on a branch with that name, or reuses it if
+      it exists, and trusts it for that run. To let Vibe name it from
+      the prompt, put the prompt first: `vibe "Fix the login bug"
+      --worktree`. Give each session its task and let both run.
+
+  3b. Desktop path: in the Code tab, start two New Sessions on the
+      repository and pick Worktree in the Local, Worktree, Cloud
+      selector under the input for each, one task per session. (Asking
+      Vibe in a Local session to use a new git worktree also works.)
+      Optionally ask the
+      main session to create sub-sessions: "Create a sub-session for
+      task A and another for task B. Use separate worktrees for each.
+      Keep coordinating here." Sub-sessions appear nested under the main
+      session in the left sidebar, and send updates back as "Received a
+      message from ..." entries. Select each conversation to inspect its
+      own files, terminal, and Git Changes (+ → Git Changes).
+
+  4. Review each task's changes separately: `git -C <worktree path> diff`
+     or Desktop's Git Changes panel. Run the tests in each worktree. Have
+     each session commit its work on its branch.
+
+  5. Merge the results. Back in the main checkout, merge (or open a PR
+     for) both branches, for example `git merge task-a` then
+     `git merge task-b`. If they conflict, ask Vibe to resolve the
+     conflict and explain how, then review it.
+
+  6. Clean up. In the CLI, when an interactive session ends, Vibe removes
+     a worktree it created if it has no changes and asks otherwise.
+     `git worktree list` shows what's left. In Desktop, keep a worktree
+     until its changes are committed and delivered.
+
+  The exercise is complete when two branches produced by parallel
+  sessions are merged (or have open PRs). Verify with
+  `git log --oneline --graph -n 15` showing commits from both branches
+  on the main branch (or `gh pr list` showing both PRs), and
+  `git worktree list` to confirm the worktrees were used. Then mark the
+  exercise complete with exerciseSlug "run-parallel-agents".
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+One agent is useful. Two working at the same time, on different tasks, without stepping on each other, is faster. In this exercise, you'll run two Vibe sessions in parallel on the same repository, each in its own [worktree](/glossary#worktree), then merge their work.
+
+## Why worktrees
+
+Two conversations in the same checkout share the same files. If both edit `README.md`, they overwrite each other. A **git worktree** is a second checkout of the same repository on its own branch. Each agent gets its own folder, and git history stays shared, so merging is ordinary git.
+
+<div class="callout">
+Worktrees isolate files, not everything. Dependencies, environment variables, and server ports may still need separate setup. Two development servers can't both use the same port just because they run in different worktrees.
+</div>
+
+## Start two sessions
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+Open two terminals in your repository and start one session in each:
+
+```bash
+# terminal 1
+vibe --worktree task-a
+
+# terminal 2
+vibe --worktree task-b
+```
+
+Vibe creates each worktree under `~/.vibe/worktrees/` on a branch with that name, or reuses it if it already exists. `--worktree` trusts the worktree for that run. To let Vibe pick the name from your prompt, put the prompt first:
+
+```bash
+vibe "Add tests for the parser" --worktree
+```
+
+When an interactive session ends, Vibe removes a worktree it created if it holds no changes, and asks you otherwise.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+In the **Code** tab, click **New Session**, pick the repository, and select **Worktree** in the selector under the input (next to **Local** and **Cloud**). Give it one task. Then start a second **Worktree** session for the other task.
+
+In a **Local** session, you can also ask for a worktree before any edit:
+
+```text
+Use a new Git worktree for this task. Add tests for the parser,
+leaving my current checkout unchanged.
+```
+
+Or let one main session coordinate the work through **sub-sessions**:
+
+```text
+Create a sub-session to add tests for the parser and another to update
+the README. Use separate worktrees for each. Keep coordinating here and
+tell me when both are ready.
+```
+
+Sub-sessions appear nested under the main session in the sidebar. Each has its own files, terminal, and **+ → Git Changes** panel, so select the right conversation before you inspect anything.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+## Bring it together
+
+Review each branch on its own, run its tests, and commit. Then merge both into your main branch (or open two pull requests). If they conflict, ask Vibe to resolve the conflict, explain what it did, and leave it for you to review.
+
+## Tips
+
+- **Pick independent tasks.** Parallel work pays off when tasks touch different files. Two edits to the same function will conflict.
+- **Name worktrees after the task.** `task-a` is fine for practice; `parser-tests` is better in real life.
+- **Check what's left.** `git worktree list` shows every worktree of the repository.
+
+More in the [Parallel work](/lessons/parallel) and [Desktop](/lessons/desktop) lessons, and the docs on [CLI worktrees](https://docs.mistral.ai/vibe/code/cli/work-with-cli#worktrees) and [Desktop parallel tasks](https://docs.mistral.ai/vibe/code/desktop/parallel-tasks).

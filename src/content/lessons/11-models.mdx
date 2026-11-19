@@ -1,0 +1,202 @@
+---
+title: "Models"
+slug: models
+description: "Pick a model and thinking level, track plan usage, and add other providers."
+order: 11
+track: code
+surfaces: [cli, vscode, desktop]
+quiz: true
+goals:
+  - "See and change the model and thinking level"
+  - "Track your plan usage"
+  - "Add another provider or a local model"
+  - "Restrict which models a project can use"
+minutes: 15
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. Switching models: /model opens the model picker (also opened by
+     clicking the model name on the input box's top border). In the picker,
+     Enter saves the choice to config (active_model), while s uses it for
+     this session only. The top border of the input box shows the active
+     model and its thinking level, for example mistral-medium-3.5[medium].
+     A session pins its model at the first message, so a resumed session
+     keeps the model it last ran on. In the VS Code extension, /model and
+     /thinking are not slash commands: change the model and reasoning level
+     from the extension's interface.
+
+  2. Thinking levels: /thinking picks how much the model reasons before
+     answering (levels such as off, low, medium, high, xhigh, max,
+     depending on the model). Same rule as /model: Enter saves to config,
+     s applies to this session only. More thinking can help hard problems
+     but takes longer and uses more tokens.
+
+  3. Plans and usage: with a Mistral plan and a Mistral model, the footer
+     shows a usage gauge for the organization's monthly Vibe Code usage. It
+     turns yellow, then red, near the limit, or reads PAYG when
+     pay-as-you-go is on. Included monthly usage is shared across Studio,
+     the API and Vibe Code. /status shows the active model, provider and
+     credential source; /whoami shows the account, Workspace and plan.
+
+  4. Other providers and local models: [[providers]] and [[models]] presets
+     in ~/.vibe/config.toml add any OpenAI-compatible endpoint (for example
+     OpenRouter) under an alias that active_model or /model can select.
+     Local models run behind an OpenAI-compatible server such as vLLM or
+     llama.cpp; Vibe has a built-in llamacpp provider preset pointing at
+     http://127.0.0.1:8080/v1. Mention allowed_models briefly: an
+     allow-list, usually set by admins, matched against model names, not
+     aliases.
+
+  Then the hands-on part, in the student's vibe-todo session (if the
+  folder is missing, fetch the starter as in the Configuration lesson).
+  Nothing is written to the project: this is a side-by-side comparison.
+
+  1. Ask the current model a small, read-only question about the
+     project, for example: "Read todo/cli.py and propose, without
+     editing anything, how you would add a `stats` command that prints
+     how many tasks are open and done. Keep it under 10 lines." Note the
+     model shown on the input box's top border (CLI), in the extension's
+     interface (VS Code), or in Select model (Desktop).
+
+  2. Switch model or thinking level for this session only. CLI: /model
+     (or /thinking), pick a different option, and press s. VS Code:
+     change the model or reasoning level from the extension's interface.
+     Desktop: click Select model under the input and pick a different
+     Model or Thinking level. Then send the same question again.
+
+  3. Compare the two answers with the student: length, accuracy against
+     the project's rules (if vibe-todo has an AGENTS.md, did both follow
+     it?), and speed. Ask them to explain in their own words the
+     difference between saving a choice (Enter) and using it for the
+     session only (s). Don't save active_model to the project's
+     .vibe/config.toml: a model choice is usually personal, and a project
+     value would override everyone's user setting.
+
+  Verify completion by asking the student which two models (or thinking
+  levels) they compared, which one is now shown on the input box's top
+  border, in the extension's interface, or in Desktop's Select model
+  control, and which answer they preferred and why. If they chose to
+  save the model instead, read ~/.vibe/config.toml (or
+  $VIBE_HOME/config.toml) and confirm active_model is set to the alias
+  they picked. Never read ~/.vibe/.env. Report artifacts: model <the
+  alias they switched to, exactly as /model shows it>. Artifact names
+  allow only letters, digits and . _ - / : so a name such as
+  devstral:24b is fine, but never include spaces; if the label has
+  spaces, report the alias instead.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+The [model](/glossary#model) is the brain behind Vibe: it reads your prompt, decides which tools to call, and writes the answer. Vibe ships with Mistral models ready to go, and you can switch between them at any time, change how hard the model thinks, or point Vibe at another provider or a model running on your own machine.
+
+## In your project
+
+No new files this time. You'll ask two models (or two thinking levels) the same small question about `vibe-todo`, such as how they would add a `stats` command, and compare the answers. Keep the model out of the project's `.vibe/config.toml`: it's a personal choice, and a project value would override everyone's own setting.
+
+
+## See which model you're using
+
+In the CLI, the top border of the input box shows the active model and its [thinking level](/glossary#thinking-level), for example `mistral-medium-3.5[medium]`. Click the model name to open the picker.
+
+For more detail, run `/status`: it shows the model, the provider, and which credential source is in use.
+
+## Change the model and thinking level
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+- `/model` opens the model picker. Press `/` to search the list.
+- `/thinking` picks the thinking level for the current model.
+
+Both pickers give you two ways to confirm:
+
+| Key | Effect |
+|---|---|
+| `Enter` | Saves the choice to your config. New sessions use it too. |
+| `s` | Uses it for this session only. |
+
+`/model` saves to `active_model` in `~/.vibe/config.toml`. A session pins its model when you send the first message, so a resumed session keeps the model it last ran on.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+`/model` and `/thinking` aren't slash commands in the extension. Change the active model or reasoning level from the extension's interface instead. The extension shares the CLI's configuration, so `active_model` and your `[[models]]` presets apply here too.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+In a Code session, click **Select model** under the input to pick the **Model** and its **Thinking** level. Local sessions share the CLI's core engine, but their tools and prompts can differ. The provider and model settings below are CLI configuration.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+Thinking levels include `off`, `low`, `medium`, `high`, `xhigh`, and `max`, depending on what the model supports. More thinking can help with tricky bugs or design questions, but it's slower and uses more tokens. For quick edits, a lower level is usually enough.
+
+## Plans and usage
+
+Vibe Code uses the monthly usage included in your Mistral plan, shared across Studio, the API, and Vibe Code. With a Mistral plan and a Mistral model, the CLI footer shows a **usage gauge** for your organization's monthly Vibe Code usage, if you're allowed to see it:
+
+- Without pay-as-you-go, the gauge turns yellow, then red, as usage nears the limit. Vibe Code can stop until the next billing period.
+- With pay-as-you-go on, it reads `PAYG`, and extra usage draws from your prepaid credits.
+
+Pay-as-you-go is off by default. Some Pro plans bought through partners (Google, Apple, Free Mobile, Orange) can't enable it. Run `/whoami` to see your signed-in account, Workspace, plan, and credential source.
+
+<div class="callout">
+Browser sign-in is the default for Mistral models, so you usually don't need an API key. If you do want one, create it from <strong>Code › Vibe CLI</strong> at <a href="https://chat.mistral.ai/code/extensions">chat.mistral.ai</a>. See <a href="https://docs.mistral.ai/vibe/code/cli/api-keys-profiles">API keys and profiles</a>.
+</div>
+
+## Add another provider
+
+Any model behind an OpenAI-compatible API works. Define a provider and a model preset in `~/.vibe/config.toml`, then select the model by its alias:
+
+```toml
+active_model = "devstral-openrouter"
+
+[[providers]]
+name = "openrouter"
+api_base = "https://openrouter.ai/api/v1"
+api_key_env_var = "OPENROUTER_API_KEY"
+api_style = "openai"
+backend = "generic"
+
+[[models]]
+name = "mistralai/devstral-2512:free"
+provider = "openrouter"
+alias = "devstral-openrouter"
+```
+
+Then export the key in your shell (`export OPENROUTER_API_KEY=...`, or `$env:OPENROUTER_API_KEY = "..."` in Windows PowerShell). Keep `active_model` above the first `[[...]]` table, otherwise TOML attaches it to that table. For a model Vibe doesn't know, set `max_context_length` in its preset.
+
+## Run a model locally
+
+For privacy or restricted networks, serve an open model such as [Devstral Small 2](https://huggingface.co/mistralai/Devstral-Small-2-24B-Instruct-2512) yourself. The docs recommend [vLLM](https://github.com/vllm-project/vllm):
+
+```bash
+vllm serve mistralai/Devstral-Small-2-24B-Instruct-2512 \
+  --tool-call-parser mistral \
+  --enable-auto-tool-choice \
+  --port 8080
+```
+
+[llama.cpp](https://github.com/ggml-org/llama.cpp), LM Studio, and Ollama also work. Vibe has a built-in provider preset named `llamacpp` that points at `http://127.0.0.1:8080/v1` with no API key, so a model preset is all you need:
+
+```toml
+active_model = "devstral-local"
+
+[[models]]
+name = "mistralai/Devstral-Small-2-24B-Instruct-2512"
+provider = "llamacpp"
+alias = "devstral-local"
+```
+
+Your server must report token usage in streamed replies (`stream_options.include_usage`). To stay fully offline, also set `enable_telemetry = false` and `enable_update_checks = false`. Hardware sizing is in [Using offline models](https://docs.mistral.ai/vibe/code/cli/offline-models).
+
+## Restrict models
+
+`allowed_models` is an allow-list of model name patterns (exact, glob, or `re:` regex). When it's set, only matching models are selectable. It matches the model's `name`, not its alias. Admins usually set it for a whole team: see [Admin config](https://docs.mistral.ai/vibe/code/cli/admin-config).
+
+Every model also has a [context window](/glossary#context-window), a limit on how much it can hold at once. The [Context](/lessons/context) lesson covers how Vibe manages it.
+
+Learn more in the [configuration docs](https://docs.mistral.ai/vibe/code/cli/configuration#providers-models).

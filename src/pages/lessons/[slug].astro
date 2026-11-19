@@ -1,0 +1,302 @@
+---
+// Copyright (c) 2026 Zeke Sikelianos
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+// Modified for Vibe School.
+//
+// Lesson page. Above the fold: where you are, what you'll learn, and one way
+// to start. The full notes are folded away. Navigation ("Next") never marks
+// a lesson complete; completion is its own, explicit action.
+
+import { getCollection, render } from "astro:content";
+import AgentPrompt from "../../components/AgentPrompt.astro";
+import Base from "../../layouts/Base.astro";
+import { SURFACE_ICONS, SURFACE_LABELS, TRACK_LABELS } from "../../lib/tracks";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+	const lessons = await getCollection("lessons");
+	return lessons.map((lesson) => ({
+		params: { slug: lesson.data.slug },
+		props: { lesson },
+	}));
+}
+
+const { lesson } = Astro.props;
+const { Content } = await render(lesson);
+const d = lesson.data;
+
+const allLessons = (await getCollection("lessons")).sort((a, b) => a.data.order - b.data.order);
+const i = allLessons.findIndex((l) => l.data.slug === d.slug);
+const courseNext = allLessons[i + 1] ?? null;
+const prev = i > 0 ? allLessons[i - 1] : null;
+
+// Browser lessons (Work, Code Web) have a checklist the learner can follow
+// on the page itself.
+const hasChecklist = d.checklist.length > 0;
+const selfPaced = d.selfPaced;
+---
+
+<Base title={d.title} description={d.description} rail={d.track}>
+  <div data-page-slug={d.slug} data-page-kind="lesson" data-page-surfaces={d.surfaces.join(",")}></div>
+
+  <!-- Where you are: back to the course, and your position on the path -->
+  <div class="mb-8 flex items-center gap-4 rise" style="--d:0">
+    <a href="/" class="label hover:text-[var(--text)] whitespace-nowrap">&larr; Course</a>
+    <div class="progress-track flex-1 hidden" id="lesson-progress" data-enrolled-only><div id="lesson-progress-fill" class="progress-fill"></div></div>
+    <p class="label whitespace-nowrap" id="lesson-pos">{TRACK_LABELS[d.track]}</p>
+  </div>
+
+  <header class="mb-8 rise" style="--d:1">
+    <h1 class="font-display text-4xl sm:text-5xl leading-[1.02] tracking-[-0.02em]">{d.title}</h1>
+    <p class="mt-3 text-lg text-[var(--text-muted)]">{d.description}</p>
+    <p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[var(--text-muted)]">
+      {d.minutes && <span>About {d.minutes} min</span>}
+      {d.minutes && d.surfaces.length > 0 && <span aria-hidden="true" class="hidden sm:inline">·</span>}
+      {d.surfaces.length > 0 && (
+        <span class="inline-flex items-center gap-2">
+          <span>Works in</span>
+          {d.surfaces.map((sf) => (
+            <span class="inline-flex items-center gap-1" title={SURFACE_LABELS[sf]}>
+              <img src={SURFACE_ICONS[sf]} alt="" class="pixel w-4 h-4" width="16" height="16" />
+              <span class="text-[var(--text)]">{SURFACE_LABELS[sf]}</span>
+            </span>
+          ))}
+        </span>
+      )}
+    </p>
+  </header>
+
+  <div id="lesson-completed-banner" class="theme-banner hidden mb-8 px-4 py-3 text-sm font-medium" role="status">
+    <span class="flex items-center gap-3">
+      <img src="/pixel/jumping-orange.svg" alt="" class="pixel w-8 h-8 shrink-0" width="32" height="32" />
+      <span id="lesson-completed-text">You completed this lesson.</span>
+    </span>
+  </div>
+
+  {d.goals.length > 0 && (
+    <section class="mb-8 rise" style="--d:2" aria-labelledby="goals-heading">
+      <h2 id="goals-heading" class="label">What you'll learn</h2>
+      <ul class="mt-3 grid gap-2">
+        {d.goals.map((g) => (
+          <li class="flex gap-3"><span class="mt-[0.55em] w-1.5 h-1.5 shrink-0 bg-[var(--accent)]" aria-hidden="true"></span><span>{g}</span></li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <div id="lesson-enroll-nudge" class="hidden mb-8 panel px-4 py-3 text-sm text-[var(--text-muted)]">
+    <a href="/#start" class="theme-link font-medium">Get a Vibe Pass</a> to get your prompt for Vibe and track your progress. It's free and takes one click.
+  </div>
+
+  <div class="rise" style="--d:3">
+  {hasChecklist ? (
+    <section class="panel overflow-hidden mb-6" aria-labelledby="checklist-heading">
+      <div class="launch-head flex flex-wrap items-center justify-between gap-2 px-4 py-2">
+        <h2 id="checklist-heading" class="font-display text-lg">Do it in your browser</h2>
+        <a href="https://chat.mistral.ai" target="_blank" rel="noopener noreferrer" class="btn btn-ghost px-3 py-1 text-sm">Open chat.mistral.ai &nearr;</a>
+      </div>
+      <ol class="p-2 grid" id="checklist">
+        {d.checklist.map((step, n) => (
+          <li>
+            <label class="check-step flex gap-3 items-start cursor-pointer rounded px-2 py-2">
+              <input type="checkbox" class="mt-1 accent-[var(--accent)]" data-step={n} />
+              <span>{step}</span>
+            </label>
+          </li>
+        ))}
+      </ol>
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t hairline px-4 py-3">
+        <p class="text-sm text-[var(--text-muted)]"><span id="check-count">0</span> of {d.checklist.length} steps</p>
+        <button type="button" id="show-tutor" class="text-sm theme-link">Use Vibe as a tutor instead</button>
+      </div>
+    </section>
+  ) : null}
+
+  {selfPaced && (
+    <p class="mb-6 text-[var(--text-muted)]">
+      Vibe can't teach you until it's installed, so this one is a short read. Follow the steps below, then mark it complete. From the next lesson on, Vibe is your tutor.
+    </p>
+  )}
+
+  <div id="tutor-card" class:list={["mb-6", (hasChecklist || selfPaced) && "hidden"]}>
+    <AgentPrompt title={d.title} slug={d.slug} kind="lesson" order={d.order} surfaces={d.surfaces} />
+  </div>
+  </div>
+
+  <!-- Full notes: available, not in the way -->
+  <details id="notes" class="notes rise" style="--d:4" open={selfPaced}>
+    <summary class="cursor-pointer list-none flex items-center gap-3 py-3 border-t hairline group">
+      <span class="min-w-0 flex-1">
+        <span class="block font-medium group-hover:text-[var(--accent-text)] transition-colors">{selfPaced ? "Steps" : "Lesson notes"}</span>
+        <span class="block text-sm text-[var(--text-muted)]">{selfPaced ? "Install, sign in, and send your first prompt." : "The full reference, if you want to read along or look something up later."}</span>
+      </span>
+      <span class="label notes-toggle"></span>
+    </summary>
+    <article class="prose dark:prose-invert max-w-none pb-6 pt-2">
+      <Content />
+    </article>
+  </details>
+
+  <!-- Bottom: navigation and completion are separate -->
+  <nav class="mt-10 pt-6 border-t hairline" aria-label="Lesson">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      {prev ? (
+        <a href={`/lessons/${prev.data.slug}`} class="text-sm text-[var(--text-muted)] hover:text-[var(--text)]">&larr; {prev.data.title}</a>
+      ) : <span></span>}
+      <div class="flex flex-wrap items-center gap-4 ml-auto">
+        {!d.agentOnly && (
+          <button
+            type="button"
+            id="mark-complete"
+            class:list={[
+              "hidden",
+              hasChecklist || selfPaced ? "btn btn-ghost px-4 py-2.5 text-sm" : "text-sm text-[var(--text-muted)] hover:text-[var(--text)] underline underline-offset-4 decoration-[var(--hair-strong)]",
+            ]}
+            title={hasChecklist || selfPaced ? undefined : "Vibe usually marks lessons done for you."}
+          >Mark complete</button>
+        )}
+        {courseNext && (
+          <a id="next-link" href={`/lessons/${courseNext.data.slug}`} class="btn btn-primary px-5 py-3">
+            <span id="next-label">Next: {courseNext.data.title}</span> <span class="arrow" aria-hidden="true">&rarr;</span>
+          </a>
+        )}
+      </div>
+    </div>
+  </nav>
+
+  <script is:inline define:vars={{ lessonSlug: d.slug, agentOnly: d.agentOnly, hasChecklist }}>
+    (function () {
+      var school = window.school;
+      if (!school) return;
+      var $ = function (id) { return document.getElementById(id); };
+
+      if (!school.getStudentId()) {
+        // Visitors have no tutor prompt, so the notes are the lesson.
+        $("lesson-enroll-nudge").classList.remove("hidden");
+        $("notes").open = true;
+        return;
+      }
+      school.markLessonVisited(lessonSlug);
+
+      // ---- Path-aware navigation and progress ----
+      var nextLink = $("next-link");
+      function renderNav() {
+        var path = school.getPath();
+        var items = school.pathCourse(path);
+        var pos = items.findIndex(function (l) { return l.slug === lessonSlug; });
+        var prog = school.pathProgress(path);
+        $("lesson-progress").classList.remove("hidden");
+        $("lesson-pos").textContent = pos === -1 ? "Extra lesson" : (pos + 1) + " of " + items.length;
+        $("lesson-progress-fill").style.width = prog.pct + "%";
+        var nxt = school.nextOnPath(lessonSlug, path);
+        if (nextLink) {
+          if (nxt) {
+            nextLink.href = "/lessons/" + nxt.slug;
+            $("next-label").textContent = "Next: " + nxt.title;
+            nextLink.hidden = false;
+          } else {
+            nextLink.href = "/";
+            $("next-label").textContent = "Back to your course";
+          }
+        }
+        return nxt;
+      }
+      renderNav();
+
+      // ---- Completion ----
+      var banner = $("lesson-completed-banner");
+      var markBtn = $("mark-complete");
+      function renderComplete() {
+        var c = school.getLessonCompletion(lessonSlug);
+        var done = !!c;
+        var wasHidden = banner.classList.contains("hidden");
+        banner.classList.toggle("hidden", !done);
+        if (done && wasHidden) banner.classList.add("banner-in");
+        if (done) {
+          var p = school.pathProgress();
+          var left = p.total - p.done;
+          var cheer = p.pct >= 100 ? "That's your whole path. You hit 60."
+            : p.pct >= 75 ? "Nearly there."
+            : p.pct >= 50 ? "Past halfway."
+            : p.pct >= 25 ? "Picking up speed."
+            : "Good start.";
+          $("lesson-completed-text").textContent =
+            "Lesson done" + (c.source === "agent" ? " with Vibe" : "") + ". " + cheer + " " +
+            p.done + " of " + p.total + " on your path" + (left > 0 ? ", " + left + " to go." : ".");
+        }
+        if (markBtn) markBtn.classList.toggle("hidden", done);
+      }
+      if (markBtn) {
+        markBtn.addEventListener("click", async function () {
+          markBtn.disabled = true;
+          markBtn.textContent = "Saving...";
+          // Marked by hand: stay on the page (only Vibe finishing it moves on).
+          baseline = true;
+          var ok = await school.markComplete(lessonSlug);
+          markBtn.disabled = false;
+          markBtn.textContent = "Mark complete";
+          if (ok) {
+            school.updateAllCheckmarks();
+            renderNav();
+            renderComplete();
+            school.celebrate(markBtn);
+          }
+        });
+      }
+
+      // ---- Browser checklist ----
+      if (hasChecklist) {
+        var key = "school:checklist:" + lessonSlug;
+        var ticked = [];
+        try { ticked = JSON.parse(school.read(key) || "[]"); } catch (e) {}
+        var boxes = document.querySelectorAll("#checklist [data-step]");
+        function count() { $("check-count").textContent = String(ticked.length); }
+        boxes.forEach(function (box) {
+          var n = Number(box.getAttribute("data-step"));
+          box.checked = ticked.indexOf(n) !== -1;
+          box.addEventListener("change", function () {
+            ticked = ticked.filter(function (x) { return x !== n; });
+            if (box.checked) ticked.push(n);
+            school.write(key, JSON.stringify(ticked));
+            count();
+            // All steps ticked: point at the next action.
+            if (ticked.length === boxes.length && markBtn && !markBtn.classList.contains("hidden")) {
+              markBtn.classList.add("nudge");
+              setTimeout(function () { markBtn.classList.remove("nudge"); }, 1200);
+            }
+          });
+        });
+        count();
+        var show = $("show-tutor");
+        if (show) show.addEventListener("click", function () {
+          $("tutor-card").classList.remove("hidden");
+          $("tutor-card").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+
+      // Cache first for a fast paint, then the server is the baseline. Only
+      // a change from not done to done while this page is open (the tutor
+      // finishing it) moves on to the next lesson on the path.
+      renderComplete();
+      var baseline = null;
+      school.ready.then(function () {
+        baseline = school.isLessonComplete(lessonSlug);
+        renderNav();
+        renderComplete();
+      });
+      school.onProgress(function () {
+        renderNav();
+        renderComplete();
+        if (baseline === false && school.isLessonComplete(lessonSlug)) {
+          baseline = true;
+          var nxt = school.nextOnPath(lessonSlug);
+          // Celebrate, then give the learner a moment to see the banner.
+          school.celebrate(banner);
+          setTimeout(function () { window.location.href = nxt ? "/lessons/" + nxt.slug : "/"; }, 1600);
+        }
+      });
+    })();
+  </script>
+</Base>

@@ -1,0 +1,141 @@
+---
+title: "Drive a browser"
+slug: drive-a-browser
+description: "Add the Chrome DevTools MCP server to Vibe and automate a real web page."
+order: 6
+surfaces: [cli, vscode, desktop]
+agentInstructions: |
+  Guide the student through adding the Chrome DevTools MCP server to
+  Vibe and using it to automate a web page. Adapt depth to their
+  profile.
+
+  Steps:
+
+  1. Check prerequisites: Node.js (`node --version`, `npx --version`)
+     and Google Chrome. If Node.js is missing, help them install it
+     (Homebrew `brew install node` on macOS, or nodejs.org).
+
+  2. Explain what's about to happen: an MCP server is a separate program
+     that gives Vibe extra tools. This one is a local process (stdio
+     transport) started with `npx -y chrome-devtools-mcp@latest`, which
+     lets Vibe open pages, read their content, click, fill forms, take
+     screenshots, and inspect console and network activity in a Chrome
+     instance it controls.
+
+  3. Add the server with the CLI (the CLI and the VS Code extension
+     share ~/.vibe/config.toml; Desktop local sessions share the CLI's
+     core engine, but their tools and configuration can differ):
+
+       vibe mcp add chrome-devtools --transport stdio --command npx --arg=-y --arg chrome-devtools-mcp@latest
+
+     Note the `--arg=-y` form: `--arg -y` fails because the parser reads
+     -y as a flag. If the student doesn't have the CLI, add the same
+     server by hand to ~/.vibe/config.toml:
+
+       [[mcp_servers]]
+       name = "chrome-devtools"
+       transport = "stdio"
+       command = "npx"
+       args = ["-y", "chrome-devtools-mcp@latest"]
+
+     Back up config.toml before editing it by hand.
+
+  4. Load it: start a new session (or /reload in the CLI). In the CLI,
+     run `/mcp` to see the server and `/mcp chrome-devtools` to list its
+     tools. If the first start is slow because npx downloads the
+     package, raise `startup_timeout_sec` for that server (default 10
+     seconds). Tools are exposed as chrome-devtools_<tool>.
+
+  5. First task: open a public page (for example https://example.com or
+     docs.mistral.ai) and summarize it, then take a screenshot. The first
+     tool calls ask for approval: explain what each one does before the
+     student approves. Prefer reading the page's text or structure over
+     screenshots unless the visual result matters.
+
+  6. Real task: ask the student what they want to automate. Ideas:
+     check their own site (from "Build a website") for console errors
+     and broken links, fill out a test form, compare two product pages,
+     measure how a page loads. Help them do it.
+
+  7. Optional: once they trust a read-only tool, show per-tool
+     permissions in config.toml, e.g. `[tools.chrome-devtools_<tool>]`
+     with `permission = "always"`. Keep write-like actions (clicking,
+     filling forms) on ask.
+
+  The exercise is complete when the chrome-devtools server is configured
+  and Vibe has used it for at least one real browser task. Verify by
+  checking that ~/.vibe/config.toml (or $VIBE_HOME/config.toml) has an
+  [[mcp_servers]] entry running chrome-devtools-mcp, and that a tool
+  from that server was called in this session (or ask the student to
+  confirm what the browser task produced). Then mark the exercise
+  complete with exerciseSlug "drive-a-browser".
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Vibe can read files and run commands, but it can't see a web page. An [MCP](/glossary#mcp) server fixes that. In this exercise, you'll add the [Chrome DevTools MCP server](https://github.com/ChromeDevTools/chrome-devtools-mcp) and have Vibe open pages, read them, click through them, and take screenshots.
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org), for `npx`.
+- Google Chrome.
+
+## Add the server
+
+The server runs as a local process, so it uses the `stdio` transport:
+
+```bash
+vibe mcp add chrome-devtools --transport stdio --command npx --arg=-y --arg chrome-devtools-mcp@latest
+```
+
+Each `--arg` is one argument. Write `--arg=-y` with an equals sign: `--arg -y` fails because the parser reads `-y` as a flag of its own. The command writes this to your user config:
+
+```toml
+[[mcp_servers]]
+name = "chrome-devtools"
+transport = "stdio"
+command = "npx"
+args = ["-y", "chrome-devtools-mcp@latest"]
+```
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+Start a new session, then run `/mcp` to see the server and `/mcp chrome-devtools` to list its tools.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The extension reads the same `~/.vibe/config.toml`. Run the command above in a terminal (or add the block by hand), then start a new conversation with `Mod+N`. Adding and browsing MCP servers with `/mcp` is CLI-only; in the extension, `/mcp status` shows sign-in status.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Local sessions share the CLI's core engine, but their tools and configuration can differ from the CLI. Add the server with the command above, or the block by hand, then start a new local session and check that its tools show up.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+<div class="callout">
+The first start can be slow while <code>npx</code> downloads the package. If Vibe warns that the server failed to load, add <code>startup_timeout_sec = 60</code> to its <code>[[mcp_servers]]</code> block. The default is 10 seconds.
+</div>
+
+## What to try
+
+Start simple, then pick something you actually want to automate:
+
+- "Open https://docs.mistral.ai/vibe and summarize what's on the page."
+- "Open my local site at http://localhost:8000, check the console for errors, and take a screenshot."
+- "Fill out the contact form on my test page with sample data and tell me what happens."
+- "Compare the pricing sections of these two pages."
+
+The first tool calls ask for approval. Read what each one does before you approve it.
+
+## Tips
+
+- **Tool names get a prefix.** MCP tools appear as `chrome-devtools_<tool>`, so you can set [permissions](/lessons/permissions) per tool in `config.toml`.
+- **Allow reads, ask for writes.** Once you trust a read-only tool, set it to `permission = "always"`. Keep clicks and form fills on `ask`.
+- **Remove it any time** with `vibe mcp remove chrome-devtools`.
+
+More in the [MCP](/lessons/mcp) lesson and the [MCP servers docs](https://docs.mistral.ai/vibe/code/cli/mcp-servers).

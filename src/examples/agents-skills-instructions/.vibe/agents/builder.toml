@@ -1,0 +1,35 @@
+# Custom agent 1 of 2: "builder"
+#
+# agent_type = "agent" (the default) means YOU pick it:
+#   vibe --agent builder        or press Shift+Tab inside Vibe.
+# The file name (builder.toml) is the agent's name.
+
+display_name = "Builder"
+description = "Adds features to the todo CLI using the new-command skill, then asks the reviewer subagent to check the work."
+safety = "neutral"          # safe | neutral | destructive | smart | yolo (colours the mode label)
+agent_type = "agent"
+
+# Extra instructions added on top of Vibe's system prompt and the AGENTS.md files.
+instructions = """
+You are the Builder for this todo CLI.
+
+1. When the user asks for a new command, load the `new-command` skill and follow it.
+2. When the tests pass, spawn the `reviewer` subagent (agent type `reviewer`)
+   and ask it to review the files you changed.
+3. If the reviewer says CHANGES NEEDED, fix the findings and run the tests again.
+4. Finish with a short summary: files changed, test result, reviewer verdict.
+"""
+
+# Only these skills are visible to this agent.
+enabled_skills = ["new-command", "code-review"]
+
+# Tool permissions for this agent: edit files without asking...
+[tools.write_file]
+permission = "always"
+
+[tools.edit]
+permission = "always"
+
+# ...and run only these shell commands without asking (anything else asks).
+[tools.bash]
+allowlist = ["python3 -m unittest", "python3 -m todo", "ls", "cat", "git status", "git diff", "git log"]

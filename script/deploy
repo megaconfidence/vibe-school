@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Build and deploy Vibe School to Cloudflare Workers.
+#
+# Builds from a fresh clone of the current commit in a temp folder, so the
+# deploy always matches git: no local Vite cache, no stray files, and the dev
+# server keeps running. Extra arguments go to `wrangler deploy`:
+#
+#   script/deploy             deploy
+#   script/deploy --dry-run   build and check, upload nothing
+#
+# Needs `npx wrangler login` first, and the KV id and SITE_URL set in
+# wrangler.jsonc.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+# Deploy only what's committed, so the live site always matches a commit.
+if [ -n "$(git status --porcelain -- .)" ]; then
+  echo "vibe-school/ has uncommitted changes. Commit or stash them first." >&2
+  exit 1
+fi
+
+node -e '
+  const { parse } = require("jsonc-parser");
+  const c = parse(require("fs").readFileSync("wrangler.jsonc", "utf8"));
+  const id = c.kv_namespaces?.[0]?.id ?? "";
+  const site = c.vars?.SITE_URL ?? "";
+  if (/^0+$/.test(id)) { console.error("Set kv_namespaces[0].id in wrangler.jsonc first."); process.exit(1); }
+  if (!site.startsWith("https://")) { console.error("Set vars.SITE_URL in wrangler.jsonc to the https address first."); process.exit(1); }
+'
+
+ROOT="$(git rev-parse --show-toplevel)"
+SUB="$(git rev-parse --show-prefix)"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+echo "Cloning $(git rev-parse --short HEAD) into a temp folder..."
+git clone --quiet --no-hardlinks "$ROOT" "$WORK/repo"
+git -C "$WORK/repo" checkout --quiet "$(git rev-parse HEAD)"
+cd "$WORK/repo/$SUB"
+
+npm ci --no-audit --no-fund
+script/fetch-brand-fonts
+script/lint
+script/test
+script/check-assets
+script/build
+npx wrangler deploy --message "$(git log -1 --format='%h %s')" "$@"

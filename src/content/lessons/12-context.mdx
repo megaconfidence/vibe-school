@@ -1,0 +1,173 @@
+---
+title: "Context"
+slug: context
+description: "See what fills the context window, compact it, and feed Vibe files, images, and output."
+order: 12
+track: code
+surfaces: [cli, vscode, desktop]
+quiz: true
+goals:
+  - "Read the /context gauge"
+  - "Compact a long conversation"
+  - "Add files with @ and shell output with !"
+  - "Share images with Vibe"
+minutes: 15
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. The context window: everything the model sees in one request, the
+     system prompt (including AGENTS.md), tool definitions (including MCP
+     and connector tools), skills, and the conversation. It has a size
+     limit. /context shows a gauge of the window split by category, with
+     free space and the auto-compaction buffer; clicking the token counter
+     in the CLI footer opens the same view.
+
+  2. Compaction: /compact summarizes the conversation history to free up
+     space, and takes optional instructions to guide the summary. Vibe
+     also compacts automatically when the conversation reaches a threshold
+     derived from the model's context window. A top-level
+     auto_compact_threshold in config.toml is only a fallback for models
+     without their own threshold (the model catalog can set one, and it
+     wins); to override one model, add a [[models]] entry with just that
+     model's name and auto_compact_threshold. The session and the
+     visible conversation stay intact. /clear (or /new) starts a fresh conversation instead.
+
+  3. Adding context: @path attaches a file. Text files are read for the
+     model (same limits as read_file, about 2000 lines or 64 KB), folders
+     are not read automatically, and images (.png, .jpg, .jpeg, .gif,
+     .webp) are attached as images. Images need a model with
+     supports_images = true, or a vision model on the same provider that
+     describes them. On macOS, Ctrl+V or /paste-image pastes an image from
+     the clipboard. !command runs a shell command directly, and the agent
+     sees the command and output in its next turn. In VS Code, the active
+     file and selection are attached automatically.
+
+  4. Working alongside the agent: press Enter while the agent works to
+     queue a message (sent when the turn ends, or right away with Enter on
+     an empty input). Up selects a queued message to edit or remove.
+     Escape interrupts. Cmd+\ or Alt+\ toggles the todo list panel, where
+     the agent tracks its plan for longer tasks.
+
+  Then have the student try it in their vibe-todo session (if the
+  folder is missing, fetch the starter as in the Configuration lesson).
+  Nothing is written to the project. CLI: run /context and read the
+  gauge (point out the system prompt share, which includes vibe-todo's
+  AGENTS.md if it exists), send a message that @-mentions a file, for
+  example "Explain how @todo/cli.py dispatches subcommands", run
+  `!python3 -m unittest` so the agent sees the test output, run /context
+  again to see the conversation grow, then run
+  `/compact keep the list of subcommands`. VS Code: open todo/cli.py so
+  it becomes the active file, ask about it, then type /compact in the
+  Vibe panel. Vibe Desktop: in a local Code session on vibe-todo, ask
+  about todo/cli.py, check the Files panel (+ > Files) for the same
+  file, and try /compact if the slash menu offers it (tools and
+  commands can differ from the CLI).
+
+  Verify completion by asking the student to paste or describe their
+  /context output (the categories and the token total), and confirm they
+  ran /compact. In VS Code, where /context is not listed, ask them to
+  confirm the agent answered about todo/cli.py and that /compact ran. In
+  Desktop, ask them to confirm the agent answered about the file and
+  whether /compact was available and ran. No artifacts to report for
+  this lesson.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+The model only knows what's in its [context window](/glossary#context-window): your instructions, the tools it can call, and the conversation so far. The window has a size limit, and a full window means slower, more expensive, and less focused answers. This lesson shows you how to see what's in it, how to keep it lean, and how to put the right things in.
+
+## In your project
+
+No new files this time. In your `vibe-todo` session you'll read the `/context` gauge, ask about `@todo/cli.py`, show the agent the test output with `!python3 -m unittest`, and compact the conversation.
+
+
+## See what fills the window
+
+Run `/context`. It shows a gauge of the context window split by category:
+
+- **System prompt**: Vibe's instructions plus your [`AGENTS.md`](/lessons/instructions) files.
+- **Tool definitions**: built-in tools, plus any [MCP](/lessons/mcp) and connector tools.
+- **Skills**: the list of [skills](/lessons/skills) the model can load.
+- **Conversation**: your messages, the agent's replies, and tool results.
+
+It also shows free space and the auto-compaction buffer, marked where compaction triggers. The CLI footer has a running token counter, like `ctx 23k/600k`. Click it to open `/context`.
+
+<div class="callout">
+Every MCP server and skill you add costs context in every turn. If <code>/context</code> shows tool definitions taking a big share, turn off the servers you don't need.
+</div>
+
+## Compaction
+
+When the conversation gets long, **compaction** replaces the history with a summary so the model can keep going.
+
+- `/compact` compacts now. Add instructions to steer the summary, for example `/compact keep the list of failing tests`.
+- **Auto-compaction** happens on its own when the conversation reaches a threshold derived from the model's context window. A top-level `auto_compact_threshold` in `config.toml` only applies to models without their own threshold (the model catalog can set one per model, and it wins). To override it for one model, add a `[[models]]` entry with just that model's `name` and `auto_compact_threshold`.
+
+Your session and the visible conversation stay intact. Only what the model sees is summarized. To start completely fresh instead, run `/clear` (or `/new`).
+
+## Add files with @
+
+Type `@` to autocomplete a path, then send your message:
+
+```text
+Explain how @todo/cli.py dispatches subcommands.
+```
+
+What happens depends on what you mention:
+
+| Mention | What the model gets |
+|---|---|
+| Text file | The file's content, read like the `read_file` tool (about 2000 lines or 64 KB) |
+| Folder | Just the path. The agent can read or search it if it needs to |
+| Image (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`) | The image itself |
+
+## Images
+
+Images work when the active model has `supports_images = true`, or when a vision-capable model on the same provider can describe them (set `vision_model` to use another provider). Otherwise the model receives `[Image]` and a link to the file.
+
+On macOS, paste an image from the clipboard with `Ctrl+V` or `/paste-image`. You can also drag a file from Finder into the terminal. Each message can carry up to 8 images of 10 MiB each.
+
+## Run shell commands with !
+
+Prefix a command with `!` to run it in your shell, bypassing the agent:
+
+```text
+!python3 -m unittest
+```
+
+On Windows, use `!python -m unittest` if `python3` isn't on your path. The agent sees the command and its output as context for your next message. It's a quick way to show it a test failure or a log without asking it to run anything.
+
+## Work alongside the agent
+
+You don't have to wait for the agent to finish:
+
+- **Queue a message**: press `Enter` while it works. Queued messages go out together when the turn ends. Press `Enter` again on an empty input to hand them over right away.
+- **Edit the queue**: press `Up` to select a queued message, then `Enter` to edit it or `Backspace` to remove it.
+- **Interrupt**: press `Escape` to stop the agent and pause the queue.
+- **Todo panel**: for longer tasks the agent keeps a todo list. Press `Cmd+\` or `Alt+\` to toggle it.
+
+`!` commands and most slash commands need an idle agent. Read-only commands such as `/status` run right away.
+
+## On other surfaces
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+Everything above works in the CLI: `/context`, `/compact`, `@`, `!`, image paste, the queue, and the todo panel.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The extension attaches your **active file** and **selection** automatically, so you rarely need `@`. Highlight the code you want to discuss and ask. `/compact` is available in the Vibe panel; type `/` to see the commands the extension supports.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Desktop local sessions share the CLI's core engine. Use the **Files** and **Terminal** panels to look at the same evidence the agent sees. You met the panels in the [Desktop](/lessons/desktop) lesson.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+Learn more in [Work with the CLI](https://docs.mistral.ai/vibe/code/cli/work-with-cli#interactive-mode) and [Commands and shortcuts](https://docs.mistral.ai/vibe/code/cli/commands-shortcuts).

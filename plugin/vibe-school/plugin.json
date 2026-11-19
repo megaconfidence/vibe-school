@@ -1,0 +1,8 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "vibe-school",
+  "version": "1.0.0",
+  "description": "Take the Vibe School course from inside Vibe: /vibe-school:next starts your next lesson, /vibe-school:status shows your progress.",
+  "license": "Apache-2.0",
+  "keywords": ["course", "learning", "vibe"]
+}

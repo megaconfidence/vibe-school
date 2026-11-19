@@ -1,0 +1,116 @@
+---
+// Tabbed container for per-surface instructions inside lesson MDX.
+//
+// Usage in MDX:
+//
+//   import SurfaceTabs from '../../components/SurfaceTabs.astro'
+//   import SurfaceTab from '../../components/SurfaceTab.astro'
+//
+//   <SurfaceTabs>
+//     <SurfaceTab surface="cli">...markdown...</SurfaceTab>
+//     <SurfaceTab surface="vscode">...</SurfaceTab>
+//     <SurfaceTab surface="desktop">...</SurfaceTab>
+//   </SurfaceTabs>
+//
+// The chosen surface goes through window.school.setSurface(), which saves it
+// and fires a "school:surface" event, so every SurfaceTabs and the launch bar
+// on the page stay in sync.
+---
+
+<div class="surface-tabs my-6 panel overflow-hidden" data-surface-tabs>
+  <div class="surface-tabs-bar flex flex-wrap gap-1 px-2 pt-2 sunk border-b hairline" role="tablist"></div>
+  <div class="surface-tabs-panels px-5 py-1">
+    <slot />
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    var LABELS = {
+      cli: "CLI",
+      vscode: "VS Code",
+      desktop: "Desktop",
+      "code-web": "Code Web",
+      work: "Work",
+    };
+    function read() {
+      return window.school ? window.school.getSurface() : null;
+    }
+    function write(v) {
+      if (window.school) window.school.setSurface(v);
+    }
+
+    function select(root, surface) {
+      var panels = root.querySelectorAll("[data-surface-tab]");
+      var buttons = root.querySelectorAll("[data-surface-button]");
+      var found = false;
+      panels.forEach(function (p) { if (p.getAttribute("data-surface-tab") === surface) found = true; });
+      if (!found && panels.length) surface = panels[0].getAttribute("data-surface-tab");
+      panels.forEach(function (p) {
+        p.hidden = p.getAttribute("data-surface-tab") !== surface;
+      });
+      buttons.forEach(function (b) {
+        var on = b.getAttribute("data-surface-button") === surface;
+        b.setAttribute("aria-selected", on ? "true" : "false");
+        b.setAttribute("tabindex", on ? "0" : "-1");
+        b.classList.toggle("surface-tab-active", on);
+      });
+    }
+
+    var counter = 0;
+
+    function init() {
+      var roots = document.querySelectorAll("[data-surface-tabs]");
+      roots.forEach(function (root) {
+        if (root.getAttribute("data-ready")) return;
+        root.setAttribute("data-ready", "1");
+        var bar = root.querySelector(".surface-tabs-bar");
+        var uid = "st" + (counter++);
+        root.querySelectorAll("[data-surface-tab]").forEach(function (panel) {
+          var s = panel.getAttribute("data-surface-tab");
+          var b = document.createElement("button");
+          var tabId = uid + "-tab-" + s;
+          var panelId = uid + "-panel-" + s;
+          b.type = "button";
+          b.id = tabId;
+          b.setAttribute("role", "tab");
+          b.setAttribute("aria-controls", panelId);
+          b.setAttribute("data-surface-button", s);
+          b.className = "surface-tab-button px-3 py-2 cursor-pointer";
+          b.textContent = LABELS[s] || s;
+          panel.id = panelId;
+          panel.setAttribute("aria-labelledby", tabId);
+          panel.setAttribute("tabindex", "0");
+          b.addEventListener("click", function () { write(s); });
+          bar.appendChild(b);
+        });
+        bar.setAttribute("aria-label", "Surface");
+        bar.addEventListener("keydown", function (e) {
+          var tabs = Array.prototype.slice.call(bar.querySelectorAll("[role=tab]"));
+          var i = tabs.indexOf(document.activeElement);
+          if (i < 0) return;
+          var next = null;
+          if (e.key === "ArrowRight") next = tabs[(i + 1) % tabs.length];
+          else if (e.key === "ArrowLeft") next = tabs[(i - 1 + tabs.length) % tabs.length];
+          else if (e.key === "Home") next = tabs[0];
+          else if (e.key === "End") next = tabs[tabs.length - 1];
+          if (!next) return;
+          e.preventDefault();
+          next.click();
+          next.focus();
+        });
+        select(root, read() || "cli");
+      });
+    }
+
+    document.addEventListener("school:surface", function (e) {
+      document.querySelectorAll("[data-surface-tabs]").forEach(function (r) { select(r, e.detail.surface); });
+    });
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", init);
+    } else {
+      init();
+    }
+  })();
+</script>

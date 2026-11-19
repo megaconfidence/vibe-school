@@ -1,0 +1,5 @@
+# Project config. Vibe reads it only when this folder is trusted.
+# It overrides ~/.vibe/config.toml for this project.
+
+# Start in our custom agent instead of the built-in "accept-edits".
+default_agent = "builder"

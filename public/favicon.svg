@@ -1,0 +1,20 @@
+<svg width="162" height="162" viewBox="0 0 162 162" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="162" height="162" fill="#FA500F"/>
+<g clip-path="url(#clip0_335_5144)">
+<rect x="35.9382" y="35.9382" width="18.0247" height="18.0247" fill="white"/>
+<rect x="108.037" y="35.9382" width="18.0247" height="18.0247" fill="white"/>
+<rect x="71.9877" y="90.0123" width="18.0247" height="18.0247" fill="white"/>
+<rect x="35.9382" y="90.0123" width="18.0247" height="18.0247" fill="white"/>
+<rect x="108.037" y="90.0123" width="18.0247" height="18.0247" fill="white"/>
+<rect x="35.9382" y="53.9629" width="36.0494" height="18.0247" fill="white"/>
+<rect x="17.9136" y="108.037" width="54.0741" height="18.0247" fill="white"/>
+<rect x="90.0123" y="108.037" width="54.0741" height="18.0247" fill="white"/>
+<rect x="35.9382" y="71.9877" width="90.1235" height="18.0247" fill="white"/>
+<rect x="90.0123" y="53.9629" width="36.0494" height="18.0247" fill="white"/>
+</g>
+<defs>
+<clipPath id="clip0_335_5144">
+<rect width="126.173" height="90.1235" fill="white" transform="translate(17.9136 35.9382)"/>
+</clipPath>
+</defs>
+</svg>

@@ -1,0 +1,126 @@
+---
+title: "Fix a bug in the cloud"
+slug: fix-a-bug-in-the-cloud
+description: "Hand a bug to a cloud session on a GitHub repository, review the pull request it opens, and iterate."
+order: 2
+surfaces: [code-web, desktop]
+agentInstructions: |
+  Guide the student through fixing a real bug with a Vibe Code Web cloud
+  session (in the browser, or as a cloud session in Vibe Desktop). You
+  are the tutor running locally: the work itself happens in the
+  student's browser or Desktop app, so explain each step, then ask them
+  to confirm or paste what they see. Adapt depth to their profile.
+
+  Steps:
+
+  1. Pick a repository and a bug. It must be a GitHub repository the
+     student can push to. Good candidates: a small open issue, a failing
+     test, a typo-level bug, or a deliberate bug they add themselves to a
+     throwaway repo. If they have no repo, help them create one with a
+     tiny project and one failing test, and push it with `gh` or git.
+
+  2. Open Vibe Code Web from the Code tab in Vibe at chat.mistral.ai (or
+     switch to Code in Vibe Desktop and start a cloud session). The first
+     time, the student is prompted to install the Mistral GitHub App and
+     authorize it. Recommend granting access to selected repositories
+     only. Organization repos may need an owner to approve the install.
+
+  3. Create a project: in the Code tab, click New Project next to
+     Projects, pick Using GitHub (Using GitLab and a blank project are
+     also offered; this exercise uses GitHub), pick the account or
+     organization, search for the repository and select it, click Next,
+     check the Project name, optionally add Project instructions, then
+     click Create project. All repositories in a project must share the
+     same GitHub owner. Labels can shift; follow what's on screen.
+
+  4. Start a session with a focused prompt. Help them write it: name the
+     file, the failing test or stack trace, the expected behavior, and
+     ask for a pull request. For example: "The test test_parse_date in
+     tests/test_dates.py fails with <error>. Find the cause, make the
+     smallest fix, run the tests, and open a pull request. Don't weaken
+     the test." Remind them the sandbox can't reach their local machine,
+     so everything the agent needs must be in the repository.
+
+  5. Follow the session: the activity stream shows commands and output,
+     plus file changes, branch, and a link to the pull request once it's
+     open. Explain that this activity stream is the audit log.
+
+  6. Review the pull request in GitHub. If `gh` is installed and
+     authenticated locally, help them inspect it: `gh pr view <number>
+     --repo <owner>/<repo>`, `gh pr diff <number> --repo <owner>/<repo>`,
+     and `gh pr checks <number> --repo <owner>/<repo>`. Walk through
+     the diff together: does it fix the cause, stay in scope, and leave
+     the tests intact?
+
+  7. Iterate once. While the session is still active, have them send a
+     follow-up in the same session: paste a review comment or a failing
+     CI output and ask the agent to address it. The agent reuses the same
+     sandbox and branch. If the sandbox has already been deprovisioned,
+     explain that the session can't be resumed and they would start a
+     new one.
+
+  8. The merge decision is theirs, in GitHub. Don't merge for them.
+
+  The exercise is complete when a pull request opened by the cloud
+  session exists and the student has reviewed it and sent at least one
+  follow-up. Verify with `gh pr view` when gh is available (the PR
+  exists and has at least one commit after the follow-up); otherwise ask
+  the student to paste the pull request URL and describe the follow-up
+  change. Then mark the exercise complete with exerciseSlug
+  "fix-a-bug-in-the-cloud".
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Some tasks don't need your laptop at all. In this exercise, you'll hand a bug to a [Vibe Code Web](/glossary#code-web) session. It runs in a cloud [sandbox](/glossary#sandbox), fixes the bug on a branch, and opens a pull request. You review it in GitHub and ask for changes, like you would with a teammate.
+
+## What you'll need
+
+- A GitHub repository you can push to, with a small, real bug in it. A failing test is ideal. A throwaway repo with a bug you planted works too.
+- A Mistral account with access to Vibe Code.
+- Optional: the [GitHub CLI](https://cli.github.com) (`gh`), so your local Vibe session can inspect the pull request with you.
+
+## Start the session
+
+<SurfaceTabs>
+<SurfaceTab surface="code-web">
+
+1. Open Vibe Code Web from the **Code** tab in Vibe.
+2. Create a project: click **New Project** next to **Projects** and pick **Using GitHub**. Choose your account, search for the repository, select it, and click **Next**. Check the **Project name**, optionally add **Project instructions**, then click **Create project**. The first time, you're asked to install the Mistral GitHub App.
+3. Click **New session** and enter your prompt.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Switch to **Code** and start a **cloud session** against a repository connected to a project. Cloud sessions in Desktop use the same projects, sessions, and sandbox as Vibe Code Web.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+A good prompt names the file, the failing test or stack trace, and what "fixed" means:
+
+```text
+The test test_parse_date in tests/test_dates.py fails with the error below.
+Find the cause, make the smallest fix, run the tests, and open a pull request.
+Don't weaken the test.
+```
+
+## Review and iterate
+
+The session view shows an activity stream of every command and its output, the files changed, the branch, and a link to the pull request. Detailed review happens in GitHub, where your branch protections, required reviews, and checks apply.
+
+A pull request doesn't end the session. While it's still active, send follow-ups in the same session: paste a reviewer comment or a failing CI log and ask the agent to address it. It reuses the same sandbox and branch.
+
+<div class="callout">
+Once the sandbox is deprovisioned, a session <strong>can't be resumed</strong>. To continue, start a new session. See <a href="https://docs.mistral.ai/vibe/code/web/limits-and-lifecycle">Limits and lifecycle</a>.
+</div>
+
+## Tips
+
+- **Start small.** A well-scoped task with a clear test teaches you more than a vague "clean up the code".
+- **Grant narrow access.** Install the GitHub App on selected repositories only.
+- **Everything must be in the repo.** The sandbox can't reach your machine, local files, or local secrets. If the task needs those, use a [local session](/lessons/desktop) instead.
+- **Treat repo content as untrusted input.** Read the [Security](https://docs.mistral.ai/vibe/code/web/security) page on prompt injection.
+
+More in the [Code Web](/lessons/code-web) lesson and the [Sessions docs](https://docs.mistral.ai/vibe/code/web/sessions).

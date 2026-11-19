@@ -1,0 +1,156 @@
+---
+title: "CLI"
+slug: cli
+description: "Get fast in the Vibe CLI with prefixes, shortcuts, message queueing, and voice."
+order: 4
+track: surfaces
+surfaces: [cli]
+quiz: true
+goals:
+  - "Use the /, @, and ! input prefixes"
+  - "Learn the keyboard shortcuts that save the most time"
+  - "Queue and steer messages while Vibe works"
+  - "Set up your terminal and keep Vibe up to date"
+minutes: 15
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. Input prefixes: `/` opens the slash-command picker (built-in
+     commands and user-invocable skills), `@` attaches a file with
+     autocompletion (images too, when the model supports them), and `!`
+     runs a shell command directly, bypassing the agent; the agent sees
+     the command and output as context. Useful info commands: /status
+     (agent stats, model, provider, credential source), /whoami (signed-in
+     user, workspace, plan), /copy (copy the last agent message), /log
+     (session log path), /pr (this session's pull requests and CI
+     status), /release-notes (alias /whatsnew).
+
+  2. Keyboard shortcuts: Enter submits; Ctrl+J (or Alt+Enter, or
+     Shift+Enter where the terminal reports it) inserts a new line;
+     Escape interrupts; Escape twice opens rewind; Shift+Tab cycles
+     agents; Ctrl+O toggles tool output; Ctrl+G edits the input in an
+     external editor; Ctrl+R searches prompt history; Ctrl+C clears the
+     input or interrupts, twice to quit. vim_keybindings = true gives the
+     prompt vim Normal and Insert modes.
+
+  3. Working while the agent works: pressing Enter during a turn queues
+     the message; Vibe sends queued messages when the turn ends, or right
+     away if you press Enter again on an empty input (steering). Up
+     selects a queued message to edit (Enter) or remove (Backspace).
+     Escape interrupts and pauses the queue. Voice: /voice turns on voice
+     mode, then Ctrl+T starts and stops dictation (Escape cancels).
+     /theme picks a theme (auto follows the terminal or OS).
+
+  4. Terminal setup and updates: recommended terminals are Ghostty and
+     Kitty (macOS, Linux) and Windows Terminal. In macOS Terminal, iTerm2
+     and WezTerm, Shift+Enter submits, so use Ctrl+J. In tmux, add
+     `set -g mouse on` to ~/.tmux.conf so Vibe gets the mouse, and scroll
+     with Shift+Up/Down. Hold Shift (Option in iTerm2, Fn in macOS
+     Terminal) while dragging for native text selection. `vibe update`
+     checks for a new version and offers to install it. Editors such as
+     Zed and JetBrains can run Vibe over ACP (Zed through the `vibe-acp`
+     command; covered in the next lesson, VS Code).
+
+  Then have the student try three things in a Vibe CLI session (a second
+  terminal if you are running in their CLI): (a) type `!git status` or
+  `!ls` to run a shell command directly, (b) start typing a prompt and
+  press Ctrl+G to finish it in their external editor, then submit it,
+  (c) press Ctrl+R and find an earlier prompt. If a shortcut doesn't
+  work, check their terminal against the terminal notes and suggest the
+  alternative (for example Ctrl+J for a new line).
+
+  Verify completion by asking the student to confirm each of the three
+  worked (or which alternative they used), and by running
+  `vibe --version` and checking it prints a version. If it's older than
+  3.1.3, suggest `vibe update`.
+---
+
+
+The CLI is Vibe's home surface: a full-screen terminal app with the most commands and the most shortcuts. This lesson is a tour of the input prefixes, shortcuts, and habits that make you fast in it.
+
+## Three prefixes
+
+| Type | What happens |
+|---|---|
+| `/` | Opens the slash-command picker, with built-in commands and any [skills](/lessons/skills) you can invoke. |
+| `@` | Attaches a file, with autocompletion: `Read @src/agent.py and suggest improvements.` |
+| `!` | Runs a shell command directly, without the agent: `!git status`. The agent sees the command and its output with your next message. |
+
+A few slash commands worth knowing:
+
+| Command | What it does |
+|---|---|
+| `/status` | Agent statistics, model and provider details, and the credential source. |
+| `/whoami` | Your signed-in user, workspace, plan, and credential source. |
+| `/copy` | Copy the last agent message to the clipboard. |
+| `/log` | Show the path to the current session log. |
+| `/pr` | This session's pull requests. `c` opens the first failing CI check, `f` drafts a prompt to fix what blocks the PR. |
+| `/release-notes` | Browse what changed in every version (alias `/whatsnew`). |
+
+The full list is in [Commands and shortcuts](https://docs.mistral.ai/vibe/code/cli/commands-shortcuts).
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `Enter` | Submit. |
+| `Ctrl+J` or `Alt+Enter` | New line. `Shift+Enter` works only in terminals that report it. |
+| `Escape` | Interrupt the agent, or close a dialog. |
+| `Escape` twice | Rewind to an earlier message (more in the [Sessions](/lessons/sessions) lesson). |
+| `Shift+Tab` | Cycle agents. |
+| `Ctrl+O` | Toggle tool output. |
+| `Ctrl+G` | Edit the current input in your external editor. |
+| `Ctrl+R` | Search prompt history. `Enter` loads the match, `Escape` restores your draft. |
+| `Ctrl+T` | Start or stop voice recording (voice mode on). |
+| `Cmd+\` or `Alt+\` | Toggle the todo panel. |
+| `Ctrl+C` | Clear the input, or interrupt. Press twice to quit when idle. |
+
+Prefer vim? Set `vim_keybindings = true` in `config.toml`. The input starts in Insert mode, `Escape` switches to Normal mode, and `Ctrl+C` interrupts the agent from Insert mode.
+
+You can also use the mouse: click approval options, click the model name to open `/model`, or the token counter to open `/context`.
+
+## Queue and steer
+
+You don't have to wait for the agent to finish. Press `Enter` while it works and your message is **queued**. Vibe sends queued messages together when the turn ends.
+
+- Want it to read your message now? Press `Enter` again with an empty input to hand the queue over before the turn ends.
+- Press `Up` to select a queued message, then `Enter` to edit it or `Backspace` to remove it.
+- `Escape` interrupts the agent and pauses the queue. Press `Enter` to send it.
+
+`!` commands and most slash commands need an idle agent: while it works, Vibe refuses them with a notice. Read-only commands such as `/status`, display settings such as `/theme`, and `/branch` run right away.
+
+## Voice and themes
+
+Run `/voice` to turn on voice mode. Then press `Ctrl+T` to start dictating, `Ctrl+T` again to stop, or `Escape` to cancel. `/voice` also toggles the experimental narrator.
+
+Run `/theme` to pick a theme. `auto` follows your terminal background, then your OS light or dark setting.
+
+## Your terminal
+
+Terminals don't all support the same features. Vibe falls back gracefully, but some shortcuts behave differently.
+
+| OS | Recommended |
+|---|---|
+| macOS, Linux | [Ghostty](https://ghostty.org/), [Kitty](https://sw.kovidgoyal.net/kitty/) |
+| Windows | [Windows Terminal](https://aka.ms/terminal) |
+
+- **macOS Terminal, iTerm2, WezTerm**: `Shift+Enter` submits instead of adding a line. Use `Ctrl+J`.
+- **tmux**: add `set -g mouse on` to `~/.tmux.conf` so clicks and scrolling reach Vibe. Scroll with `Shift+Up` and `Shift+Down`. If colors look washed out, set `COLORTERM=truecolor`.
+- **Selecting text**: dragging selects inside Vibe. Hold `Shift` (`Option` in iTerm2, `Fn` in macOS Terminal) to use your terminal's selection instead.
+- **IDE terminals** may keep some shortcuts for the editor. Use the alternatives above.
+
+See [Terminal support](https://docs.mistral.ai/vibe/code/cli/terminal-support) for more.
+
+## Stay up to date
+
+Vibe checks for updates daily and asks before installing. To check now:
+
+```bash
+vibe update
+vibe --version
+```
+
+<div class="callout">
+Prefer another editor? Zed, JetBrains IDEs, and other <a href="/glossary#acp">ACP</a> clients can run Vibe with the same <code>~/.vibe/</code> config. Clients without an agent registry, such as Zed, use the <code>vibe-acp</code> command. See the <a href="/lessons/vscode">VS Code</a> lesson and <a href="https://docs.mistral.ai/vibe/code/use-vibe-in-other-ides">Use Vibe in other IDEs</a>.
+</div>

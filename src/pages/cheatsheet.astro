@@ -1,0 +1,29 @@
+---
+// Copyright (c) 2026 Zeke Sikelianos
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+// Modified for Vibe School.
+export const prerender = true;
+
+import { getEntry, render } from "astro:content";
+import Base from "../layouts/Base.astro";
+
+const page = await getEntry("pages", "cheatsheet");
+if (!page) throw new Error("Missing pages/cheatsheet content entry");
+const { Content } = await render(page);
+---
+
+<Base title={page.data.title} description={page.data.description}>
+  <div class="mb-8 rise" style="--d:0">
+    <a href="/" class="label hover:text-[var(--text)]">&larr; Course</a>
+  </div>
+
+  <header class="mb-8 rise" style="--d:1">
+    <h1 class="font-display text-4xl sm:text-5xl leading-[1.02] tracking-[-0.02em]">{page.data.title}</h1>
+    <p class="text-[var(--text-muted)] mt-2">{page.data.description}</p>
+  </header>
+
+  <article class="prose dark:prose-invert max-w-none">
+    <Content />
+  </article>
+</Base>

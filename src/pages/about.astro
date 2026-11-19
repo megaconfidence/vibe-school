@@ -1,0 +1,48 @@
+---
+// Copyright (c) 2026 Zeke Sikelianos
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+// Modified for Vibe School.
+export const prerender = true;
+
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="About" description="Vibe School is a free course for learning Mistral Vibe on every surface.">
+  <div class="mb-8 rise" style="--d:0">
+    <a href="/" class="label hover:text-[var(--text)]">&larr; Course</a>
+  </div>
+
+  <header class="mb-8 rise" style="--d:1">
+    <h1 class="font-display text-4xl sm:text-5xl leading-[1.02] tracking-[-0.02em]">About Vibe School</h1>
+    <p class="text-[var(--text-muted)] mt-2 text-lg">A free, self-paced course for learning Mistral Vibe.</p>
+  </header>
+
+  <article class="prose dark:prose-invert max-w-none">
+    <p>
+      Vibe School teaches <a href="https://docs.mistral.ai/vibe" target="_blank" rel="noopener noreferrer">Mistral Vibe</a> on every surface: the CLI, the VS Code extension, Vibe Desktop, Vibe Code Web and Vibe Work. Vibe is the teacher: each lesson gives you a prompt to paste into Vibe, and Vibe walks you through the material, checks your work on your machine, and records your progress.
+    </p>
+    <p>
+      No account is required to enroll. You get a random student ID, and the only things stored are your lesson progress and the optional answers you give in the Interview lesson.
+    </p>
+
+    <h2>Where it comes from</h2>
+    <p>
+      The idea of an agent teaching its own course comes from <a href="https://opencode.school" target="_blank" rel="noopener noreferrer">OpenCode School</a> and <a href="https://pi-school.ziki.boo" target="_blank" rel="noopener noreferrer">Pi School</a>, and Vibe School reuses their Apache-2.0 code for the enrollment flow, the agent-facing API, and the teach, quiz, verify lesson format. What's specific to Vibe: one project you build across the Code lessons, lessons for five surfaces, a Vibe plugin that runs the course from inside Vibe, and a homepage that shows what you've built. The lesson content is written from the official <a href="https://docs.mistral.ai/vibe" target="_blank" rel="noopener noreferrer">Vibe documentation</a> and the <a href="https://github.com/mistralai/mistral-vibe" target="_blank" rel="noopener noreferrer">mistral-vibe</a> source code.
+    </p>
+
+    <h2>How it's built</h2>
+    <p>
+      The site is an <a href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a> app that runs on Cloudflare Workers, with student progress in Cloudflare KV. Agents find their way in through <a href="/llms.txt"><code>/llms.txt</code></a>, which points to an <a href="/api/openapi.json">OpenAPI spec</a> for the lessons and progress API.
+    </p>
+
+    <h2>Useful links</h2>
+    <ul>
+      <li><a href="https://docs.mistral.ai/vibe" target="_blank" rel="noopener noreferrer">Vibe documentation</a></li>
+      <li><a href="https://github.com/mistralai/mistral-vibe" target="_blank" rel="noopener noreferrer">mistral-vibe on GitHub</a> (the CLI's source, changelog and issue tracker)</li>
+      <li><a href="https://chat.mistral.ai" target="_blank" rel="noopener noreferrer">chat.mistral.ai</a> (Vibe Work and Vibe Code Web)</li>
+      <li><a href="https://mistral.ai/products/vibe/" target="_blank" rel="noopener noreferrer">Vibe product page</a> (downloads for Vibe Desktop and the VS Code extension)</li>
+      <li><a href="https://discord.com/invite/mistralai" target="_blank" rel="noopener noreferrer">Mistral community on Discord</a></li>
+    </ul>
+  </article>
+</Base>

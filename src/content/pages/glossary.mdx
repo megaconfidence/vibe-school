@@ -1,0 +1,193 @@
+---
+title: "Glossary"
+slug: glossary
+description: "Definitions of the terms used across Vibe School."
+---
+
+## ACP
+
+**Agent Client Protocol.** An open protocol that lets an editor talk to a coding agent. Vibe implements it, which is how the VS Code extension runs Vibe in the background, and how ACP-compatible clients such as JetBrains IDEs (through AI Assistant) and Zed run Vibe in their own chat. Clients without an agent registry can point at the `vibe-acp` command that the [CLI](#cli) installs. See [Use Vibe in other IDEs](https://docs.mistral.ai/vibe/code/use-vibe-in-other-ides).
+
+## admin config
+
+Configuration that organization admins set centrally in the Admin Panel. The CLI and the VS Code extension apply it above every other config layer, so it can enforce defaults such as allowed models or blocked MCP servers. See the [Team rollout lesson](/lessons/team-rollout).
+
+## agent
+
+The AI assistant that reads files, runs commands, and edits code for you. In Vibe, "agent" also means a named bundle of settings that changes how it behaves: the built-ins are `ask`, `accept-edits` (the default), `smart-approve`, and `auto-approve`. Switch with `Shift+Tab` or `vibe --agent <name>`. See [agent profile](#agent-profile) and the [Agents](/lessons/agents) lesson.
+
+## agent profile
+
+A [config](#config-toml) override that bundles a system prompt, a model, a tool set, and approval rules under one name. You write your own as TOML files in `~/.vibe/agents/` or `.vibe/agents/`. `agent_type = "agent"` makes it selectable by you; `agent_type = "subagent"` makes it a [subagent](#subagent) that only the agent can start.
+
+<h2 id="agents-md">AGENTS.md</h2>
+
+A Markdown file of standing instructions that Vibe loads at the start of every session. `~/.vibe/AGENTS.md` applies everywhere; an `AGENTS.md` in a project applies there, and ones in subfolders load the first time Vibe reads a file in that folder. Project files only load in a [trusted folder](#trusted-folder). There is no `/init` command: ask Vibe to write one. See the [Instructions](/lessons/instructions) lesson.
+
+## API key
+
+A secret that lets Vibe call Mistral's models on your account. `vibe --setup` stores it in your OS keyring, or in `~/.vibe/.env` when no keyring is available. You can also set the `MISTRAL_API_KEY` environment variable, which is what CI uses.
+
+## approval
+
+The moment Vibe stops and asks before running a [tool](#tool). In the CLI you answer with `1` or `y` (once), `2` (for this session), `3` (always), or `4`, `n`, or `Escape` (deny). Which calls need approval depends on the active [agent](#agent) and your per-tool permissions. See the [Permissions](/lessons/permissions) lesson.
+
+## auto-approve
+
+A built-in agent that approves every tool call, shell commands included. Start it with `vibe --agent auto-approve`, or approve everything for one run with `--auto-approve` (alias `--yolo`). Use it only in disposable, sandboxed environments. Administrators can turn it off with `enable_auto_approve = false`. See also [YOLO](#yolo).
+
+## Canvas
+
+The built-in editor in [Vibe Work](#vibe-work) where Work produces and refines documents, tables, code, slides, and [mini apps](/lessons/canvas). It opens when you ask for a document or ask Work to open something in a canvas. Edit directly or with inline prompts, and export the result as a file.
+
+## CLI
+
+**Command-line interface.** The `vibe` command you run in a terminal. It's one of the four [surfaces](#surface) of Vibe Code, and the only one with [programmatic mode](#programmatic-mode) for scripts and CI. Install it with the install script or `uv tool install mistral-vibe`. See the [CLI](/lessons/cli) lesson.
+
+## Code (mode)
+
+Vibe's coding mode. It reads files, edits code, runs commands, and opens pull requests under your supervision. You use it through the [CLI](#cli), the VS Code extension, [Vibe Desktop](#desktop), or [Code Web](#code-web). Compare with [Vibe Work](#vibe-work).
+
+## Code Web
+
+Vibe Code in the browser. Each [session](#session) runs in a managed cloud [sandbox](#sandbox) against GitHub or GitLab repositories in a project, and ends with a branch or pull request for you to review. You open it from the **Code** tab in Vibe. See the [Code Web](/lessons/code-web) lesson.
+
+## compaction
+
+Summarizing the conversation so far to free up space in the [context window](#context-window). Run it by hand with `/compact` (optionally with instructions for the summary), or let Vibe do it automatically when the conversation reaches the compaction threshold, which Vibe derives from the model's context window.
+
+<h2 id="config-toml">config.toml</h2>
+
+Vibe Code's settings file. The user file is `~/.vibe/config.toml`; a project can add `.vibe/config.toml`, which overrides it and loads only in a [trusted folder](#trusted-folder). Edit it by hand or with `/config`. `vibe config schema` prints every setting as a JSON schema. See the [Configuration](/lessons/configuration) lesson.
+
+## connector
+
+A Mistral-managed integration with a service such as GitHub, Gmail, Slack, Notion, or Google Drive. You connect it once from the `Connectors` page in [Vibe Work](#vibe-work), and Work and Vibe Code share the same integrations. Unlike an [MCP](#mcp) server, you don't configure it yourself. See the [Connectors](/lessons/connectors) lesson.
+
+## context window
+
+The amount of text, measured in [tokens](#token), that a [model](#model) can consider at once: your messages, file contents, tool results, instructions, and its own replies. When it fills up, Vibe [compacts](#compaction) the conversation. `/context` in the CLI shows what's using the space. See the [Context](/lessons/context) lesson.
+
+## custom instructions
+
+Persistent preferences for [Vibe Work](#vibe-work): your role, tone, and output style. Set them from `Context` > `Instructions` in the sidebar. They're Work's equivalent of [AGENTS.md](#agents-md).
+
+## Desktop
+
+The Vibe desktop app for macOS and Windows. It runs Vibe Work and Vibe Code, with **local sessions** on your machine (sharing the CLI's core engine and session logs) and **cloud sessions** in a sandbox, plus panels for files, terminal, browser, and pull requests. See the [Desktop](/lessons/desktop) lesson.
+
+## hook
+
+A shell command that Vibe runs at a point in a session: before or after a tool call, before or after the agent replies, on a notification, or when a session starts or ends. Hooks can block, rewrite, or add context. Declare them in `~/.vibe/hooks.toml` or `.vibe/hooks.toml`. See the [Hooks](/lessons/hooks) lesson.
+
+## Knowledge
+
+The [Vibe Work](#vibe-work) feature that saves what matters from your conversations, such as preferences and facts you ask it to remember, so later chats can recall it. Manage entries from `Context` > `Knowledge`.
+
+## Library
+
+A persistent collection of documents and web pages in [Vibe Work](#vibe-work). Attach it to any chat and Work searches it, answering from your data with references. Unlike a file upload, a Library lasts across chats. See the [Projects](/lessons/projects) lesson.
+
+## MCP
+
+**Model Context Protocol.** An open standard for giving an AI agent extra [tools](#tool) from another program. In Vibe Code you add a server with `vibe mcp add`, `/mcp add`, or an `[[mcp_servers]]` block in [config.toml](#config-toml), over `stdio`, `http`, or `streamable-http`. Its tools appear as `server_tool`. See the [MCP](/lessons/mcp) lesson.
+
+## model
+
+The large language model that does the thinking, such as Mistral Large 4 or Mistral Medium 3.5. In Vibe Code, pick one with `/model` (or `active_model` in [config.toml](#config-toml)); you can also add models from other providers or run local ones. See the [Models](/lessons/models) lesson.
+
+## plugin
+
+A package that bundles [skills](#skill), [MCP](#mcp) servers, [hooks](#hook), [subagents](#subagent), and more into one folder with a `plugin.json` manifest. Vibe loads plugins from `~/.vibe/plugins/` and, in trusted folders, `.vibe/plugins/`. Run `/plugins` to see what's loaded. See the [Plugins](/lessons/plugins) lesson.
+
+## programmatic mode
+
+Running the CLI non-interactively: `vibe -p "<prompt>"` runs one task and exits, with no chat interface. Tool calls that need [approval](#approval) are denied unless you pass `--auto-approve`. Flags like `--max-turns`, `--max-price`, and `--output json` make it fit for scripts and CI. See the [Automation](/lessons/automation) lesson.
+
+## project
+
+In [Vibe Work](#vibe-work), a group of chats with its own tone, instructions, and shared files. In [Code Web](#code-web), a project is the set of GitHub or GitLab repositories (from one owner) that its sessions work on. See the [Projects](/lessons/projects) lesson.
+
+## prompt
+
+What you type to Vibe: a question, a task, or an instruction. Good prompts name the outcome, the files or sources, and the constraints. In the CLI, a prompt can include `@` file mentions and start with `!` to run a shell command.
+
+## prompt injection
+
+Text in a file, web page, command output, issue, or comment that tries to redirect the agent. Treat anything the agent reads as untrusted data: scope tasks tightly, keep tool access narrow, and review what the agent did.
+
+## sandbox
+
+An isolated environment where the agent's actions can't reach your machine. Each [Code Web](#code-web) session runs in its own single-tenant cloud sandbox, which is deleted when the session ends. Agents like [auto-approve](#auto-approve) are meant for sandboxed environments only.
+
+## scheduled task
+
+A [Vibe Work](#vibe-work) prompt that runs automatically once or on a daily, weekly, monthly, or yearly schedule. Create one from `Scheduled` in the sidebar or by asking in a chat. In the CLI, `/loop` schedules a recurring prompt inside a running session instead. See the [Automations](/lessons/automations) lesson.
+
+## service account
+
+A non-human identity scoped to a Workspace, used to give scripts, CI jobs, and other workloads their own API keys instead of a person's.
+
+## session
+
+One conversation with Vibe, including its history, the agent and model it uses, and its tool calls. CLI and VS Code sessions are saved under `~/.vibe/logs/session/`; resume one with `vibe -c`, `vibe --resume`, or `/resume`. See the [Sessions](/lessons/sessions) lesson.
+
+## skill
+
+A folder with a `SKILL.md` file of instructions that Vibe loads when a task matches its description, or when you run it as `/skill-name`. Skills follow the open Agent Skills standard. In Vibe Code they live in `.vibe/skills/`, `.agents/skills/`, `~/.vibe/skills/`, or `~/.agents/skills/`; Vibe Work has its own skills under `Context` > `Skills`. See the [Skills](/lessons/skills) lesson.
+
+## slash command
+
+A command you type with a leading `/`, such as `/model`, `/compact`, or `/resume`. Type `/` to open the picker. User-invocable [skills](#skill) appear there too. See the [Cheatsheet](/cheatsheet) for the list.
+
+## smart approve
+
+A built-in agent (`smart-approve`) that classifies each tool call with a model: calls it judges safe run right away, risky ones need your confirmation. It reduces prompts but isn't a [sandbox](#sandbox). Start it with `vibe --smart-approve` or select it with `Shift+Tab`.
+
+## sub-session
+
+In Vibe Desktop, a conversation started by a main session and nested under it, so one session can coordinate several pieces of work. See the [Parallel work lesson](/lessons/parallel).
+
+## subagent
+
+An agent that the main agent starts to handle part of a task, such as exploring a codebase, so its own context stays small. You can't select a subagent yourself. Vibe ships `explore`, a read-only subagent; you define your own with `agent_type = "subagent"`.
+
+## surface
+
+Vibe School's word for a place where you use Vibe: the CLI, the VS Code extension, Vibe Desktop, Vibe Code Web, or Vibe Work. See the [Surfaces](/lessons/surfaces) lesson.
+
+## thinking level
+
+How much the [model](#model) reasons before answering: `off`, `low`, `medium`, `high`, `xhigh`, or `max`, depending on the model. Set it with `/thinking` in the CLI. In Vibe Work, the fast/think toggle, or a reasoning level in the model menu (depending on your account), plays a similar role.
+
+## token
+
+The unit models read and write in, usually a word or part of a word. [Context windows](#context-window), usage, and prices are all measured in tokens.
+
+## tool
+
+An action the agent can take: read a file (`read_file`), write or edit one (`write_file`, `edit`), run a shell command (`bash`), or call an [MCP](#mcp) server or [connector](#connector). Each tool has a permission (`always`, `ask`, or `never`) that you can set in `[tools.<name>]` in [config.toml](#config-toml).
+
+## trusted folder
+
+A folder you've told Vibe to trust. Only then does it load project-level files: `.vibe/config.toml`, `.vibe/agents/`, `.vibe/skills/`, `.vibe/hooks.toml`, and `AGENTS.md`. Vibe asks the first time you start an interactive session there, and remembers the answer in `~/.vibe/trusted_folders.toml`. `vibe --trust` trusts a folder for one run. See the [Permissions](/lessons/permissions) lesson.
+
+## Vibe Work
+
+Vibe's productivity mode at [chat.mistral.ai](https://chat.mistral.ai/work), on the web, mobile, and Desktop. You describe an outcome; Work plans the steps, uses [connectors](#connector), web search, files, and [skills](#skill), and asks before sensitive actions. See the [Work](/lessons/work) lesson.
+
+<h2 id="vibe-home">VIBE_HOME</h2>
+
+An environment variable that moves Vibe's home directory away from `~/.vibe`. It changes where Vibe looks for `config.toml`, `.env`, `agents/`, `prompts/`, `skills/`, `plugins/`, and `logs/`. For example: `export VIBE_HOME="$HOME/.config/vibe"`.
+
+## Workspace
+
+A unit inside a Mistral Organization that separates members, roles, API keys, usage, and limits. Chats, projects, skills, and connector sign-ins in Vibe Work are scoped per Workspace.
+
+## worktree
+
+A git feature that gives a repository a second checkout, on its own branch, in its own folder. Vibe uses worktrees to keep parallel tasks apart: `vibe --worktree <name>` starts a session in one under `~/.vibe/worktrees/`, and Desktop can create them for local sessions. See the [Run parallel agents](/exercises/run-parallel-agents) exercise.
+
+## YOLO
+
+Slang for approving everything without looking. In Vibe, `--yolo` is an alias for `--auto-approve`, and `safety = "yolo"` is the most permissive safety label a custom agent file can declare. The label doesn't grant any permissions: the agent's tools and permissions decide what actually runs. It colors the mode indicator, and when an administrator sets `enable_auto_approve = false`, Vibe hides every agent labeled `yolo`. See [auto-approve](#auto-approve).

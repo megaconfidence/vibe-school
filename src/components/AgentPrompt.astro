@@ -1,0 +1,163 @@
+---
+// Copyright (c) 2026 Zeke Sikelianos
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+// Modified for Vibe School.
+//
+// "Start in Vibe" card. One prompt, a compact "where are you?" selector that
+// only offers surfaces this lesson works in, and the plugin command as an
+// alternative. Lesson and exercise pages render it once at the top.
+interface Props {
+	title: string;
+	prompt?: string;
+	slug?: string;
+	kind?: "lesson" | "exercise";
+	surfaces?: string[];
+	/** Lesson order, so early lessons don't mention vibe-todo. */
+	order?: number;
+}
+
+const { title, prompt, slug, kind, surfaces, order } = Astro.props;
+---
+
+<section
+    class="agent-prompt-card launch hidden not-prose"
+    aria-labelledby="start-card-title"
+    data-lesson-title={title}
+    data-prompt={prompt}
+    data-slug={slug}
+    data-kind={kind}
+    data-order={order}
+    data-surfaces={surfaces?.join(",")}
+  >
+    <div class="launch-head flex flex-wrap items-center justify-between gap-2 px-4 py-2">
+      <h2 id="start-card-title" class="font-display text-lg">Start in Vibe</h2>
+      <label class="flex items-center gap-2 text-sm">
+        <span class="label">I'm using</span>
+        <select class="agent-prompt-where choice px-2 py-1 text-sm"></select>
+      </label>
+    </div>
+    <div class="relative">
+      <pre class="agent-prompt-text px-5 pr-24 py-4 text-sm whitespace-pre-wrap leading-relaxed overflow-x-auto"></pre>
+      <button type="button" class="agent-prompt-copy btn btn-primary absolute top-3 right-3 px-3 py-1.5 text-xs">Copy</button>
+    </div>
+    <div class="flex flex-wrap items-center gap-3 border-t hairline px-5 py-3">
+      <p class="agent-prompt-hint text-sm text-[var(--text-muted)] flex-1 min-w-[14rem]"></p>
+    </div>
+  </section>
+
+  <script is:inline>
+    (function () {
+      if (!window.school) return;
+      var studentId = window.school.getStudentId();
+      if (!studentId) return;
+
+      var LABELS = { cli: "the CLI", vscode: "VS Code", desktop: "Vibe Desktop", plugin: "the Vibe School plugin" };
+      var card = document.querySelector(".agent-prompt-card");
+      if (!card || card.dataset.ready) return;
+      card.dataset.ready = "1";
+
+      var title = card.getAttribute("data-lesson-title");
+      var custom = card.getAttribute("data-prompt");
+      var slug = card.getAttribute("data-slug");
+      var kind = card.getAttribute("data-kind") || "lesson";
+      var order = Number(card.getAttribute("data-order") || 0);
+      var lessonSurfaces = (card.getAttribute("data-surfaces") || "").split(",").filter(Boolean);
+      var pre = card.querySelector(".agent-prompt-text");
+      var copy = card.querySelector(".agent-prompt-copy");
+      var hint = card.querySelector(".agent-prompt-hint");
+      var where = card.querySelector(".agent-prompt-where");
+
+      // Only offer local surfaces this lesson works in (all three when the
+      // lesson is browser-only, since the tutor still runs locally).
+      var local = ["cli", "vscode", "desktop"].filter(function (s) {
+        return lessonSurfaces.indexOf(s) !== -1;
+      });
+      if (local.length === 0) local = ["cli", "vscode", "desktop"];
+      var options = local.concat(["plugin"]);
+      options.forEach(function (o) {
+        var opt = document.createElement("option");
+        opt.value = o;
+        opt.textContent = o === "plugin" ? "The plugin" : o === "cli" ? "CLI" : o === "vscode" ? "VS Code" : "Desktop";
+        where.appendChild(opt);
+      });
+
+      var project = order >= 8 && kind === "lesson";
+      var where2 = project ? "your vibe-todo folder" : "any folder";
+      var HINTS = {
+        cli: "Run vibe in " + where2 + " and paste this. Vibe teaches the lesson and this page updates when you're done.",
+        vscode: "Open " + where2 + " in VS Code, start a new Mistral Vibe chat, and paste this. This page updates when you're done.",
+        desktop: "Start a local session on " + where2 + " in Vibe Desktop and paste this. This page updates when you're done.",
+        plugin: "Type this in Vibe. It needs the Vibe School plugin.",
+      };
+
+      var pasted =
+        "I'm enrolled in Vibe School as " + studentId + "\n\n" +
+        (custom || "Let's work on the \"" + title + "\" " + kind + " together!") +
+        "\n\nRun `curl -s " + window.location.origin + "/llms.txt` for instructions.";
+      var plugin = slug ? "/vibe-school:" + kind + " " + slug : "/vibe-school:next";
+
+      // Render the prompt with the student ID kept on one line (a hyphen
+      // break would make it look like two words on phones).
+      function renderPrompt(text) {
+        pre.textContent = "";
+        var parts = text.split(studentId);
+        parts.forEach(function (part, i) {
+          pre.appendChild(document.createTextNode(part));
+          if (i < parts.length - 1) {
+            var id = document.createElement("span");
+            id.className = "whitespace-nowrap";
+            id.textContent = studentId;
+            pre.appendChild(id);
+          }
+        });
+      }
+
+      function show(which) {
+        where.value = which;
+        renderPrompt(which === "plugin" ? plugin : pasted);
+        hint.textContent = HINTS[which] + " ";
+        if (which === "plugin") {
+          var a = document.createElement("a");
+          a.className = "theme-link";
+          a.href = "/plugin";
+          a.textContent = "Install it.";
+          hint.appendChild(a);
+        }
+        copy.textContent = "Copy";
+      }
+
+      where.addEventListener("change", function () {
+        var v = where.value;
+        if (v === "plugin") {
+          window.school.write("school:launch", "plugin");
+          show("plugin");
+        } else {
+          window.school.write("school:launch", "prompt");
+          window.school.setSurface(v);
+        }
+      });
+      document.addEventListener("school:surface", function (e) {
+        if (local.indexOf(e.detail.surface) !== -1 && where.value !== "plugin") show(e.detail.surface);
+      });
+
+      copy.addEventListener("click", function () {
+        window.school.copy(where.value === "plugin" ? plugin : pasted).then(function () {
+          copy.textContent = "Copied";
+          window.school.toast("Copied. Paste it into " + LABELS[where.value] + ".");
+          setTimeout(function () { copy.textContent = "Copy"; }, 1600);
+        }, function () {
+          window.school.toast("Couldn't copy. Select the text and copy it.");
+        });
+      });
+
+      // Default: the plugin if the student chose it before, else their
+      // surface if this lesson supports it, else the first one that does.
+      var saved = window.school.getSurface();
+      var first = window.school.read("school:launch") === "plugin"
+        ? "plugin"
+        : local.indexOf(saved) !== -1 ? saved : local[0];
+      show(first);
+      card.classList.remove("hidden");
+    })();
+  </script>

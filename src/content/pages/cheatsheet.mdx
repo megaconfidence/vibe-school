@@ -1,0 +1,229 @@
+---
+title: "Cheatsheet"
+slug: cheatsheet
+description: "CLI flags, slash commands, keyboard shortcuts, file locations, and config snippets for Vibe Code at a glance."
+---
+
+A quick reference for Vibe Code, checked against Vibe 3.1.3 and the [official docs](https://docs.mistral.ai/vibe/code/overview). Run `vibe --help` or type `/help` in a session for the live list on your machine.
+
+## Prompt prefixes
+
+| Prefix | What it does |
+| --- | --- |
+| `@path` | Attach a file to your prompt, with autocompletion. Text files are read into context, folders stay as a path, images become image attachments (e.g. `Explain @src/agent.py`) |
+| `!command` | Run a shell command directly, bypassing the agent. The agent sees the command and its output with your next message (e.g. `!git status`) |
+| `/command` | Run a [slash command](/glossary#slash-command) or a user-invocable [skill](/lessons/skills) |
+
+## CLI flags
+
+| Flag | What it does |
+| --- | --- |
+| `vibe "prompt"` | Start an interactive session with a first prompt |
+| `-p`, `--prompt [TEXT]` | [Programmatic mode](/glossary#programmatic-mode): run one task and exit. With no text, reads the prompt from stdin |
+| `--prompt-file PATH` | Programmatic mode with the prompt read from a file |
+| `-c`, `--continue` | Continue this terminal's last session in this folder, else the folder's most recent |
+| `--resume [ID]` | Resume a session by ID, or pick one from a list |
+| `--agent NAME` | Start with an agent: `ask`, `accept-edits`, `smart-approve`, `auto-approve`, or a custom one |
+| `--auto-approve`, `--yolo` | Approve every tool call without asking |
+| `--smart-approve` | Auto-run the calls a classifier judges safe, ask for risky ones |
+| `--trust` | Trust the working directory for this run only |
+| `--worktree [NAME]` | Run inside a git [worktree](/glossary#worktree) under `~/.vibe/worktrees/` |
+| `--workdir DIR` | Change to this directory before running |
+| `--add-dir DIR` | Give the agent access to another directory (repeatable) |
+| `--enabled-tools TOOL` | Enable specific tools; in programmatic mode, disables all others (repeatable) |
+| `--disabled-tools TOOL` | Disable specific tools (repeatable) |
+| `--output text\|json\|streaming` | Output format in programmatic mode |
+| `--max-turns N` | Cap assistant turns (programmatic mode) |
+| `--max-price DOLLARS` | Cap the run's cost, subagents included (programmatic mode, indicative) |
+| `--max-tokens N` | Cap total prompt and completion tokens (programmatic mode) |
+| `--time-limit SECONDS` | Stop the run after a deadline |
+| `--output-dir DIR` | Write `export.json` and a copy of the session to `DIR` |
+| `--model ALIAS` | Use a model for this run without saving it (programmatic mode) |
+| `--thinking LEVEL` | Set the thinking level for this run (programmatic mode) |
+| `--system-prompt-file PATH` | Replace Vibe's own instructions with the file's text (programmatic mode) |
+| `--setup` | Set up your API key and exit |
+| `-v`, `--version` | Show the version |
+| `vibe update` | Check for an update now and offer to install it |
+| `vibe mcp add` / `vibe mcp remove` | Add or remove an [MCP](/lessons/mcp) server without starting a session |
+| `vibe config schema` | Print the JSON schema of `config.toml` |
+
+## Slash commands (CLI)
+
+Type `/` to open the picker. Skills and plugins add their own commands.
+
+| Command | What it does |
+| --- | --- |
+| `/help` | Show help |
+| `/model` | Select the active model (`Enter` saves it, `s` uses it for this session only) |
+| `/thinking` | Select the thinking level |
+| `/config` | Edit settings |
+| `/reload` | Reload configuration, agent instructions, and skills from disk |
+| `/context` | Show what fills the context window |
+| `/compact [instructions]` | Summarize the conversation to free up context |
+| `/clear`, `/new` | Start a new conversation |
+| `/resume`, `/continue` | Browse, resume, or delete saved sessions |
+| `/rename` | Rename the current session |
+| `/rewind` | Go back to a previous message (or press `Escape` twice) |
+| `/branch`, `/fork` | Fork the conversation into a new resumable session |
+| `/retry [instructions]` | Retry a failed or interrupted response |
+| `/copy` | Copy the last agent message |
+| `/status` | Agent statistics, model and provider, credential source |
+| `/whoami` | Signed-in user, workspace, plan, credential source |
+| `/mcp`, `/connectors` | Browse MCP servers and connectors; `add`, `status`, `login`, `logout` |
+| `/skills` | Browse skills and turn them on or off |
+| `/plugins` | Show this session's plugins |
+| `/reload-plugins` | Re-pin plugins and report what changed |
+| `/pr` | Show this session's pull requests (`c` first failing check, `f` draft a fix) |
+| `/loop` | Schedule a recurring prompt in plain language |
+| `/goal` | Set a goal Vibe keeps working on across turns |
+| `/trusted-folders` | Browse and change trusted folder decisions |
+| `/voice` | Turn voice mode on or off |
+| `/theme` | Select a theme |
+| `/paste-image` | Paste an image from the clipboard (macOS only) |
+| `/log` | Show the path to the current log file |
+| `/release-notes`, `/whatsnew` | Browse release notes |
+| `/exit` | Quit |
+
+The VS Code extension supports a subset: `/help`, `/compact`, `/reload`, `/log`, `/proxy-setup`, `/leanstall`, `/unleanstall`, `/data-retention`, `/mcp` (`status`, `login`, `logout`), and `/retry`. Change the model, thinking level, and sessions from the panel UI.
+
+## Keyboard shortcuts
+
+### CLI
+
+| Shortcut | What it does |
+| --- | --- |
+| `Enter` | Send the message (while the agent works, queue it) |
+| `Ctrl+J`, `Alt+Enter`, `Shift+Enter` | New line |
+| `Shift+Tab` | Cycle agents |
+| `Escape` | Interrupt, or close a dialog |
+| `Escape` twice | Rewind to a previous message (clears the input if it has text) |
+| `Ctrl+C` | Copy selection, clear input, deny an approval, or interrupt; twice to quit |
+| `Ctrl+D` | Twice on an empty input to quit |
+| `Ctrl+O` | Toggle tool output |
+| `Ctrl+G` | Edit the input in your external editor |
+| `Ctrl+R` | Search prompt history |
+| `Ctrl+T` | Start or stop voice recording (voice mode on) |
+| `Ctrl+V` | Paste an image from the clipboard (macOS) |
+| `Cmd+\` or `Alt+\` | Toggle the todo panel |
+| `Shift+Up` / `Shift+Down` | Scroll the chat |
+| `Ctrl+Z` | Suspend (macOS and Linux) |
+
+### Approvals (CLI)
+
+| Key | What it does |
+| --- | --- |
+| `1` or `y` | Allow once |
+| `2` | Allow for the rest of the session |
+| `3` | Always allow |
+| `4`, `n`, or `Escape` | Deny |
+
+### VS Code extension
+
+`Mod` is `Cmd` on macOS and `Ctrl` on Windows and Linux.
+
+| Shortcut | What it does |
+| --- | --- |
+| `1` / `2` / `3` / `4` | On an approval card: Allow once / Allow for remainder of this session / Always allow / Deny |
+| `Mod+N` | New conversation |
+| `Mod+Shift+L` | Switch between chat and session list |
+| `Mod+[` / `Mod+]` | Previous / next active session |
+| `Shift+Tab` | Cycle the session mode (agent) |
+| `Escape` | Cancel or blur the input |
+
+## File locations
+
+`~/.vibe` moves if you set [`VIBE_HOME`](/glossary#vibe-home).
+
+### User (every project)
+
+| Path | What it holds |
+| --- | --- |
+| `~/.vibe/config.toml` | User settings |
+| `~/.vibe/AGENTS.md` | Your personal instructions |
+| `~/.vibe/.env` | API keys when no OS keyring is available. Don't share it |
+| `~/.vibe/hooks.toml` | User hooks |
+| `~/.vibe/agents/*.toml` | Custom agents |
+| `~/.vibe/prompts/*.md` | Custom system prompts |
+| `~/.vibe/skills/<name>/SKILL.md` | User skills (also `~/.agents/skills/`) |
+| `~/.vibe/plugins/<plugin>/` | User plugins |
+| `~/.vibe/trusted_folders.toml` | Trusted folder decisions |
+| `~/.vibe/logs/vibe.log` | Main log |
+| `~/.vibe/logs/session/` | Saved sessions |
+| `~/.vibe/worktrees/` | Worktrees made by `--worktree` |
+
+### Project (trusted folders only)
+
+| Path | What it holds |
+| --- | --- |
+| `AGENTS.md` | Project instructions (subfolder `AGENTS.md` files load lazily) |
+| `.vibe/config.toml` | Project settings, override the user file |
+| `.vibe/hooks.toml` | Project hooks |
+| `.vibe/agents/*.toml` | Project agents |
+| `.vibe/prompts/*.md` | Project system prompts |
+| `.vibe/skills/<name>/SKILL.md` | Project skills (also `.agents/skills/`) |
+| `.vibe/plugins/<plugin>/` | Project plugins |
+
+## Config snippets
+
+Set the default agent:
+
+```toml
+default_agent = "smart-approve"
+```
+
+Allow and block shell commands:
+
+```toml
+[tools.bash]
+permission = "ask"
+allowlist = ["git status", "pnpm test"]
+denylist = ["rm -rf"]
+```
+
+Set a per-tool permission (`always`, `ask`, or `never`):
+
+```toml
+[tools.write_file]
+permission = "ask"
+```
+
+Add a local MCP server:
+
+```toml
+[[mcp_servers]]
+name = "fetch_server"
+transport = "stdio"
+command = "uvx"
+args = ["mcp-server-fetch"]
+```
+
+Filter skills:
+
+```toml
+enabled_skills = ["code-review", "test-*"]
+disabled_skills = ["experimental-*"]
+```
+
+Turn off pull request tracking:
+
+```toml
+enable_pr_monitoring = false
+```
+
+Any setting can also come from an environment variable with the `VIBE_` prefix, such as `VIBE_ACTIVE_MODEL`.
+
+Hooks don't go in `config.toml`. They live in their own file, `~/.vibe/hooks.toml` or `.vibe/hooks.toml`. This one formats Python after each edit:
+
+```toml
+# ~/.vibe/hooks.toml or .vibe/hooks.toml (not config.toml)
+[[hooks]]
+name = "format-python"
+type = "post_tool"
+match = "re:edit|write_file"
+command = "python ./.vibe/hooks/format.py"
+```
+
+## Where to look next
+
+- [Glossary](/glossary) for the terms used here.
+- [Commands and shortcuts](https://docs.mistral.ai/vibe/code/cli/commands-shortcuts) and the [configuration reference](https://docs.mistral.ai/vibe/code/cli/configuration-reference) in the official docs.

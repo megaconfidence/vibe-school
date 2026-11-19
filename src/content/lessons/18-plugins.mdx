@@ -1,0 +1,269 @@
+---
+title: "Plugins"
+slug: plugins
+description: "Bundle skills, MCP servers, and hooks into a plugin you can share and manage."
+order: 18
+track: code
+surfaces: [cli, vscode, desktop]
+quiz: true
+goals:
+  - "Understand what a plugin can bundle"
+  - "Write a valid plugin.json manifest"
+  - "Package a skill as a project plugin"
+  - "Load, reload, and disable plugins on each surface"
+minutes: 20
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. What a plugin is: a directory that bundles extensions (skills, MCP
+     servers, hooks, knowledge folders, subagents, libraries, connector
+     requirements) so a whole setup can be shared or installed without
+     merging it into your own config. Vibe reads the Agent Plugins 1.0
+     format. Plugin support is experimental and the format may change.
+     Vibe ships one built-in plugin, `vibe`, with skills such as
+     /vibe:skill-creator, /vibe:worktree and /vibe:import (which imports
+     a setup from Claude Code, Codex or OpenCode).
+
+  2. Locations and the manifest: each subdirectory of
+     ~/.vibe/plugins/ (user, always loaded) or ./.vibe/plugins/
+     (project, trusted folders only) is one plugin. Project beats user
+     beats built-in on a name clash. plugin.json is the only required
+     file: "$schema" must be exactly
+     https://agent-plugins.org/schemas/1.0.0/plugin.schema.json and
+     "name" is 1 to 64 lowercase letters, digits, "." and "-", starts and
+     ends with a letter or digit, and has no "--" or "..".
+     Without the "ai.mistral.vibe" extension (with "schemaVersion": 1)
+     Vibe loads only skills/ and mcp.json; the extension turns on
+     ai.mistral.vibe/hooks.toml, knowledge, agents, libraries.json and
+     connectors.json.
+
+  3. Naming and components: plugin skills live in
+     skills/<skill>/SKILL.md (frontmatter name must match the folder) and
+     are exposed as <plugin-name>:<skill-name>, so a user-invocable skill
+     runs as /<plugin-name>:<skill-name>. MCP servers go in mcp.json with
+     its own exact $schema and an mcpServers key. Plugin hooks are
+     prefixed with the plugin name. Vibe also loads Claude Code, Codex,
+     Kimi Code and OpenCode plugins, but only their skills and MCP
+     servers.
+
+  4. Managing plugins: in the CLI, /plugins browses the session's
+     plugins (with a "Not loaded" section explaining failures) and
+     /reload-plugins re-reads them; plain /reload does not reload
+     plugins. Sessions pin plugin content at start, so edits apply after
+     /reload-plugins or in a new session. In the VS Code extension, a
+     new or changed plugin only loads after "Developer: Reload Window"
+     (or restarting VS Code); a new session or /reload isn't enough,
+     because the extension keeps its agent process running. If the
+     student is in VS Code, tell them this before checking that the
+     plugin loaded. Turn one off with
+     disabled_plugins = ["name"] in config.toml; enabled_plugins turns
+     on plugins that ship with "defaultEnabled": false. Review a plugin
+     like code before installing: it can start local MCP servers.
+
+  Then the hands-on part, in vibe-todo (if the folder is missing, fetch
+  the starter as in the Configuration lesson; if
+  .vibe/skills/code-review/SKILL.md is missing, write a short version
+  first, as in the Skills lesson). Package the code-review skill as a
+  project plugin, so it can later be copied to other repos or to
+  ~/.vibe/plugins/ as one folder.
+
+  1. Create vibe-todo/.vibe/plugins/todo-review/plugin.json:
+       {
+         "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+         "name": "todo-review",
+         "version": "1.0.0",
+         "description": "Code review checklist for the vibe-todo CLI."
+       }
+     The student may pick another name: lowercase letters, digits, "."
+     and "-", not a reserved namespace such as vibe.
+
+  2. Copy (don't move) .vibe/skills/code-review/ to
+     .vibe/plugins/todo-review/skills/code-review/. Keep the project
+     skill: the reviewer subagent from the Agents lesson loads it by the
+     name code-review. Inside the plugin it is exposed as
+     todo-review:code-review.
+
+  3. Check it loads. CLI: /reload-plugins (or a new session), then
+     /plugins: todo-review should be listed with one skill and not under
+     Not loaded. To run it, type `/todo-review:code-review` in a
+     vibe-todo session. It works under any primary agent, including
+     builder: on primary agents, enabled_skills and disabled_skills
+     don't filter plugin skills (disabled_plugins and enabled_plugins
+     control them). Subagents are different: a subagent's
+     enabled_skills or disabled_skills does filter plugin skills by
+     their full <plugin>:<skill> name, so the reviewer subagent (which
+     only allows code-review) can't load todo-review:code-review unless
+     "todo-review:*" is added to its list. VS Code (new conversation with Mod+N, agent set to
+     Accept Edits in the Session mode menu): type /todo-review:code-review
+     in the slash-command picker. Desktop (New Session in the Code tab):
+     ask for the todo-review:code-review skill by name.
+
+  4. Commit: `git add .vibe && git commit -m "Package code-review as a plugin"`.
+
+  Verify completion by running, in vibe-todo,
+  python3 -c "import json;print(json.load(open('.vibe/plugins/todo-review/plugin.json')))"
+  (adjust the folder name if they chose another; use `python` on
+  Windows) and checking that it parses, that "name" matches the folder
+  name and is valid, and that "$schema" is the 1.0.0 URL; then check
+  that skills/code-review/SKILL.md exists in the plugin with a
+  frontmatter name of code-review. Then ask the student to confirm the
+  plugin appears in /plugins (CLI) or that /todo-review:code-review ran
+  (VS Code, Desktop). If the CLI is installed, you can also confirm with
+  `vibe --trust -p "List your available skills" --max-turns 3`
+  in vibe-todo. Report artifacts: plugin todo-review.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Your `vibe-todo` project now has [skills](/lessons/skills), [agents](/lessons/agents), an [MCP server](/lessons/mcp) and a [hook](/lessons/hooks). A [plugin](/glossary#plugin) packs pieces like these into one folder that you can hand to a teammate or commit to a repo. Installing it adds its pieces to every session without touching anyone's own `config.toml`.
+
+<div class="callout">
+Plugin support is <strong>experimental</strong>. The format and features can change, and an update can break existing plugins.
+</div>
+
+## In your project
+
+This lesson packages the `code-review` skill as a project plugin in `vibe-todo`, so it can travel to other repositories as one folder:
+
+```text
+vibe-todo/
+└── .vibe/
+    ├── skills/code-review/SKILL.md      # stays: the reviewer subagent uses it
+    └── plugins/
+        └── todo-review/
+            ├── plugin.json              # new: the manifest
+            └── skills/
+                └── code-review/SKILL.md # new: a copy, run as /todo-review:code-review
+```
+
+
+## Where plugins live
+
+Each subdirectory of a plugins folder is one plugin:
+
+| Scope | Location | Loaded |
+|---|---|---|
+| Project | `./.vibe/plugins/<plugin>/` | Only in a [trusted folder](/glossary#trusted-folder) |
+| User | `~/.vibe/plugins/<plugin>/` | Always |
+| Built-in | Shipped with Vibe | Always |
+
+When two plugins share a name, project beats user, which beats built-in. Vibe's built-in `vibe` plugin provides skills such as `/vibe:skill-creator`, `/vibe:worktree`, and `/vibe:import`, which brings your setup over from Claude Code, Codex, or OpenCode. In Vibe 3.1.3 it also includes `/vibe:create-plugin`, which scaffolds a new plugin for you.
+
+## Layout
+
+Only `plugin.json` is required:
+
+```text
+release-tools/
+├── plugin.json            # Manifest (required)
+├── mcp.json               # MCP servers
+├── libraries.json         # Python and Node libraries (Vibe extension)
+├── connectors.json        # Required connectors (Vibe extension)
+├── skills/
+│   └── changelog/
+│       └── SKILL.md
+└── ai.mistral.vibe/       # Vibe-only components (Vibe extension)
+    ├── hooks.toml
+    ├── knowledge/
+    └── agents/
+```
+
+## The manifest
+
+```json
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "release-tools",
+  "version": "1.0.0",
+  "description": "Skills for cutting releases.",
+  "extensions": {
+    "ai.mistral.vibe": {
+      "schemaVersion": 1,
+      "displayName": "Release tools"
+    }
+  }
+}
+```
+
+- `$schema` must be exactly the 1.0.0 URL. Vibe rejects other versions.
+- `name` is 1 to 64 characters: lowercase letters, digits, `.` and `-`. It starts and ends with a letter or digit, with no `--` or `..`.
+- `description` is shown in `/plugins` and listed in the agent's context, so say what the plugin is for.
+- The `ai.mistral.vibe` extension is optional. **Without it, Vibe loads only `skills/` and `mcp.json`.** Add it to ship hooks, knowledge, subagents, libraries, or connectors.
+
+## What a plugin can ship
+
+| Component | Where | Exposed as |
+|---|---|---|
+| Skills | `skills/<skill>/SKILL.md` | `<plugin>:<skill>`, run with `/<plugin>:<skill>` |
+| MCP servers | `mcp.json` (with its own 1.0.0 `$schema` and `mcpServers`) | Listed in `/mcp`, tagged with the plugin |
+| Hooks | `ai.mistral.vibe/hooks.toml` | Prefixed, like `release-tools:audit-bash` |
+| Knowledge | `ai.mistral.vibe/knowledge/<name>/KNOWLEDGE.md` | A read-only folder the agent reads when relevant |
+| Subagents | `ai.mistral.vibe/agents/<name>.toml` | `<plugin>:<name>` |
+| Libraries | `libraries.json` | Added to `PYTHONPATH` and `NODE_PATH` |
+| Connectors | `connectors.json` | Checked against your account, not connected |
+
+Every path must stay inside the plugin folder. The [plugins documentation](https://docs.mistral.ai/vibe/code/cli/plugins#components) lists the fields for each component.
+
+## A real example to compare
+
+This course ships its own plugin: [Vibe School](/plugin) ([zip](/plugin/vibe-school.zip)). It's a `plugin.json` without the `ai.mistral.vibe` extension plus a `skills/` folder, exactly the shape of `todo-review`, and its skills run as `/vibe-school:next`, `/vibe-school:status`, and so on. Open its `plugin.json` next to yours.
+
+## Manage plugins
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+| Command | What it does |
+|---|---|
+| `/plugins` | Browse this session's plugins: version, scope, components. Anything that failed shows under **Not loaded** with the reason. Press `r` to reload. |
+| `/reload-plugins` | Re-read the plugin folders and report what was added (`+`), removed (`-`), or updated (`~`). |
+
+`/reload` doesn't reload plugins. A session **pins** each plugin's content when it starts, so editing a plugin on disk changes nothing until you run `/reload-plugins` or start a new session.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The extension reads the same `~/.vibe/plugins/` and project `.vibe/plugins/` folders. Its slash commands don't include `/plugins`, so use the CLI to check what loaded.
+
+After you install or change any plugin, run **Developer: Reload Window** from the Command Palette (or restart VS Code). A new conversation or `/reload` isn't enough: the extension keeps its agent running in the background, and only a window reload makes it read the plugin folders again. Then type `/` and look for the plugin's skills.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Desktop local sessions share the CLI's core engine and session logs. Use the CLI's `/plugins` to check that a plugin loads, then start a new Desktop session.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+To turn a plugin off without deleting it, list it in `config.toml`:
+
+```toml
+disabled_plugins = ["release-tools"]
+```
+
+A plugin that sets `"defaultEnabled": false` stays off until you add it to `enabled_plugins`. The built-in `vibe` plugin can't be turned off.
+
+<div class="callout">
+On a primary agent, <code>enabled_skills</code> and <code>disabled_skills</code> don't filter plugin skills: <code>disabled_plugins</code> and <code>enabled_plugins</code> do. So <code>/todo-review:code-review</code> works inside <code>builder</code> even though the builder sets <code>enabled_skills = ["new-command", "code-review"]</code>. Subagents are stricter: a subagent's skill lists filter plugin skills by their full <code>&lt;plugin&gt;:&lt;skill&gt;</code> name, so the <code>reviewer</code> subagent only sees <code>todo-review:code-review</code> if you add <code>"todo-review:*"</code> to its <code>enabled_skills</code>.
+</div>
+
+## Plugins for other agents
+
+Vibe also loads plugins written for other coding agents, but only their **skills and MCP servers**:
+
+| Format | Marker |
+|---|---|
+| Claude Code | `.claude-plugin/plugin.json` |
+| Codex | `.codex-plugin/plugin.json` |
+| Kimi Code | `kimi.plugin.json` or `.kimi-plugin/plugin.json` |
+| OpenCode | `.opencode/` content or `opencode.json` |
+
+Hooks in Claude Code or Kimi plugins don't run. Write new plugins in the Agent Plugins 1.0 format.
+
+<div class="callout">
+A plugin can start local MCP servers and add tools and instructions to your sessions. <strong>Review it like code before you install it.</strong> Plugins don't change approvals: their tools go through the same <a href="/lessons/permissions">permissions</a> as any other tool.
+</div>
+
+Learn more in the [plugins documentation](https://docs.mistral.ai/vibe/code/cli/plugins).

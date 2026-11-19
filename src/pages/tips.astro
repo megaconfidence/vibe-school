@@ -1,0 +1,67 @@
+---
+// Copyright (c) 2026 Zeke Sikelianos
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+// Modified for Vibe School.
+export const prerender = true;
+
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Tips" description="Practical tips for getting better results with Vibe and Vibe School.">
+  <div class="mb-8 rise" style="--d:0">
+    <a href="/" class="label hover:text-[var(--text)]">&larr; Course</a>
+  </div>
+
+  <header class="mb-8 rise" style="--d:1">
+    <h1 class="font-display text-4xl sm:text-5xl leading-[1.02] tracking-[-0.02em]">Tips</h1>
+    <p class="text-[var(--text-muted)] mt-2">Practical ways to get better results with Vibe.</p>
+  </header>
+
+  <article class="prose dark:prose-invert max-w-none">
+    <h2>Steer the course</h2>
+    <p>Vibe School is just Vibe following instructions, so you can change how it teaches. Ask for what you want:</p>
+    <ul>
+      <li>"Skip the explanations and just make the changes."</li>
+      <li>"Quiz me on this lesson." (or "Stop quizzing me.")</li>
+      <li>"Let's recap what we've covered so far."</li>
+      <li>"Let's do this lesson in French."</li>
+      <li>"Show me how this works in the VS Code extension instead."</li>
+    </ul>
+
+    <h2>Describe the outcome, not the steps</h2>
+    <p>
+      Say what "done" looks like: "Add a <code>--json</code> flag to the export command, with a test, and make sure the test suite passes." Vibe plans the steps, and you review the result.
+    </p>
+
+    <h2>Point at the right context</h2>
+    <p>
+      Type <code>@</code> to mention a file so Vibe reads it right away. Paste the exact error message or stack trace. In VS Code, select code before you ask about it. Less guessing means better answers and a smaller context.
+    </p>
+
+    <h2>Start Vibe in the right folder</h2>
+    <p>
+      Vibe works relative to the folder you start it in, and asks before it touches files outside it. To work across several projects, start it in their parent folder, or add more folders with <code>vibe --add-dir</code>.
+    </p>
+
+    <h2>Let it check its own work</h2>
+    <p>
+      Ask Vibe to run the tests, the linter, or the app after a change. Put those commands in your project's <code>AGENTS.md</code> so it does this without being asked.
+    </p>
+
+    <h2>Go back instead of arguing</h2>
+    <p>
+      If a turn went the wrong way, press <code>Esc</code> twice (or run <code>/rewind</code>) to go back to an earlier message and try a different prompt. It's usually faster than correcting a bad path. Use <code>/branch</code> to keep both versions.
+    </p>
+
+    <h2>Keep the context lean</h2>
+    <p>
+      Long sessions fill the context window. Check it with <code>/context</code>, summarize with <code>/compact</code>, and start fresh with <code>/clear</code> when you switch tasks.
+    </p>
+
+    <h2>Turn repeated prompts into skills</h2>
+    <p>
+      If you type the same instructions often, make them a <a href="/lessons/skills">skill</a>. If you want a different role with its own permissions, make a <a href="/lessons/agents">custom agent</a>.
+    </p>
+  </article>
+</Base>

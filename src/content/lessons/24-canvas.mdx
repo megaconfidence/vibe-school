@@ -1,0 +1,154 @@
+---
+title: "Canvas"
+slug: canvas
+description: "Upload files to Vibe Work and build documents, spreadsheets, mini apps, and images."
+order: 24
+track: work
+surfaces: [work]
+quiz: true
+goals:
+  - "Upload files and ask questions about them"
+  - "Edit, version, and export work in Canvas"
+  - "Analyze data with Code Interpreter"
+  - "Build spreadsheets, mini apps, and images"
+minutes: 20
+checklist:
+  - "Make a small CSV with columns month, region, units, revenue (or use any spreadsheet you have)"
+  - "Open chat.mistral.ai in Work, click + then Upload Files, and add the CSV"
+  - "Ask: Analyze the attached CSV, open it in a canvas as a table, then chart revenue by month for each region"
+  - "In Canvas, select a passage or cell and change it with Ask Work or by hand"
+  - "Use the version arrows to compare two versions"
+  - "Export the result, for example as CSV or Excel"
+agentInstructions: |
+  Cover these four topics:
+
+  1. Files: drag files into the chat or use + > Upload Files (several at
+     once, or a folder). Work keeps them in context for the whole chat.
+     Supported formats include PDF, Word, PowerPoint, Excel, CSV, images,
+     text and Markdown, JSON/YAML/XML, code files, email (EML, MSG), and
+     audio, which Work transcribes. Answers come from the uploaded
+     content. Uploads last for one chat; Libraries persist (see
+     {origin}/lessons/projects).
+
+  2. Canvas: the built-in editor where Work produces and refines text,
+     data, code, and presentations. It opens when Work decides it's
+     useful, or when the student asks for it ("open this in a canvas") or
+     types /canvas. The live + menu has no Tools entry (it has Upload
+     Files, Skills, Knowledge, Connectors, Projects, Libraries, Workflows
+     and Reset input), so never tell the student to enable Canvas or
+     image generation from a Tools menu. You can edit directly, open several Canvases as tabs,
+     move between versions and see tracked changes, select text to use the
+     Ask Work field, preview HTML, React, Mermaid, and Marp, and export
+     (for example slides as PowerPoint or a table as CSV/Excel).
+
+  3. Code Interpreter (paid plans only): a sandbox that runs Python and
+     TypeScript with no internet access, with pandas, numpy, and
+     matplotlib preinstalled. Describe the analysis in plain language and
+     it returns tables, charts, or files. It can't fetch URLs; upload the
+     file instead. Uploaded files are available for the current
+     conversation only. Use it for charts from real data, not image
+     generation.
+
+  4. Other Canvas outputs: spreadsheets (paid plans only) with multiple
+     sheets and formulas, exportable as .xlsx or opened in Google Sheets;
+     mini apps, self-contained React apps that run in Canvas, with a
+     preview and code view, a ZIP download, and a public share link; and
+     image generation (just ask for an image; uses Black Forest Labs
+     models, with daily limits by plan). Shared links
+     expose only the spreadsheet or app, not the chat.
+
+  Then do the hands-on part. Create a small sample CSV on the student's
+  machine at ~/vibe-school/sales.csv (create the folder if needed) with a
+  header row month,region,units,revenue and about 12 to 24 rows of
+  plausible data across at least two regions and several months. Tell the
+  student the full path. Then have them, at https://chat.mistral.ai:
+  upload the CSV with + > Upload Files, and ask something like "Analyze the attached CSV, open it in Canvas as a
+  table, then chart revenue by month for each region." If they're on a
+  free plan without Code Interpreter, have them ask for the table and a
+  written summary in Canvas instead of a chart.
+
+  Verify completion by checking that ~/vibe-school/sales.csv exists and
+  has a header row plus data rows (for example with head and wc -l, or
+  Get-Content on Windows). Then
+  ask the student to confirm Work opened the data in Canvas and produced
+  the chart (or, on a free plan, the table and summary), and to describe
+  one insight it found.
+---
+
+
+Vibe Work isn't only a chat. Bring in files, and Work can produce real outputs: edited documents, data tables, charts, spreadsheets, small apps, and images. Most of that happens in [Canvas](/glossary#canvas), the editor that opens next to the chat. This lesson shows you each piece, then has you turn a CSV into a chart.
+
+## Files
+
+Drag files into the chat, or click `+`, select `Upload Files`, and pick them. You can upload several at once or a whole folder, and Work keeps them in context for the rest of the chat.
+
+| Category | Formats |
+|---|---|
+| Documents | PDF, Word, PowerPoint, ODT, EPUB, RTF |
+| Spreadsheets | Excel, CSV, ODS, Numbers |
+| Images | PNG, JPEG, WebP, GIF |
+| Text and data | TXT, Markdown, RST, LaTeX, JSON, JSONL, XML, YAML |
+| Code | Python, JavaScript/TypeScript, Go, Rust, SQL, and more |
+| Email | EML, MSG |
+| Audio | Recordings are transcribed, then answered from the transcript |
+
+Answers come from your files, not general knowledge. Use descriptive filenames and name the file in your prompt when you have several.
+
+<div class="callout">
+Uploads last for one chat. For documents you query again and again, use a Library or project files (see <a href="/lessons/projects">Projects</a>). Using Work in Desktop? You can also add local folders as context with <code>+</code> then <code>Folders</code>.
+</div>
+
+## Canvas
+
+You don't need to switch Canvas on. It opens when Work decides it's useful, for example when you ask for a document, a table, or slides. To open it yourself, ask Vibe to *"open it in a canvas"*, or type `/canvas`.
+
+In Canvas you can:
+
+- **Edit directly**: click anywhere to fix text, code, or data by hand.
+- **Ask Work**: select a passage to get the `Ask Work` field (*"make this more concise"*). Only the selection changes.
+- **Track versions**: use the arrows to move between versions, see what changed, and restore an old one.
+- **Preview**: the eye icon renders HTML, React components, [Mermaid](https://mermaid.js.org/) diagrams, and [Marp](https://marp.app/) slides.
+- **Export**: save a deck as PowerPoint or a table as CSV or Excel.
+
+Open several Canvases in one chat and they appear as tabs.
+
+## Code Interpreter
+
+Code Interpreter runs Python and TypeScript in a sandbox inside Work. You describe what you want; Work writes and runs the code:
+
+```text
+Load this CSV and show the top 5 rows, then plot sales by month.
+```
+
+The sandbox has no internet access, and pandas, numpy, and matplotlib are preinstalled. It can't fetch files from URLs, so upload the file instead.
+
+<div class="callout">
+Code Interpreter and spreadsheets are available on <strong>paid plans only</strong>. On a free plan, Work can still read a CSV and show it as a table in Canvas.
+</div>
+
+## Spreadsheets
+
+Ask for a spreadsheet in plain language (*"Build a project tracker with task, owner, status, due date, and priority columns"*). Work builds sheets with formulas, shown in the Canvas panel. Click any cell to edit, click `Expand` to open the full Canvas view, then:
+
+- Click the download icon to export an `.xlsx` file.
+- Click `Open in Google Sheets` to continue there. Changes don't sync back.
+
+## Mini apps
+
+Mini apps are self-contained React apps that run in Canvas:
+
+```text
+Build a Pomodoro timer with start, pause, and reset controls.
+```
+
+The app is interactive right away. Toggle between preview (eye icon) and code (`<>` icon), refine it in chat, and click the download icon for a ZIP of the source.
+
+## Image generation
+
+Ask for an image in plain language, and describe the subject, style, and aspect ratio. Follow up in the same chat to edit, or upload an image to a new chat and describe changes. Daily limits depend on your plan.
+
+<div class="callout">
+For charts from real data, use Code Interpreter, not image generation. Spreadsheets and mini apps can be shared with <code>Share</code> then <code>Link accessible to anyone</code>. The link shows only the spreadsheet or app, never your chat messages.
+</div>
+
+Learn more in the docs: [Files and Canvas](https://docs.mistral.ai/vibe/work/web/files-and-canvas), [Code Interpreter](https://docs.mistral.ai/vibe/work/web/code-interpreter), [Spreadsheets](https://docs.mistral.ai/vibe/work/web/spreadsheets), [Mini apps](https://docs.mistral.ai/vibe/work/web/mini-apps), and [Image generation](https://docs.mistral.ai/vibe/work/web/image-generation).

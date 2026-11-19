@@ -1,0 +1,146 @@
+---
+// "Which surface for this task?" Three questions, one recommendation.
+// Pure client-side; the rules mirror the Surfaces lesson.
+import { SURFACE_ICONS, SURFACE_LABELS } from "../lib/tracks";
+
+const questions = [
+	{
+		id: "work",
+		q: "What's the task?",
+		options: [
+			{ v: "code", label: "Change code in a repository" },
+			{ v: "work", label: "Research, a document, a spreadsheet or an email" },
+		],
+	},
+	{
+		id: "where",
+		q: "Where should it run?",
+		options: [
+			{ v: "local", label: "On my machine, with my tools and files" },
+			{ v: "cloud", label: "In the cloud, so I can close my laptop" },
+		],
+	},
+	{
+		id: "how",
+		q: "How do you like to work?",
+		options: [
+			{ v: "terminal", label: "In a terminal, or scripted in CI" },
+			{ v: "editor", label: "In my editor, next to the code" },
+			{ v: "app", label: "In a desktop app with panels and diffs" },
+		],
+	},
+];
+
+const results = {
+	work: {
+		title: "Vibe Work",
+		why: "Work is built for research, documents and multi-step tasks across your apps, at chat.mistral.ai or in Vibe Desktop.",
+		lesson: "work",
+	},
+	"code-web": {
+		title: "Vibe Code Web",
+		why: "Cloud sessions run in a sandbox against your GitHub or GitLab repo and hand back a branch or a pull request. Vibe Desktop can start cloud sessions too.",
+		lesson: "code-web",
+	},
+	cli: {
+		title: "Vibe CLI",
+		why: "The CLI is the most complete surface, and the only one with programmatic mode (vibe -p) for scripts and CI.",
+		lesson: "cli",
+	},
+	vscode: {
+		title: "VS Code extension",
+		why: "The extension sees your active file and selection, and shows changes as diffs you approve from the editor. It shares config and sessions with the CLI.",
+		lesson: "vscode",
+	},
+	desktop: {
+		title: "Vibe Desktop",
+		why: "Desktop runs local and cloud sessions side by side, with file, terminal, browser and pull request panels, and Work in the same app.",
+		lesson: "desktop",
+	},
+} as const;
+---
+
+<div class="widget panel not-prose my-8 overflow-hidden" data-surface-picker>
+  <div class="px-5 py-3 border-b hairline sunk flex items-center justify-between">
+    <p class="label">Try it · which surface?</p>
+    <button type="button" class="label hover:text-[var(--text)] cursor-pointer" data-sp-reset>Reset</button>
+  </div>
+  <div class="p-5 grid gap-5">
+    {questions.map((q, i) => (
+      <fieldset data-sp-q={q.id} class:list={[i > 0 && "hidden"]}>
+        <legend class="font-display text-lg">{i + 1}. {q.q}</legend>
+        <div class="mt-2 flex flex-wrap gap-2">
+          {q.options.map((o) => (
+            <button type="button" class="choice px-3 py-2 text-sm cursor-pointer" aria-pressed="false" data-sp-v={o.v}>{o.label}</button>
+          ))}
+        </div>
+      </fieldset>
+    ))}
+    <div class="hidden border-t hairline pt-5" data-sp-result aria-live="polite">
+      {Object.entries(results).map(([key, r]) => (
+        <div class="hidden flex gap-4 items-start" data-sp-out={key}>
+          <img src={SURFACE_ICONS[key as keyof typeof SURFACE_ICONS]} alt="" class="pixel w-12 h-12 shrink-0" width="48" height="48" />
+          <div>
+            <p class="label">Use</p>
+            <p class="font-display text-2xl">{r.title}</p>
+            <p class="mt-1 text-sm text-[var(--text-muted)]">{r.why}</p>
+            <a href={`/lessons/${r.lesson}`} class="mt-2 inline-block text-sm theme-link">{SURFACE_LABELS[key as keyof typeof SURFACE_LABELS]} lesson &rarr;</a>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    document.querySelectorAll("[data-surface-picker]").forEach(function (root) {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "1";
+      var answers = {};
+      var qs = Array.prototype.slice.call(root.querySelectorAll("[data-sp-q]"));
+      var result = root.querySelector("[data-sp-result]");
+
+      function decide() {
+        if (answers.work === "work") return "work";
+        if (answers.where === "cloud") return "code-web";
+        if (!answers.how) return null;
+        return answers.how === "terminal" ? "cli" : answers.how === "editor" ? "vscode" : "desktop";
+      }
+
+      function render() {
+        var out = decide();
+        // Show only the questions still needed.
+        qs[1].classList.toggle("hidden", !answers.work || answers.work === "work");
+        qs[2].classList.toggle("hidden", !answers.where || answers.where === "cloud" || answers.work === "work");
+        result.classList.toggle("hidden", !out);
+        root.querySelectorAll("[data-sp-out]").forEach(function (el) {
+          el.classList.toggle("hidden", el.getAttribute("data-sp-out") !== out);
+        });
+      }
+
+      qs.forEach(function (fs) {
+        var id = fs.getAttribute("data-sp-q");
+        fs.querySelectorAll("[data-sp-v]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            fs.querySelectorAll("[data-sp-v]").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+            answers[id] = b.getAttribute("data-sp-v");
+            if (id === "work") { delete answers.where; delete answers.how; }
+            if (id === "where") delete answers.how;
+            qs.slice(qs.indexOf(fs) + 1).forEach(function (later) {
+              later.querySelectorAll("[data-sp-v]").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+            });
+            render();
+          });
+        });
+      });
+
+      root.querySelector("[data-sp-reset]").addEventListener("click", function () {
+        answers = {};
+        root.querySelectorAll("[data-sp-v]").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+        render();
+      });
+      render();
+    });
+  })();
+</script>

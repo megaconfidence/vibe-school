@@ -1,0 +1,47 @@
+---
+// Copyright (c) 2026 Zeke Sikelianos
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+// Modified for Vibe School.
+export const prerender = true;
+
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Contributing" description="Improve Vibe School: fix a lesson, add an exercise, or report what confused you.">
+  <div class="mb-8 rise" style="--d:0">
+    <a href="/" class="label hover:text-[var(--text)]">&larr; Course</a>
+  </div>
+
+  <header class="mb-8 rise" style="--d:1">
+    <h1 class="font-display text-4xl sm:text-5xl leading-[1.02] tracking-[-0.02em]">Contributing</h1>
+    <p class="text-[var(--text-muted)] mt-2">Help improve the course for the next student.</p>
+  </header>
+
+  <article class="prose dark:prose-invert max-w-none">
+    <p>
+      Every moment you get stuck is useful: it shows where a lesson is unclear, out of date, or missing something. Post it in the <a href="https://discord.com/invite/mistralai" target="_blank" rel="noopener noreferrer">Mistral community on Discord</a>: what happened, which lesson, which surface (CLI, VS Code, Desktop, Code Web or Work), and your Vibe version (<code>vibe --version</code>).
+    </p>
+
+    <h2 id="let-vibe-help"><a href="#let-vibe-help" class="heading-anchor">Let Vibe write it up</a></h2>
+    <p>
+      If something comes up during a lesson, say "Let's write this up for the Vibe School maintainers." Vibe already has the details from your conversation and can draft a clear report for you to post.
+    </p>
+
+    <h2 id="change-the-course"><a href="#change-the-course" class="heading-anchor">Change the course yourself</a></h2>
+    <p>
+      Each lesson is one MDX file in <code>src/content/lessons/</code>. The frontmatter holds the <code>agentInstructions</code> Vibe follows when it teaches; the body is what you read on the page. Exercises live in <code>src/content/exercises/</code>.
+    </p>
+    <p>Run the site locally:</p>
+    <pre><code>npm install
+script/dev        # http://localhost:4321
+script/lint
+script/test</code></pre>
+    <p>
+      Then point Vibe at your local copy: enroll on <code>http://localhost:4321</code> and paste a lesson prompt. Vibe fetches the lesson from your local server, so you can test a change end to end.
+    </p>
+    <p>
+      The authoring rules (frontmatter, components, voice, where facts must come from) are in <code>AGENTS.md</code> at the root of the project. Vibe reads it too, so you can ask it to write or fix a lesson for you.
+    </p>
+  </article>
+</Base>

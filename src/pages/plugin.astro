@@ -1,0 +1,122 @@
+---
+// Install page for the vibe-school Vibe plugin (plugin/vibe-school/).
+export const prerender = true;
+
+import Base from "../layouts/Base.astro";
+
+const commands = [
+	{ cmd: "/vibe-school:next", what: "Start or continue your next lesson." },
+	{ cmd: "/vibe-school:lesson skills", what: "Run a specific lesson by its slug." },
+	{ cmd: "/vibe-school:exercise build-a-website", what: "Run an exercise." },
+	{ cmd: "/vibe-school:status", what: "See your progress, what you've built, and what's next." },
+];
+---
+
+<Base title="Vibe School plugin" description="Install the Vibe School plugin and take the course from inside Vibe with /vibe-school:next.">
+  <header class="mb-10 rise" style="--d:0">
+    <p class="label">Optional</p>
+    <div class="mt-3 flex items-center gap-4">
+      <img src="/pixel/plugins-red.svg" alt="" class="pixel w-12 h-12" width="48" height="48" />
+      <h1 class="font-display text-4xl sm:text-5xl leading-[1.02] tracking-[-0.02em]">Take the course from inside Vibe</h1>
+    </div>
+    <p class="mt-4 text-lg text-[var(--text-muted)]">
+      The Vibe School plugin is a small Vibe plugin with four skills. Install it once, and type <code class="font-mono">/vibe-school:next</code> in the CLI, VS Code or Vibe Desktop instead of copying a prompt for every lesson. Pasting prompts keeps working too.
+    </p>
+  </header>
+
+  <section class="panel p-6" aria-labelledby="install-heading">
+    <h2 id="install-heading" class="font-display text-2xl">Install</h2>
+    <div id="install-guest" class="mt-3 text-[var(--text-muted)]">
+      <a href="/#start" class="theme-link underline">Get a Vibe Pass</a> first. The install command includes your student ID.
+    </div>
+    <div id="install-enrolled" class="hidden">
+      <p class="mt-2 text-sm text-[var(--text-muted)]">Run this in a terminal. It puts the plugin in <code class="font-mono">~/.vibe/plugins/vibe-school/</code> (or under <code class="font-mono">$VIBE_HOME</code> if you set it) with your student ID, so it works in every project.</p>
+      <div class="launch mt-4">
+        <div class="launch-head flex" role="tablist" aria-label="Operating system">
+          <button type="button" role="tab" id="os-tab-unix" aria-controls="install-panel" class="launch-tab cursor-pointer" data-os="unix" aria-selected="true">macOS / Linux</button>
+          <button type="button" role="tab" id="os-tab-win" aria-controls="install-panel" class="launch-tab cursor-pointer" data-os="win" aria-selected="false">Windows (PowerShell)</button>
+        </div>
+        <div class="relative" id="install-panel" role="tabpanel" aria-labelledby="os-tab-unix">
+          <pre id="install-cmd" class="px-5 pr-24 py-4 text-sm whitespace-pre-wrap break-all leading-relaxed"></pre>
+          <button id="install-copy" type="button" class="btn btn-primary absolute top-3 right-3 px-3 py-1.5 text-xs">Copy</button>
+        </div>
+      </div>
+      <p class="mt-4 text-sm text-[var(--text-muted)]">
+        Then load it:
+      </p>
+      <ul class="mt-2 text-sm text-[var(--text-muted)] grid gap-1 list-disc pl-5">
+        <li><strong>CLI:</strong> run <code class="font-mono">/reload-plugins</code>, or start a new session. Check it with <code class="font-mono">/plugins</code>.</li>
+        <li><strong>VS Code:</strong> run <strong>Developer: Reload Window</strong> from the Command Palette, or restart VS Code. A new chat or <code class="font-mono">/reload</code> isn't enough.</li>
+        <li><strong>Desktop:</strong> start a new session.</li>
+      </ul>
+      <p class="mt-3 text-sm text-[var(--text-muted)]">
+        Prefer to ask Vibe? Paste the command into Vibe and ask it to run it.
+      </p>
+    </div>
+  </section>
+
+  <section class="mt-10" aria-labelledby="use-heading">
+    <h2 id="use-heading" class="font-display text-2xl">Use it</h2>
+    <ul class="mt-4 grid gap-2">
+      {commands.map((c) => (
+        <li class="panel px-4 py-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <code class="font-mono text-sm">{c.cmd}</code>
+          <span class="text-sm text-[var(--text-muted)]">{c.what}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="mt-10 prose dark:prose-invert max-w-none">
+    <h2>What's inside</h2>
+    <p>
+      A <code>plugin.json</code> manifest, four skills (<code>next</code>, <code>lesson</code>, <code>exercise</code>, <code>status</code>), and a <code>student.json</code> file with your student ID and this site's address. The skills tell Vibe to read <code>/llms.txt</code> and follow the lesson, exactly like the pasted prompt does. Nothing else is installed and no code runs on its own. <a href="/plugin/vibe-school.zip">Download the zip</a> to read it first.
+    </p>
+    <p>
+      You'll build a plugin of your own in the <a href="/lessons/plugins">Plugins</a> lesson. This one is a good example to compare against.
+    </p>
+    <h2>Remove it</h2>
+    <p>Delete <code>~/.vibe/plugins/vibe-school/</code>, or turn it off without deleting by adding <code>disabled_plugins = ["vibe-school"]</code> to <code>~/.vibe/config.toml</code>.</p>
+  </section>
+
+  <script is:inline>
+    (function () {
+      var id = window.school && window.school.getStudentId();
+      if (!id) return;
+      document.getElementById("install-guest").classList.add("hidden");
+      document.getElementById("install-enrolled").classList.remove("hidden");
+      var origin = window.location.origin;
+      var unix =
+        "P=\"${VIBE_HOME:-$HOME/.vibe}/plugins\" && mkdir -p \"$P\" && curl -fsSL " + origin + "/plugin/vibe-school.zip -o /tmp/vibe-school.zip && " +
+        "rm -rf \"$P/vibe-school\" && unzip -oq /tmp/vibe-school.zip -d \"$P\" && " +
+        "printf '{\"studentId\":\"" + id + "\",\"origin\":\"" + origin + "\"}\\n' > \"$P/vibe-school/student.json\" && " +
+        "echo 'Vibe School plugin installed'";
+      var win =
+        "$h = if ($env:VIBE_HOME) { $env:VIBE_HOME } else { \"$HOME\\.vibe\" }; $p = \"$h\\plugins\"; New-Item -ItemType Directory -Force $p | Out-Null; " +
+        "Invoke-WebRequest " + origin + "/plugin/vibe-school.zip -OutFile \"$env:TEMP\\vibe-school.zip\"; " +
+        "Remove-Item -Recurse -Force \"$p\\vibe-school\" -ErrorAction SilentlyContinue; " +
+        "Expand-Archive -Force \"$env:TEMP\\vibe-school.zip\" $p; " +
+        "Set-Content \"$p\\vibe-school\\student.json\" '{\"studentId\":\"" + id + "\",\"origin\":\"" + origin + "\"}'; " +
+        "Write-Output 'Vibe School plugin installed'";
+      var pre = document.getElementById("install-cmd");
+      var copy = document.getElementById("install-copy");
+      var tabs = Array.prototype.slice.call(document.querySelectorAll("[data-os]"));
+      var panel = document.getElementById("install-panel");
+      function show(os) {
+        tabs.forEach(function (t) { t.setAttribute("aria-selected", t.getAttribute("data-os") === os ? "true" : "false"); });
+        panel.setAttribute("aria-labelledby", "os-tab-" + os);
+        pre.textContent = os === "win" ? win : unix;
+        copy.textContent = "Copy";
+      }
+      var sync = window.school.rovingGroup(tabs, "aria-selected", function (t) { show(t.getAttribute("data-os")); });
+      copy.addEventListener("click", function () {
+        window.school.copy(pre.textContent).then(
+          function () { copy.textContent = "Copied"; },
+          function () { copy.textContent = "Select and copy"; }
+        );
+      });
+      show(/Win/.test(navigator.platform) ? "win" : "unix");
+      sync();
+    })();
+  </script>
+</Base>

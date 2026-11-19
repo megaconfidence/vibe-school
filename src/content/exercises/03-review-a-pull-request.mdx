@@ -1,0 +1,114 @@
+---
+title: "Review a pull request"
+slug: review-a-pull-request
+description: "Check out a pull request branch and have Vibe hunt for bugs and edge cases in the diff."
+order: 3
+surfaces: [vscode, cli]
+agentInstructions: |
+  Guide the student through reviewing a real pull request with Vibe.
+  Adapt depth to their profile. The goal is a useful review, not
+  rubber-stamping: Vibe finds candidates, the student decides.
+
+  Steps:
+
+  1. Pick a pull request. Ideally an open PR on a repository they work
+     on, or one of their own (for example the PR from the "Fix a bug in
+     the cloud" exercise). If they have none, help them create a small
+     branch with a change and open a PR on a throwaway repo.
+
+  2. Check out the branch locally. If the GitHub CLI is installed and
+     authenticated (`gh auth status`), use `gh pr checkout <number>`.
+     Otherwise use `git fetch` and `git switch <branch>`. Confirm with
+     `git status` and find the base branch (usually main).
+
+  3. Get the diff in front of Vibe. Use `git diff <base>...HEAD` (or
+     `gh pr diff <number>`). In the CLI, the student can run it with a
+     ! prefix (`!git diff main...HEAD`) so the output lands in context.
+     In VS Code, they can open a changed file and select the lines they
+     care about: the extension attaches the active file and selection.
+
+  4. Ask for a focused review. Suggest the ask agent (Shift+Tab) so Vibe
+     asks before every tool call, edits included. Example prompt: "Review this diff for bugs,
+     missing edge cases, error handling, and risky changes. For each
+     finding give file:line, why it matters, and a suggested fix. Don't
+     edit any files." Encourage them to ask Vibe to read the surrounding
+     code, not just the diff, and to run the tests.
+
+  5. Triage the findings with the student. For each one: real bug,
+     nitpick, or false positive? Have them verify at least one finding by
+     reading the code or writing a quick test.
+
+  6. CLI only: show /pr. With enable_pr_monitoring on (the default) and
+     gh (or glab for GitLab) available, Vibe finds the pull request for
+     the current branch and shows its status in the footer (for example
+     CI failing or conflicts). /pr lists the session's PRs: Enter opens
+     one, c opens its first failing CI check, f drafts a prompt to fix
+     what blocks it. If /pr is empty, check `gh auth status` and that
+     the branch has an open PR.
+
+  7. Optional: if they own the PR, let Vibe fix one confirmed finding,
+     review the change, and push it. If it's someone else's PR, help
+     them post the review comments themselves (in GitHub, or with
+     `gh pr review`). Never post or push without the student's explicit
+     go-ahead.
+
+  The exercise is complete when Vibe has produced a review of a real
+  diff and the student has triaged the findings (at least one confirmed
+  or explicitly rejected with a reason). Verify by checking that the
+  current branch is the PR branch (`git branch --show-current`) and ask
+  the student to summarize the most important finding. Then mark the
+  exercise complete with exerciseSlug "review-a-pull-request".
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+A second pair of eyes catches bugs before they ship. In this exercise, you'll check out a pull request and have Vibe read the diff for bugs, missing edge cases, and risky changes. Then you decide which findings are real.
+
+## Check out the branch
+
+With the [GitHub CLI](https://cli.github.com):
+
+```bash
+gh pr checkout 42
+git diff main...HEAD
+```
+
+Or with plain git: `git fetch`, then `git switch <branch>`.
+
+## Ask for a review
+
+Use the `ask` [agent](/glossary#agent) (`Shift+Tab`) so Vibe asks before every tool call, edits included. Then be explicit about what you want:
+
+```text
+Review this diff for bugs, missing edge cases, error handling, and risky changes.
+For each finding, give file:line, why it matters, and a suggested fix.
+Read the surrounding code and run the tests. Don't edit any files.
+```
+
+<SurfaceTabs>
+<SurfaceTab surface="vscode">
+
+Open a changed file and select the lines you're unsure about. The extension attaches the active file and your selection, so you can ask "Review this diff for edge cases before I open a pull request." Use VS Code's diff and source control views to read the changes alongside Vibe's comments.
+
+</SurfaceTab>
+<SurfaceTab surface="cli">
+
+Put the diff in context with a shell command: `!git diff main...HEAD`. The agent sees the command and its output.
+
+With `gh` (or `glab` for GitLab) installed, Vibe tracks the pull request for your branch. The footer shows its status, such as `CI failing` or `conflicts`. Run `/pr` to list the session's pull requests: `Enter` opens one, `c` opens its first failing CI check, and `f` drafts a prompt that fixes what blocks it. Turn this off with `enable_pr_monitoring = false`.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+## Triage the findings
+
+Not every finding is a bug. Sort them into three piles: real bugs, nitpicks, and false positives. Check at least one by reading the code or writing a quick test. A review is only as good as what you verify.
+
+## Tips
+
+- **Give it the "why".** Paste the PR description or linked issue, so Vibe can check the change against its goal.
+- **Ask for the test that's missing.** "Which input would break this?" often finds more than "any bugs?".
+- **Package your checklist.** If you review the same way every time, turn it into a [skill](/lessons/skills). The worked example in the [Package a team setup](/exercises/package-a-team-setup) exercise ships a `code-review` skill.
+
+More in the [VS Code extension docs](https://docs.mistral.ai/vibe/code/vs-code-extension/work-with-extension) and [Commands and shortcuts](https://docs.mistral.ai/vibe/code/cli/commands-shortcuts).

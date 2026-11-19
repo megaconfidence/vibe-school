@@ -1,0 +1,187 @@
+---
+title: "Installation"
+slug: installation
+description: "Install Vibe Code in your terminal, VS Code, or Vibe Desktop, sign in, and send your first prompt."
+order: 1
+track: start
+surfaces: [cli, vscode, desktop]
+quiz: false
+goals:
+  - "Tell Vibe Work and Vibe Code apart"
+  - "Install Vibe in the terminal, VS Code, or Vibe Desktop"
+  - "Sign in with your Mistral account or an API key"
+  - "Trust a folder and send your first prompt"
+minutes: 15
+checklist: []
+selfPaced: true
+agentInstructions: |
+  If the student is talking to you through Vibe already (the CLI, the VS
+  Code extension, or a local session in Vibe Desktop), they have completed
+  most of this lesson. Confirm the rest:
+
+  1. Vibe is installed on a supported surface. In a terminal, `vibe
+     --version` prints a version. In VS Code, the Mistral Vibe panel opens
+     without an authentication prompt. In Vibe Desktop, they are signed in
+     and can start a local session in Code.
+  2. They are signed in, either with their Mistral account (browser
+     sign-in) or with an API key. Don't ask them to show the key and never
+     read ~/.vibe/.env.
+  3. They have sent at least one prompt and received a response. If you
+     are reading this, that's already true.
+
+  If anything is missing, point them to the matching tab on
+  {origin}/lessons/installation. Then mark the lesson complete.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Mistral Vibe is Mistral's AI agent. You describe what you want in plain language, and it reads files, runs commands, edits code, and calls tools to get it done, asking for your approval before anything risky. This first lesson happens here in your browser: you'll install Vibe, sign in, and send your first prompt. From the next lesson on, Vibe itself becomes your tutor.
+
+## Two modes: Work and Code
+
+Vibe has two modes ([compare them](https://docs.mistral.ai/vibe/choose-chat-work-code)):
+
+- **Work** is the productivity mode, in the Vibe web and mobile apps at [chat.mistral.ai](https://chat.mistral.ai/work) and in Vibe Desktop. It handles multi-step tasks across your apps and documents through [connectors](/glossary#connector) like Gmail, Slack, Notion, and GitHub.
+- **Code** is the developer mode. It works on a codebase: reads files, edits code, runs commands, and opens pull requests.
+
+Vibe Code runs on four [surfaces](/glossary#surface):
+
+- **CLI**: a terminal app. The most flexible surface, scriptable and ideal for local repos and automation.
+- **VS Code extension**: Vibe in a side panel of your editor, with the active file, selection, and diffs as context.
+- **Vibe Desktop**: a macOS and Windows app that runs local sessions on your machine and cloud sessions, with Work in the same app.
+- **Vibe Code Web**: cloud sessions in a managed sandbox against GitHub or GitLab repositories, straight from your browser.
+
+The course tutor runs locally (CLI, VS Code, or a Desktop local session) because it needs to run commands on your machine. Pick one below. You can add the others later; the [Surfaces](/lessons/surfaces) lesson helps you choose.
+
+## Install Vibe
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+On **macOS or Linux**, use the one-line installer:
+
+```bash
+curl -LsSf https://mistral.ai/vibe/install.sh | bash
+```
+
+It installs [uv](https://docs.astral.sh/uv/) if needed, then installs or upgrades `mistral-vibe` and makes the `vibe` and `vibe-acp` commands available.
+
+On **Windows**, install uv first:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Then, in a new terminal:
+
+```powershell
+uv tool install --python 3.14 mistral-vibe
+```
+
+If you already use uv, `uv tool install --python 3.14 mistral-vibe` works on any platform. Vibe runs on Windows, but macOS and Linux are the primary supported platforms.
+
+Check that it worked:
+
+```bash
+vibe --version
+```
+
+**Troubleshooting:**
+
+- `vibe` not found in a new terminal? Run `uv tool update-shell` and open a new terminal.
+- Install hangs or fails? Your uv may be using a Python version some dependencies don't support yet. Reinstall on 3.14: `uv tool install --force --python 3.14 mistral-vibe`.
+- Vibe needs a GIL-enabled build of Python 3.12 or later. If uv picks a free-threaded (no-GIL) Python, run `uv python install cpython-3.14`, then `uv tool install --python cpython-3.14+gil mistral-vibe`.
+
+Now open a terminal in a project folder and start Vibe:
+
+```bash
+cd /path/to/a/project
+vibe
+```
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The extension ships with the Vibe agent built in, so you don't need the CLI. You need VS Code 1.94.0 or later.
+
+1. Open VS Code.
+2. Press `Cmd+Shift+X` on macOS or `Ctrl+Shift+X` on Windows or Linux.
+3. Search for `Mistral Vibe`.
+4. Select the extension published by **Mistral AI** (publisher ID: `mistralai`).
+5. Click `Install`.
+
+Or install it from the [Marketplace listing](https://marketplace.visualstudio.com/items?itemName=mistralai.mistral-vibe-code). If it doesn't appear after installing, run **Developer: Reload Window** from the Command Palette.
+
+Open a project folder, then open Vibe by clicking the Mistral Vibe icon (the orange M) in the editor title bar, or by running **Mistral Vibe: Open Mistral Vibe** from the Command Palette.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Vibe Desktop runs on **macOS** and **Windows** (Linux support is coming soon). It doesn't need the CLI: its local sessions share the CLI's core engine and session logs without embedding it.
+
+1. Download Vibe Desktop for [macOS](https://chat.mistral.ai/download/vibe-desktop/mac) or [Windows](https://chat.mistral.ai/download/vibe-desktop/windows) (also linked from the [Vibe product page](https://mistral.ai/products/vibe/)), install it, and sign in with your Mistral account.
+2. Switch to **Code**.
+3. Start a **local session** against a project folder on your machine.
+
+The same app also gives you **Work**, which can use local folders as context. See [Code on Desktop](https://docs.mistral.ai/vibe/code/desktop/overview) and [Work on Desktop](https://docs.mistral.ai/vibe/work/desktop).
+
+</SurfaceTab>
+</SurfaceTabs>
+
+## Sign in
+
+Vibe Code needs either your Mistral account or an [API key](/glossary#api-key).
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+On first launch, a setup wizard asks how you want to connect:
+
+- **Launch browser**: sign in with your Mistral account and use your Mistral plan. Vibe Code is included, with usage and rate limits based on your plan and pay-as-you-go settings.
+- **Use an API key**: create a key at [Code > Vibe CLI](https://chat.mistral.ai/code/extensions) and paste it when prompted. The same key works in Free mode, with a paid plan, or with pay-as-you-go enabled.
+
+The wizard saves keys in your OS keyring, or in `~/.vibe/.env` if no keyring is available. Rerun it any time with `vibe --setup`. Run `/whoami` in a session to see your account, plan, and credential source.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The first time the extension needs credentials, it opens a terminal setup flow:
+
+1. Start setup from the extension when prompted.
+2. In the **Mistral Vibe Setup** terminal, paste your API key from [Code > Vibe CLI](https://chat.mistral.ai/code/extensions).
+3. Wait for the extension to return to the ready state.
+
+The key is stored in your OS keyring, or in `~/.vibe/.env`. If you already set up the CLI on this machine, the extension reuses it.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Sign in to Vibe Desktop with your Mistral account. Usage and rate limits depend on your [Mistral plan](https://mistral.ai/pricing).
+
+</SurfaceTab>
+</SurfaceTabs>
+
+<div class="callout">
+Never paste an API key into a prompt, a screenshot, or a support ticket. If you need to change it, rerun the setup or edit <code>~/.vibe/.env</code> yourself.
+</div>
+
+## Trust the folder
+
+When you start Vibe in a folder that contains project configuration (a `.vibe/` folder, `.agents/skills/`, or an `AGENTS.md`), it asks whether to trust it. Choose **Trust folder** (or **Trust full repo** when you start in a subfolder of a git repository) for your own projects, or **Don't trust** for code you haven't reviewed. A [trusted folder](/glossary#trusted-folder) lets Vibe load the project's settings. You'll learn more in the [Permissions](/lessons/permissions) lesson.
+
+## Send your first prompt
+
+Type this and press Enter:
+
+```text
+Hello! What can you see in this folder?
+```
+
+If Vibe replies, you're connected. It may ask for approval before running a command to list your files: that's normal, and you can allow it.
+
+## Next: enroll and meet your tutor
+
+If you haven't yet, get your Vibe Pass on the [homepage](/): it holds your student ID. Then open the [Interview](/lessons/interview) lesson. Its launch bar has a tab for each way in (CLI, VS Code, Desktop, or Plugin): copy the prompt from the tab that matches where you run Vibe, paste it in, and Vibe will take it from there.
+
+If you install the [Vibe School plugin](/plugin) in VS Code, run **Developer: Reload Window** from the Command Palette afterwards (or restart VS Code). A new session or `/reload` isn't enough to load a new plugin there.

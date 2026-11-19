@@ -1,0 +1,121 @@
+---
+// Team starter pack builder for the Team rollout lesson: an admin config
+// snippet plus a team AGENTS.md. Logic lives in src/lib/config-builder.ts.
+---
+
+<div class="widget panel not-prose my-8 overflow-hidden" data-starter-pack>
+  <div class="px-5 py-3 border-b hairline sunk flex flex-wrap items-center justify-between gap-2">
+    <p class="label">Try it · team starter pack</p>
+    <button type="button" data-sp="download" class="btn btn-primary px-3 py-1 text-xs">Download both files</button>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-[18rem_minmax(0,1fr)]">
+    <form class="min-w-0 p-5 grid gap-4 content-start border-b lg:border-b-0 lg:border-r hairline">
+      <label class="grid gap-1.5">
+        <span class="label">Team name</span>
+        <input data-sp="team" class="choice px-3 py-2 text-sm" value="Platform team" />
+      </label>
+      <label class="grid gap-1.5">
+        <span class="label">Allowed models (patterns)</span>
+        <textarea data-sp="models" rows="2" class="choice px-3 py-2 font-mono text-xs" placeholder="mistral-medium-*"></textarea>
+        <span class="text-xs text-[var(--text-muted)]">Leave empty to allow all. If no model matches, the whole admin config is rejected.</span>
+      </label>
+      <fieldset class="grid gap-2">
+        <legend class="label mb-1">Guardrails</legend>
+        <label class="flex gap-2 text-sm"><input type="checkbox" data-sp="noyolo" checked /> Block auto-approve</label>
+        <label class="flex gap-2 text-sm"><input type="checkbox" data-sp="nomcp" /> Block MCP servers</label>
+        <label class="flex gap-2 text-sm"><input type="checkbox" data-sp="notel" /> Turn off telemetry</label>
+      </fieldset>
+      <label class="grid gap-1.5">
+        <span class="label">Disabled tools</span>
+        <input data-sp="tools" class="choice px-3 py-2 font-mono text-xs" placeholder="web_fetch" />
+      </label>
+      <label class="grid gap-1.5">
+        <span class="label">Team rules for AGENTS.md (one per line)</span>
+        <textarea data-sp="rules" rows="4" class="choice px-3 py-2 text-xs">Use the existing test framework; don't add new dependencies.
+Keep pull requests small and explain the why.</textarea>
+      </label>
+    </form>
+    <div class="p-5 grid gap-5 content-start min-w-0">
+      <div>
+        <div class="flex items-center justify-between">
+          <span class="label">Admin config (TOML)</span>
+          <button type="button" data-sp="copy-admin" class="btn btn-ghost px-2.5 py-1 text-xs">Copy</button>
+        </div>
+        <pre data-sp="admin" class="mt-2 sunk border hairline rounded-sm p-3 text-xs leading-relaxed overflow-x-auto"></pre>
+      </div>
+      <div>
+        <div class="flex items-center justify-between">
+          <span class="label">AGENTS.md (commit to the repo)</span>
+          <button type="button" data-sp="copy-agents" class="btn btn-ghost px-2.5 py-1 text-xs">Copy</button>
+        </div>
+        <pre data-sp="agents" class="mt-2 sunk border hairline rounded-sm p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre-wrap"></pre>
+      </div>
+      <p class="text-xs text-[var(--text-muted)]">Admin config is a distribution mechanism, not a security control. Try it in a test Organization or Workspace before rolling it out.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Bundled so the TOML and AGENTS.md come from the unit-tested code in
+  // src/lib/config-builder.ts.
+  import { adminConfigToml, lines, teamAgentsMd } from "../lib/config-builder";
+
+  const school = (window as unknown as { school: { copy: (t: string) => Promise<void> } }).school;
+
+  for (const root of document.querySelectorAll<HTMLElement>("[data-starter-pack]")) {
+    if (root.dataset.ready) continue;
+    root.dataset.ready = "1";
+    const el = (k: string) => root.querySelector(`[data-sp="${k}"]`) as HTMLElement;
+    const val = (k: string) => (el(k) as HTMLInputElement).value;
+    const checked = (k: string) => (el(k) as HTMLInputElement).checked;
+    root.querySelector("form")?.addEventListener("submit", (e) => e.preventDefault());
+
+    const render = () => {
+      el("admin").textContent = adminConfigToml({
+        allowedModels: lines(val("models")),
+        blockAutoApprove: checked("noyolo"),
+        blockMcp: checked("nomcp"),
+        disabledTools: lines(val("tools").replace(/,/g, "\n")),
+        disableTelemetry: checked("notel"),
+      });
+      el("agents").textContent = teamAgentsMd(
+        val("team"),
+        lines(val("rules")),
+      );
+    };
+    for (const i of root.querySelectorAll("input, textarea")) {
+      i.addEventListener("input", render);
+      i.addEventListener("change", render);
+    }
+    const copier = (btn: string, src: string) => {
+      const b = el(btn);
+      b.addEventListener("click", () => {
+        school
+          .copy(el(src).textContent || "")
+          .then(
+            () => { b.textContent = "Copied"; },
+            () => { b.textContent = "Select and copy"; },
+          )
+          .finally(() => setTimeout(() => { b.textContent = "Copy"; }, 1500));
+      });
+    };
+    copier("copy-admin", "admin");
+    copier("copy-agents", "agents");
+    el("download").addEventListener("click", () => {
+      for (const [name, text] of [
+        ["admin-config.toml", el("admin").textContent || ""],
+        ["AGENTS.md", el("agents").textContent || ""],
+      ]) {
+        const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+    });
+    render();
+  }
+</script>

@@ -1,0 +1,198 @@
+---
+title: "Instructions"
+slug: instructions
+description: "Write standing instructions that Vibe follows in every session."
+order: 10
+track: code
+surfaces: [cli, vscode, desktop]
+quiz: true
+goals:
+  - "Tell user and project AGENTS.md files apart"
+  - "Decide what belongs in standing instructions"
+  - "Add a subfolder AGENTS.md that loads on demand"
+  - "Apply changes with /reload"
+minutes: 15
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. What AGENTS.md is: a plain Markdown file of standing instructions
+     that Vibe loads into context at the start of every session.
+
+  2. Where Vibe looks: the user-level file ~/.vibe/AGENTS.md (or
+     $VIBE_HOME/AGENTS.md) applies to every session; project files are
+     every AGENTS.md from the working directory up to the root of the
+     trusted folder, and the file closest to the working directory wins
+     on conflicts. AGENTS.md files in subfolders are picked up lazily, the
+     first time Vibe reads a file in that folder. Project files only load
+     in a trusted folder.
+
+  3. What makes a good instruction: specific and actionable (preferred
+     languages, commit style, how to run tests, things to never do), not
+     vague ("write good code"). Keep it short: every line costs context
+     in every session.
+
+  4. There is no /init command. To create a project AGENTS.md, ask Vibe
+     to scan the project and write one. Changes apply after /reload (or a
+     new session); /context shows how much space the system prompt,
+     including AGENTS.md, takes.
+
+  Then the hands-on part, in vibe-todo (if the folder is missing, fetch
+  the starter as in the Configuration lesson). Write two project
+  instruction files, modelled on the reference project at
+  {origin}/examples/agents-skills-instructions. Don't overwrite existing
+  files: if one exists, review it with the student and add what's
+  missing.
+
+  1. vibe-todo/AGENTS.md (project rules, loaded at startup). There is no
+     /init: read todo/cli.py, todo/store.py and tests/test_cli.py
+     yourself, then draft it with the student. It should say what the project is
+     (a tiny Python todo CLI; todo/cli.py has an argparse parser and one
+     cmd_<name>() per subcommand; todo/store.py does load()/save() and is
+     the only module doing file I/O; tests/ has its own AGENTS.md), the
+     rules (Python 3.10+, standard library only, never add a dependency;
+     every subcommand is a cmd_<name>(args) -> int function registered in
+     build_parser(); return 0 on success and 1 when a task id doesn't
+     exist; only todo/store.py reads or writes files; type hints, short
+     functions), and the commands (`python3 -m unittest`,
+     `python3 -m todo <command> ...`). Let the student add one rule of
+     their own.
+
+  2. vibe-todo/tests/AGENTS.md (test rules, loaded lazily the first time
+     the agent reads a file in tests/): unittest only, no pytest or
+     third-party libraries; call the CLI through the run_cli(*argv)
+     helper, which returns (exit_code, stdout); never touch the real
+     .todo.json (setUp() points TODO_FILE at a temp file); every command
+     needs a success test, and commands that take a task id also need an
+     unknown-id test returning 1; name tests test_<command> and
+     test_<command>_<case>.
+
+  3. See them load. Have the student run /reload (CLI, VS Code panel) or
+     start a new session (Desktop), then ask "What are this project's
+     rules?". Then ask "Read tests/test_cli.py and tell me the test
+     rules", so they see tests/AGENTS.md arrive only then. In the CLI,
+     /context shows the system prompt share.
+
+  4. Optional, short: a personal ~/.vibe/AGENTS.md with two or three
+     preferences (back it up first if it exists, and add to it rather
+     than replace it).
+
+  5. Commit: `git add AGENTS.md tests/AGENTS.md && git commit -m "Add project instructions"`.
+
+  Verify completion by reading vibe-todo/AGENTS.md and
+  vibe-todo/tests/AGENTS.md and confirming each exists with specific
+  rules (not a placeholder): the root file names the test command and at
+  least one project rule, the tests file names at least one test rule.
+  Then ask the student to confirm Vibe answered with the project rules
+  after /reload or a new session. Report artifacts: instructions
+  AGENTS.md, instructions tests/AGENTS.md.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Every time Vibe starts a session, it looks for files called `AGENTS.md` and reads them as standing orders: your preferences, rules, and context that apply to everything it does. You write them once, and every session follows them.
+
+## In your project
+
+This lesson gives `vibe-todo` two instruction files, one for the whole project and one only for the tests:
+
+```text
+vibe-todo/
+├── AGENTS.md          # new: what the project is, its rules, how to run the tests
+└── tests/
+    └── AGENTS.md      # new: test rules, loaded when Vibe reads a file in tests/
+```
+
+
+## User vs. project
+
+Vibe reads two kinds of `AGENTS.md`:
+
+- **User** (`~/.vibe/AGENTS.md`): applies to every session on your machine, in every project. Your personal preferences live here. It isn't committed to Git.
+- **Project** (`AGENTS.md` in a project): applies when you work in that project. You typically commit it so your whole team, and their agents, get the same instructions.
+
+For a project, Vibe loads every `AGENTS.md` from your working directory up to the root of the [trusted folder](/glossary#trusted-folder). When two files disagree, **the one closest to your working directory wins**:
+
+```text
+/
+  dir_1/
+    AGENTS.md      <- never loaded: not trusted
+    dir_2/         <- trusted folder
+      AGENTS.md    <- loaded
+      dir_3/
+        AGENTS.md  <- loaded, wins over dir_2/AGENTS.md
+        project/   <- working directory
+```
+
+Vibe also picks up `AGENTS.md` files in **subfolders** lazily: the first time it reads a file in `tests/`, it also reads `tests/AGENTS.md`. Folder-specific rules then cost nothing until they're needed.
+
+<div class="callout">
+Project <code>AGENTS.md</code> files only load in a <strong>trusted folder</strong>. If Vibe ignores your project rules, check that you trusted the folder (see the <a href="/lessons/permissions">Permissions</a> lesson).
+</div>
+
+## What to put in it
+
+Short, specific, actionable rules. Every line is read in every session, so skip anything vague. Here is the kind of file you'll write for `vibe-todo`:
+
+```markdown
+# vibe-todo
+
+A tiny command line todo list in Python.
+
+- `todo/cli.py`: argparse parser and one `cmd_<name>()` per subcommand
+- `todo/store.py`: `load()` and `save()`, the only module that does file I/O
+- `tests/`: unittest suite (has its own AGENTS.md)
+
+## Rules
+
+- Python 3.10+, standard library only. Never add a dependency.
+- Every subcommand is a `cmd_<name>(args) -> int` function registered in `build_parser()`.
+- Return `0` on success and `1` when a task id doesn't exist.
+
+## Commands
+
+- Run the tests: `python3 -m unittest`
+```
+
+On Windows, the Python command is often `python` rather than `python3`; write the one that works on your machine.
+
+And `tests/AGENTS.md` holds the rules that only matter for tests: use `unittest`, call the CLI through the `run_cli` helper, never touch the real `.todo.json`, and add an unknown-id test for commands that take a task id.
+
+Your personal `~/.vibe/AGENTS.md` is for preferences that follow you everywhere, such as "Be concise" or "Use Conventional Commits".
+
+## Create a project AGENTS.md
+
+Vibe has no `/init` command. Just ask:
+
+```
+Scan this project and write an AGENTS.md that describes its structure, how to run the tests, and the conventions you see.
+```
+
+Review what it writes, trim it, and commit it. In `vibe-todo` you'll do exactly this, then tighten the draft with the rules above.
+
+## Apply your changes
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+Run `/reload` to reload configuration, agent instructions, and skills without restarting. Run `/context` to see how much of the context window the system prompt (including your `AGENTS.md` files) uses.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The extension shares the CLI's configuration, so it uses the same `~/.vibe/AGENTS.md`. Type `/reload` in the Vibe panel, or start a new conversation with `Mod+N`.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Local sessions in Vibe Desktop share the CLI's core engine, but their prompts can differ, so check that your rules are followed. Start a new session to pick up changes.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+<div class="callout">
+Using <strong>Vibe Work</strong>? Work has its own <a href="/lessons/projects">custom instructions</a> (<strong>Context</strong> &gt; <strong>Instructions</strong>) instead of <code>AGENTS.md</code>.
+</div>
+
+Learn more in the [agents documentation](https://docs.mistral.ai/vibe/code/cli/agents#agents-md).

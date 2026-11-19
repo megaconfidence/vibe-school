@@ -1,0 +1,117 @@
+---
+// Interactive .vibe/config.toml builder for the Permissions lesson.
+// Generates a snippet and previews what happens to a bash command. The
+// tutor validates the real file in the lesson. Logic lives in
+// src/lib/config-builder.ts (unit tested).
+import { BUILTIN_AGENTS } from "../lib/config-builder";
+
+// Vibe 3.1.3's own default bash allowlist starts with these. Setting
+// allowlist replaces the defaults, so the builder keeps the common ones.
+const DEFAULT_ALLOW = ["git diff", "git log", "git status", "ls", "cat", "pwd", "grep", "head", "tail", "wc"];
+const PROJECT_ALLOW = ["python3 -m unittest", "python3 -m todo"];
+---
+
+<div class="widget panel not-prose my-8 overflow-hidden" data-config-builder>
+  <div class="px-5 py-3 border-b hairline sunk flex flex-wrap items-center justify-between gap-2">
+    <p class="label">Try it · build your project config</p>
+    <p class="label">vibe-todo/.vibe/config.toml</p>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2">
+    <form class="min-w-0 p-5 grid gap-5 border-b lg:border-b-0 lg:border-r hairline">
+      <label class="grid gap-1.5">
+        <span class="label">Default agent</span>
+        <select data-cb="agent" class="choice px-3 py-2 text-sm">
+          {BUILTIN_AGENTS.map((a) => <option value={a} selected={a === "accept-edits"}>{a}</option>)}
+        </select>
+      </label>
+      <label class="grid gap-1.5">
+        <span class="label">Bash: always run (one prefix per line)</span>
+        <textarea data-cb="allow" rows="6" class="choice px-3 py-2 font-mono text-xs leading-relaxed">{[...PROJECT_ALLOW, ...DEFAULT_ALLOW].join("\n")}</textarea>
+        <span class="text-xs text-[var(--text-muted)]">Setting a list replaces Vibe's defaults, so the common read-only commands are kept here.</span>
+      </label>
+      <label class="grid gap-1.5">
+        <span class="label">Bash: always block</span>
+        <textarea data-cb="deny" rows="2" class="choice px-3 py-2 font-mono text-xs leading-relaxed">rm -rf
+git push --force</textarea>
+      </label>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="grid gap-1.5">
+          <span class="label">write_file</span>
+          <select data-cb="write" class="choice px-3 py-2 text-sm"><option>ask</option><option selected>always</option><option>never</option></select>
+        </label>
+        <label class="grid gap-1.5">
+          <span class="label">edit</span>
+          <select data-cb="edit" class="choice px-3 py-2 text-sm"><option>ask</option><option selected>always</option><option>never</option></select>
+        </label>
+      </div>
+    </form>
+    <div class="min-w-0 p-5 grid gap-5 content-start">
+      <div>
+        <div class="flex items-center justify-between">
+          <span class="label">Your snippet</span>
+          <button type="button" data-cb="copy" class="btn btn-primary px-3 py-1 text-xs">Copy</button>
+        </div>
+        <pre data-cb="out" class="mt-2 sunk border hairline rounded-sm p-3 text-xs leading-relaxed overflow-x-auto"></pre>
+      </div>
+      <div>
+        <label class="grid gap-1.5">
+          <span class="label">Test a command</span>
+          <input data-cb="test" class="choice px-3 py-2 font-mono text-sm" value="python3 -m unittest" spellcheck="false" />
+        </label>
+        <p class="mt-2 text-sm" data-cb="verdict" aria-live="polite"></p>
+        <p class="mt-1 text-xs text-[var(--text-muted)]">A simplified preview: Vibe matches prefixes per command segment, and smart-approve may also run calls it judges safe.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Bundled so the TOML and preview logic is the unit-tested code in
+  // src/lib/config-builder.ts.
+  import { lines, previewBash, projectConfigToml, type Permission } from "../lib/config-builder";
+
+  for (const root of document.querySelectorAll<HTMLElement>("[data-config-builder]")) {
+    if (root.dataset.ready) continue;
+    root.dataset.ready = "1";
+    const el = (k: string) => root.querySelector(`[data-cb="${k}"]`) as HTMLElement;
+    const val = (k: string) => (el(k) as HTMLInputElement).value;
+    root.querySelector("form")?.addEventListener("submit", (e) => e.preventDefault());
+
+    const render = () => {
+      const agent = val("agent");
+      const allow = lines(val("allow"));
+      const deny = lines(val("deny"));
+      el("out").textContent = projectConfigToml({
+        defaultAgent: agent,
+        bashAllow: allow,
+        bashDeny: deny,
+        writeFile: val("write") as Permission,
+        edit: val("edit") as Permission,
+      });
+      const v = previewBash(val("test"), allow, deny, agent);
+      const verdict = el("verdict");
+      verdict.textContent = "";
+      const b = document.createElement("strong");
+      b.textContent = v === "runs" ? "Runs" : v === "asks" ? "Asks" : "Blocked";
+      b.style.color = v === "blocked" ? "var(--accent-text)" : "var(--text)";
+      const why = { runs: "Runs without asking.", asks: "Vibe asks you first.", blocked: "Blocked. Vibe won't run it." }[v];
+      verdict.appendChild(b);
+      verdict.appendChild(document.createTextNode(` · ${why}`));
+    };
+    for (const k of ["agent", "allow", "deny", "write", "edit", "test"]) {
+      el(k).addEventListener("input", render);
+      el(k).addEventListener("change", render);
+    }
+    const copy = el("copy");
+    copy.addEventListener("click", () => {
+      (window as unknown as { school: { copy: (t: string) => Promise<void> } }).school
+        .copy(el("out").textContent || "")
+        .then(
+          () => { copy.textContent = "Copied"; },
+          () => { copy.textContent = "Select and copy"; },
+        )
+        .finally(() => setTimeout(() => { copy.textContent = "Copy"; }, 1500));
+    });
+    render();
+  }
+</script>

@@ -1,0 +1,218 @@
+---
+title: "VS Code"
+slug: vscode
+description: "Use Vibe in VS Code with your file and selection as context, and approve its edits."
+order: 5
+track: surfaces
+surfaces: [vscode]
+quiz: true
+goals:
+  - "Install the extension and sign in"
+  - "Point at code with your active file and selection"
+  - "Approve edits from the approval card"
+  - "Rewind, fork, and know which commands need the CLI"
+minutes: 15
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. Install and sign in: the "Mistral Vibe for VS Code" extension comes
+     from the Marketplace (publisher ID mistralai) or, for early team
+     builds, from a VSIX via Extensions > More Actions > Install from
+     VSIX... (only from an approved Mistral channel). It needs VS Code
+     1.94.0 or later and bundles the Vibe agent, so no CLI install is
+     required. Open it from the Mistral icon in the editor title bar or the Command Palette
+     entry "Mistral Vibe: Open Mistral Vibe". The first sign-in runs a
+     terminal setup flow ("Mistral Vibe Setup") where you paste an API
+     key; it's stored in the OS keyring, or ~/.vibe/.env without one.
+
+  2. Editor context: the extension attaches the active file as a
+     workspace mention, selected lines as a file mention with start and
+     end line numbers, and the selected text itself when it's big enough
+     and under the size limit. So the student can highlight code and ask
+     in plain language instead of pasting paths or snippets.
+
+  3. Reviewing actions and shortcuts: an approval card appears above the
+     input with numbered options (1 Allow once, 2 Allow for remainder of
+     this session, 3 Always allow, 4 Deny); press the number or click.
+     Mod (Cmd on macOS, Ctrl elsewhere) + N starts a new conversation,
+     Shift+Tab cycles the session mode (same
+     built-in and custom agents as the CLI). Inspect file changes in VS
+     Code's diff and Source Control views before committing.
+
+  4. Parity and sharing: the extension exposes a subset of slash
+     commands (/help, /compact, /reload, /log, /mcp, /retry, and a few
+     more). /model, /thinking, /resume and /rename live in the panel UI
+     instead. Rewind and fork are buttons on each assistant message in
+     the panel: "Rewind conversation to this message" and "Fork
+     conversation from this message". /voice and adding MCP servers need
+     the CLI (recent versions of the extension have a panel for scheduled
+     loops), and so does programmatic mode. After installing a new plugin,
+     the student must run "Developer: Reload Window" (or restart VS Code):
+     a new session or /reload isn't enough, because the extension keeps
+     its agent process running. Config, agents, skills, MCP servers
+     and sessions are shared with the CLI through ~/.vibe/. Other IDEs
+     (JetBrains AI Assistant, Zed) can run Vibe over ACP; the old Mistral
+     Code Enterprise JetBrains plugin is deprecated.
+
+  This lesson is hands-on for the student. Never complete the hands-on
+  part yourself: don't edit files the student hasn't asked you to edit
+  in this lesson, and never approve on their behalf. Each time the
+  student has to do something (select code, switch mode, approve a
+  card), say what to do, then stop and wait for their reply.
+
+  Check the Session mode first (your agent name in your context, or ask
+  the student to look at the Session mode menu at the bottom right of
+  the input). If it's Auto Approve (or Smart Approve), ask the student to
+  switch to Ask for this lesson before you go on, so they see the
+  selection context and the approval card themselves. They can switch
+  back afterwards.
+
+  First work out where you are running. If your messages arrive with
+  editor context (a file and line range attached, like "slugify.js
+  L1-6"), you ARE the VS Code extension panel: the student's next
+  requests come to you, so when they ask for the edit you propose it
+  with your edit tool and the student approves it on the card. Only make
+  the edit after they've asked for it in Ask mode. Don't tell them to go
+  to "the panel" or wait for an edit from somewhere else.
+
+  Then have the student open a project in VS Code, select a function or
+  a few lines (the panel attaches the selection as a chip), and ask
+  Vibe in the panel to explain the selection. Next, have them switch to
+  Ask (Shift+Tab or the Session mode menu at the bottom right of the
+  input) and ask for a small, harmless edit (for example, a one-line
+  comment), then approve it by pressing 1 (Allow once) on the approval
+  card.
+
+  Verify completion by checking that the edited file shows the change
+  (for example with git diff or by reading the file). If you are not
+  running in VS Code, ask the student what Vibe said about the selected
+  code, which file and lines it referred to, and that they approved the
+  edit on the card.
+---
+
+
+The VS Code extension puts Vibe in a panel next to your code. It sees the file you have open and the lines you selected, so you can point at code instead of describing it. Under the hood it runs the same Vibe agent as the CLI and reads the same `~/.vibe/` configuration, so anything you set up for the CLI works here too, including what you'll configure in the Code lessons that follow.
+
+## Install and sign in
+
+Install **Mistral Vibe for VS Code** from the Extensions view:
+
+1. Press `Cmd+Shift+X` (macOS) or `Ctrl+Shift+X` (Windows, Linux).
+2. Search for `Mistral Vibe`.
+3. Pick the extension published by **Mistral AI** (publisher ID `mistralai`) and click `Install`.
+
+Or use the [Marketplace listing](https://marketplace.visualstudio.com/items?itemName=mistralai.mistral-vibe-code). You need VS Code 1.94.0 or later. The extension ships with the Vibe agent built in, so you don't need to install the CLI.
+
+If it doesn't show up after installing, run **Developer: Reload Window** from the Command Palette.
+
+<div class="callout">
+Got a <code>.vsix</code> build from your team? Install it from <strong>Extensions &gt; More Actions &gt; Install from VSIX...</strong>. Only use VSIX files from an approved Mistral distribution channel.
+</div>
+
+Open Vibe from the Mistral Vibe icon (the orange M) in the editor title bar, or run **Mistral Vibe: Open Mistral Vibe** from the Command Palette. The first time it needs credentials, the extension opens a **Mistral Vibe Setup** terminal where you paste your Mistral API key. The key goes into your OS keyring, or `~/.vibe/.env` when no keyring is available. A browser-based sign-in is being enabled for the bundled agent; until it lands in the extension, use the terminal flow.
+
+The panel opens as a **Mistral Vibe** tab in the secondary side bar, with an input that reads *Ask anything... (@ to add context)*, a **+** button to attach context, and icons at the top for settings, session history, and a new session. You're ready when it opens without an authentication prompt and you can send a prompt such as `Explain the currently open file.`
+
+<div class="callout">
+If VS Code opens the folder in <strong>Restricted Mode</strong> (a banner at the top says so), trust the folder first: click <strong>Manage</strong> in the banner, then <strong>Trust</strong>. VS Code disables the extension in Restricted Mode. Vibe may then ask its own trust question for the folder (the same <a href="/glossary#trusted-folder">trusted folders</a> as the CLI), which decides whether project files like <code>.vibe/</code> and <code>AGENTS.md</code> load.
+</div>
+
+## Point at code
+
+The extension tracks your editor so you don't have to copy paths or paste snippets:
+
+| You have | Vibe receives |
+|---|---|
+| A file open | A mention of the active file |
+| Lines selected | The file mention plus the start and end line numbers |
+| Text selected | The selected text itself, if it's long enough and under the size limit |
+
+When you select lines, the panel attaches them as a chip under the input (for example **slugify.js · L1-6**). Highlight the code, then ask in plain language. You can also right-click a selection and pick **Explain with Mistral Vibe**, or right-click a file in the Explorer and pick **Add to Mistral Vibe**.
+
+```text
+Explain what the selected function does and when it can throw.
+```
+
+```text
+Refactor this function to make error handling explicit. Keep the public API unchanged.
+```
+
+```text
+Review this diff for edge cases before I open a pull request.
+```
+
+## Review and approve actions
+
+When Vibe wants to edit a file or run a command that needs permission, an approval card appears above the input with a preview of the change. Pick an option with the mouse or press its number:
+
+| Key | Option |
+|---|---|
+| `1` | **Allow once** |
+| `2` | **Allow for remainder of this session** |
+| `3` | **Always allow** |
+| `4` | **Deny** |
+
+After an edit lands, a **Review** bar above the input lists the changed files, with buttons to open the diff, undo, or accept.
+
+Other shortcuts in the panel (`Mod` means `Cmd` on macOS and `Ctrl` on Windows or Linux):
+
+| Shortcut | Action |
+|---|---|
+| `Shift+Tab` | Cycle the session mode (agent) |
+| `Mod+N` | Start a new conversation |
+| `Mod+Shift+L` | Switch between the chat and the session list |
+| `Mod+[` / `Mod+]` | Previous / next active session |
+| `Escape` | Cancel or blur the current input |
+
+<div class="callout">
+The official docs list <code>Mod+Y</code> / <code>Mod+Alt+N</code> approval shortcuts. In extension version 1.29 approval uses the numbered options above instead. Check the card you see.
+</div>
+
+After an edit lands, use VS Code's own diff and **Source Control** views to inspect it before you commit. How often Vibe asks depends on the [agent](/glossary#agent) you pick: click the **Session mode** menu at the bottom right of the input, or press `Shift+Tab`. The list has the built-ins (`Ask`, `Accept Edits`, `Smart Approve`, `Auto Approve`) and any custom agents from `~/.vibe/agents/` or `.vibe/agents/`. You'll learn more in the [Permissions](/lessons/permissions) and [Agents](/lessons/agents) lessons.
+
+## Slash commands and CLI parity
+
+Type `/` in the panel to see what's available. The extension exposes a subset of the CLI commands, plus any [skills](/lessons/skills) that opt in:
+
+| Command | What it does |
+|---|---|
+| `/help` | Show commands and shortcuts |
+| `/compact` | Summarize the conversation to free context |
+| `/reload` | Reload config, `AGENTS.md`, and skills from disk |
+| `/log` | Show the session log directory |
+| `/mcp` | Show MCP sign-in status, or `login` / `logout` an OAuth server |
+| `/retry` | Continue an interrupted response |
+| `/proxy-setup` | Configure proxy and SSL certificate settings |
+| `/data-retention` | Show data retention information |
+
+Some CLI commands have a UI equivalent instead: pick the model and reasoning level (`/model`, `/thinking`), load past sessions (`/resume`), and rename a session (`/rename`) from the panel. Scheduled loops (`/loop`) have their own panel in recent versions of the extension. Each assistant message in the panel has **Rewind conversation to this message** and **Fork conversation from this message** buttons: the panel's version of `/rewind` and of branching a session. For `/voice`, adding MCP servers, and programmatic mode (`vibe -p`), use the [CLI](/lessons/cli).
+
+<div class="callout">
+Installed a new plugin (like the Vibe School plugin)? Run <strong>Developer: Reload Window</strong> from the Command Palette, or restart VS Code. A new session or <code>/reload</code> isn't enough: the extension keeps its agent running in the background, and only a window reload picks up new plugins.
+</div>
+
+The Command Palette also has **Mistral Vibe: Show Logs** for debugging. The extension doesn't set default keybindings for its palette commands; add your own in `keybindings.json` if you want them.
+
+## Settings and shared config
+
+There's no separate settings panel yet. The extension runs the Vibe [ACP](/glossary#acp) agent and follows the same configuration as the CLI: `~/.vibe/config.toml`, project `.vibe/` folders, agents, skills, and MCP servers. Your configuration and sessions are shared between the CLI and the extension.
+
+Telemetry follows two switches. The extension only sends telemetry when VS Code's `telemetry.telemetryLevel` allows it, and Vibe's own telemetry is controlled by `enable_telemetry` in `~/.vibe/config.toml`. Turn off either to opt out.
+
+## Coming from Mistral Code Enterprise
+
+The old Mistral Code extension and Vibe can coexist. To switch, install Vibe, authenticate, and optionally uninstall Mistral Code. Nothing carries over automatically (settings, per-model preferences, chat history), so re-create agents, skills, and MCP servers in `~/.vibe/`. The two are billed on different plans. See the [migration guide](https://docs.mistral.ai/vibe/code/vs-code-extension/migration-mistral-code-enterprise).
+
+## Other IDEs
+
+Vibe implements the [Agent Client Protocol](https://agentclientprotocol.com/), so it also runs inside ACP-compatible editors with the same engine and `~/.vibe/` config:
+
+- **JetBrains** (2025.3.2 or later, with the AI Assistant plugin): open `Settings`, go to `Tools > AI Assistant > Agents`, search for `Mistral Vibe`, click `Install`, then pick `Mistral Vibe` in the `AI Chat` agent selector.
+- **Zed**: install the CLI, then point Zed at the `vibe-acp` command it installs, under `agent_servers` in your Zed settings.
+
+<div class="callout">
+Don't use the <strong>Mistral Code Enterprise</strong> JetBrains plugin. It's deprecated; ACP is the supported path.
+</div>
+
+Learn more in the [VS Code extension docs](https://docs.mistral.ai/vibe/code/vs-code-extension/install-authenticate) and [Use Vibe in other IDEs](https://docs.mistral.ai/vibe/code/use-vibe-in-other-ides).

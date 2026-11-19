@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Rebuild the downloadable zips in public/ from their sources:
+#   plugin/vibe-school/           -> public/plugin/vibe-school.zip
+#   starter/vibe-todo/            -> public/examples/starter.zip
+#   ../agents-skills-instructions -> public/examples/agents-skills-instructions.zip
+#                                    (+ copy in src/examples/ for the example page)
+# Zips are reproducible (fixed file times, sorted entries, no extra fields),
+# so CI can check they match their sources.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+STAGE="$(mktemp -d)"
+trap 'rm -rf "$STAGE"' EXIT
+
+# make_zip <parent dir> <folder name> <output zip>
+make_zip() {
+  local parent="$1" name="$2" out="$3"
+  mkdir -p "$STAGE/$name"
+  rsync -a --delete --exclude __pycache__ --exclude .DS_Store --exclude .todo.json \
+    --exclude student.json --exclude '*.pyc' "$parent/$name/" "$STAGE/$name/"
+  find "$STAGE/$name" -exec touch -h -t 202601010000 {} +
+  rm -f "$out"
+  (cd "$STAGE" && find "$name" -print | LC_ALL=C sort | zip -qX -@ "$OLDPWD/$out")
+}
+
+mkdir -p public/plugin public/examples
+make_zip plugin vibe-school public/plugin/vibe-school.zip
+make_zip starter vibe-todo public/examples/starter.zip
+
+if [ -d ../agents-skills-instructions ]; then
+  rsync -a --delete --exclude __pycache__ --exclude .DS_Store --exclude .todo.json \
+    ../agents-skills-instructions/ src/examples/agents-skills-instructions/
+  make_zip .. agents-skills-instructions public/examples/agents-skills-instructions.zip
+fi
+echo "Built public/plugin/vibe-school.zip, public/examples/starter.zip, public/examples/agents-skills-instructions.zip"

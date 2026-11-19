@@ -1,0 +1,93 @@
+---
+// Copyright (c) 2026 Zeke Sikelianos
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+// Modified for Vibe School.
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import { SURFACE_ICONS, SURFACE_LABELS } from "../../lib/tracks";
+
+export const prerender = true;
+
+const exercises = (await getCollection("exercises")).sort(
+	(a, b) => a.data.order - b.data.order,
+);
+---
+
+<Base title="Exercises" description="Hands-on projects where you apply what you've learned in Vibe School to build real things.">
+  <div class="mb-8 rise" style="--d:0">
+    <a href="/" class="label hover:text-[var(--text)]">&larr; Course</a>
+  </div>
+
+  <header class="mb-8 rise" style="--d:1">
+    <h1 class="font-display text-4xl sm:text-5xl leading-[1.02] tracking-[-0.02em]">Exercises</h1>
+    <p class="text-[var(--text-muted)] mt-3">
+      Open-ended projects for after the lessons. Pick any one; Vibe gives you the brief and checks your work.
+    </p>
+    <p id="ex-path-note" class="hidden mt-2 text-sm text-[var(--text-muted)]"></p>
+  </header>
+
+  <ol id="ex-list" class="panel divide-y divide-[var(--hair)] overflow-hidden rise" style="--d:2">
+    {exercises.map((exercise) => (
+      <li data-exercise-slug={exercise.data.slug} data-exercise-surfaces={exercise.data.surfaces.join(",")}>
+        <a href={`/exercises/${exercise.data.slug}`} class="lesson-row group flex items-start gap-4 px-4 py-4">
+          <span class="exercise-status mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border hairline" aria-hidden="true">
+            <span class="exercise-status-dot h-2 w-2 bg-[var(--text-label)]"></span>
+            <span class="exercise-check hidden h-full w-full items-center justify-center text-xs font-bold leading-none">&#10003;</span>
+          </span>
+          <span class="min-w-0 flex-1">
+            <span class="block font-medium group-hover:text-[var(--accent-text)] transition-colors">{exercise.data.title}</span>
+            <span class="mt-0.5 block text-sm text-[var(--text-muted)]">{exercise.data.description}</span>
+          </span>
+          {exercise.data.surfaces.length > 0 && (
+            <span class="hidden sm:flex shrink-0 items-center gap-1.5 pt-0.5" title={exercise.data.surfaces.map((sf) => SURFACE_LABELS[sf]).join(", ")}>
+              {exercise.data.surfaces.map((sf) => (
+                <img src={SURFACE_ICONS[sf]} alt="" class="pixel w-5 h-5" width="20" height="20" />
+              ))}
+              <span class="sr-only">Works in {exercise.data.surfaces.map((sf) => SURFACE_LABELS[sf]).join(", ")}</span>
+            </span>
+          )}
+        </a>
+      </li>
+    ))}
+  </ol>
+
+  <details id="ex-other" class="hidden mt-6 notes">
+    <summary class="cursor-pointer list-none flex items-center gap-3 py-3 border-t hairline group">
+      <span class="min-w-0 flex-1">
+        <span class="block font-medium group-hover:text-[var(--accent-text)] transition-colors">Other exercises</span>
+        <span id="ex-other-note" class="block text-sm text-[var(--text-muted)]"></span>
+      </span>
+      <span class="label notes-toggle"></span>
+    </summary>
+    <ol id="ex-other-list" class="panel divide-y divide-[var(--hair)] overflow-hidden mb-4"></ol>
+  </details>
+
+  <script>
+    import { exerciseFits, PATH_LABELS, PATH_SURFACE, type PathId } from "../../lib/paths";
+
+    // biome-ignore lint/suspicious/noExplicitAny: window.school is plain JS (public/school.js)
+    const school = (window as unknown as { school: any }).school;
+    const $ = (id: string) => document.getElementById(id) as HTMLElement;
+
+    // Enrolled students see their path's exercises first; the rest fold away.
+    if (school.getStudentId()) {
+      const path = school.getPath() as PathId;
+      if (PATH_SURFACE[path]) {
+        const other = $("ex-other-list");
+        let fit = 0;
+        for (const li of Array.from(document.querySelectorAll<HTMLElement>("#ex-list > li"))) {
+          if (exerciseFits(path, (li.dataset.exerciseSurfaces || "").split(","))) fit++;
+          else other.appendChild(li);
+        }
+        const rest = other.children.length;
+        $("ex-path-note").textContent = `${fit} fit your path, ${PATH_LABELS[path]}.`;
+        $("ex-path-note").classList.remove("hidden");
+        if (rest > 0) {
+          $("ex-other-note").textContent = `${rest} for other surfaces.`;
+          $("ex-other").classList.remove("hidden");
+        }
+      }
+    }
+  </script>
+</Base>

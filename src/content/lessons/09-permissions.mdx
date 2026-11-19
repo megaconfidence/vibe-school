@@ -1,0 +1,258 @@
+---
+title: "Permissions"
+slug: permissions
+description: "Control what Vibe can do without asking: agents, approvals, trusted folders, and per-tool rules."
+order: 9
+track: code
+surfaces: [cli, vscode, desktop]
+quiz: true
+goals:
+  - "Pick an agent to set how often Vibe asks"
+  - "Approve actions once, for the session, or always"
+  - "Decide which folders to trust"
+  - "Write per-tool rules, like a bash allowlist"
+minutes: 20
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. Agents set the approval behavior. Built-in agents: ask (asks before
+     every tool, file edits included), accept-edits (the default:
+     auto-approves file edits, still asks for shell commands and other
+     sensitive tools), smart-approve (a model classifies each call, runs
+     the ones it judges safe and asks before risky ones; it's a
+     classifier, not a sandbox), and auto-approve (approves everything,
+     including shell commands; only for disposable, sandboxed
+     environments). Shift+Tab cycles agents in the CLI and the VS Code
+     extension; `vibe --agent <name>` picks one at launch; default_agent
+     in config.toml sets the default.
+
+  2. Approvals. In the CLI, prompts appear at the bottom: 1 or y allows
+     once, 2 allows for the rest of the session, 3 always allows, 4, n or
+     Escape denies. In VS Code they appear in the side panel. Vibe also
+     asks before any tool reaches outside the working directory (or
+     directories added with --add-dir), and before reading or editing
+     .env and .envrc files, even when the tool's permission is "always".
+     Only auto-approve, or a path in the tool's allowlist, skips these.
+
+  3. Trusted folders. Project config (.vibe/config.toml, .vibe/agents,
+     skills, prompts, plugins, .agents/skills, AGENTS.md) only
+     loads in a folder you trusted. The trust dialog offers Trust folder,
+     Trust full repo (in a subfolder of a git repo), or Don't trust.
+     Decisions are stored in ~/.vibe/trusted_folders.toml; /trusted-folders
+     in the CLI browses and changes them (changes apply at next start).
+     `vibe --trust` trusts the working directory for one run only, which
+     matters for programmatic mode since it never prompts. Review a repo's
+     .vibe/ like any other code before trusting it.
+
+  4. Per-tool rules in config.toml. [tools.<name>] permission = "always",
+     "ask" or "never". For bash, allowlist and denylist are command
+     prefixes; setting either replaces its default list (the default
+     allowlist covers read-only commands such as ls, pwd, cat, git
+     status), so include the defaults you want to keep. sensitive_patterns
+     asks before matching files (replaces the .env defaults if set).
+     outside_workdir = "deny" refuses access outside the working directory
+     instead of asking. enabled_tools and disabled_tools turn tools on or
+     off by name, glob, or re: regex. Admins can set enable_auto_approve =
+     false to hide auto-approve and ignore --auto-approve/--yolo.
+
+  Then the hands-on part, in vibe-todo (the course project from the
+  Configuration lesson; if it's missing, fetch the starter as described
+  there). Work in the student's vibe-todo session.
+
+  1. Trusted folder, on this project. Show that vibe-todo is in
+     ~/.vibe/trusted_folders.toml (or $VIBE_HOME/trusted_folders.toml):
+     read the file, or have the student open /trusted-folders in the CLI.
+     If it isn't trusted yet, have them trust it (restart vibe in the
+     folder and choose Trust folder, or /trusted-folders then a).
+     Explain why Vibe asked: vibe-todo has a .vibe/ folder, so it now
+     holds config that changes how Vibe behaves.
+
+  2. A project allowlist. Add a [tools.bash] table to
+     vibe-todo/.vibe/config.toml (keep default_agent):
+       [tools.bash]
+       allowlist = ["ls", "pwd", "cat", "git status", "git diff", "git log", "python3 -m unittest", "python3 -m todo"]
+     Explain that bash allowlist entries are command prefixes (so
+     "python3 -m unittest -v" matches too), that setting allowlist
+     replaces the default list (that's why ls, pwd, cat and the git
+     read commands are listed again), and that a project list replaces
+     the user one for this project. On Windows, use the command name
+     that works there (often `python -m unittest`); if the student's
+     shell tool is git_bash or powershell rather than bash, put the same
+     list under [tools.git_bash] or [tools.powershell]. Never allowlist
+     destructive commands.
+
+  3. Try it. Have the student run /reload (CLI or VS Code panel) or start
+     a new session (Desktop: New Session in the Code tab), then ask Vibe
+     "Run the tests". The test command should now run without an
+     approval prompt in accept-edits. Optionally, let them set a personal
+     default_agent in ~/.vibe/config.toml (back it up first); discourage
+     auto-approve. In Desktop they can also pick the agent per session
+     with Select approval policy; in VS Code, with the Session mode menu.
+
+  4. Commit: `git add .vibe && git commit -m "Allow the test command"`.
+
+  Verify completion by reading vibe-todo/.vibe/config.toml and confirming
+  it parses (python3 -c "import tomllib;print(tomllib.load(open('.vibe/config.toml','rb')))",
+  Python 3.11+; otherwise run the same code with
+  `uv run --python 3.12 python -c`) and has a shell tool table
+  ([tools.bash], or [tools.git_bash] / [tools.powershell] on Windows)
+  whose allowlist contains the project's test command, and by checking
+  that vibe-todo's path is listed as trusted in trusted_folders.toml.
+  Report artifacts: permission tools.bash (or the Windows table name).
+---
+
+import ConfigBuilder from '../../components/ConfigBuilder.astro'
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Vibe can read files, edit code, and run shell commands on your behalf. You decide how much it does on its own. Three layers control that: the active [agent](/glossary#agent) sets how often Vibe asks, [trusted folders](/glossary#trusted-folder) decide whether a project's own config loads, and per-tool rules tighten or loosen individual tools.
+
+## In your project
+
+This lesson lets Vibe run the `vibe-todo` tests without asking, and makes sure the folder is trusted:
+
+```text
+vibe-todo/
+└── .vibe/
+    └── config.toml    # adds [tools.bash] allowlist with "python3 -m unittest"
+```
+
+
+## Agents set the approval level
+
+| Agent | What it approves on its own | Use for |
+|---|---|---|
+| `ask` | Nothing. Asks before every tool. | Unfamiliar code, or when you want to vet each action. |
+| `accept-edits` | **Default.** File edits. Still asks for shell commands and other sensitive tools. | Day-to-day work and scoped refactors. |
+| `smart-approve` | Calls a model judges safe. Asks before risky ones. | Day-to-day work with fewer prompts. |
+| `auto-approve` | Everything, including shell commands. | Disposable, sandboxed environments only. |
+
+`smart-approve` is a classifier, not a sandbox: a call it judges safe runs with your user's full access. For untrusted code or sensitive credentials, use `ask` or an isolated environment.
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+Press `Shift+Tab` to cycle agents. The mode label on the input box's top border shows the active one. Or pick one at launch:
+
+```bash
+vibe --agent ask
+vibe --smart-approve
+```
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+Click the **Session mode** menu at the bottom right of the input (it shows the current agent, for example **Auto Approve**), or press `Shift+Tab` to cycle. It defaults to your `default_agent`.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+In a Code session, use **Select approval policy** under the input: **Ask**, **Accept Edits**, **Smart Approve**, or **Auto Approve**. Then respond to approval requests and questions in the conversation. If the agent starts changing unrelated code, interrupt it and redirect the task.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+Set the agent every session starts in:
+
+```toml
+default_agent = "ask"
+```
+
+## Approving actions
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+Approval prompts appear at the bottom of the terminal:
+
+| Key | Action |
+|---|---|
+| `1` or `y` | Allow once |
+| `2` | Allow for the rest of the session |
+| `3` | Always allow |
+| `4`, `n`, or `Escape` | Deny |
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+Approval prompts appear as a card above the input. Press `1` **Allow once**, `2` **Allow for remainder of this session**, `3` **Always allow**, or `4` **Deny** (or click the option).
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Approval requests appear in the conversation. Read each one before answering.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+Whatever the agent, Vibe also asks before a tool reads, writes, or runs something **outside the working directory**, and before it touches `.env` or `.envrc` files. Only `auto-approve`, or a path in the tool's `allowlist`, skips those checks.
+
+## Trusted folders
+
+A project can ship its own Vibe setup in `.vibe/` (config, agents, skills, prompts, plugins), plus `.agents/skills/` and `AGENTS.md`. Because that changes how Vibe behaves, it only loads from folders you trust.
+
+The first time you start Vibe in such a folder, it lists what it found and offers **Trust folder**, **Trust full repo** (when you start in a subfolder of a git repository), or **Don't trust**. Review those files first, especially MCP servers and tool permissions.
+
+- Decisions are stored in `~/.vibe/trusted_folders.toml`.
+- `/trusted-folders` in the CLI lets you browse, change, or forget them. Changes apply the next time Vibe starts.
+- `vibe --trust` trusts the working directory for a single run. Programmatic mode (`vibe --prompt`) never asks, so use `--trust` there.
+
+You trusted `vibe-todo` at the end of the [Configuration](/lessons/configuration) lesson, because its `.vibe/` folder made Vibe ask.
+
+## Per-tool rules
+
+In `config.toml`, each tool can have its own block. `permission` is `"always"`, `"ask"`, or `"never"`:
+
+```toml
+[tools.read_file]
+permission = "always"
+
+[tools.write_file]
+permission = "never"
+
+[tools.bash]
+permission = "ask"
+allowlist = ["ls", "pwd", "cat", "git status", "git diff", "git log", "npm test"]
+denylist = ["rm -rf"]
+```
+
+For `bash`, `allowlist` and `denylist` match command prefixes. Some read-only commands (`ls`, `pwd`, `cat`, `git status`, and others) are allowed by default, and **setting a list replaces its defaults**, so include the ones you want to keep.
+
+In `vibe-todo`, the project file gets its own list, so the tests run without a prompt for anyone who trusts the folder:
+
+```toml
+# vibe-todo/.vibe/config.toml
+default_agent = "accept-edits"
+
+[tools.bash]
+allowlist = ["ls", "pwd", "cat", "git status", "git diff", "git log", "python3 -m unittest", "python3 -m todo"]
+```
+
+A project list replaces your user list for that project; it doesn't add to it. On Windows, use the command name that works there (often `python`). If your shell tool is `git_bash` or `powershell` instead of `bash`, put the list under `[tools.git_bash]` or `[tools.powershell]`.
+
+Other controls:
+
+- **Sensitive files**: `sensitive_patterns` makes a file tool ask before touching matching paths (default: `.env` and `.envrc` files). Setting it replaces the defaults. See [sensitive file protection](https://docs.mistral.ai/vibe/code/cli/configuration-reference#sensitive-file-protection).
+- **Outside the working directory**: `outside_workdir = "deny"` refuses instead of asking, at the top level or per tool.
+- **Turn tools on or off**: `enabled_tools` and `disabled_tools` take exact names, globs, or `re:` regexes, for example `disabled_tools = ["bash"]`.
+- **MCP and connector tools** use the same blocks. MCP tools are named `server_tool`, for example `[tools.fetch_server_get]`. More in [MCP](/lessons/mcp).
+
+<div class="callout">
+Your organization's admin can set <code>enable_auto_approve = false</code>. That hides the <code>auto-approve</code> agent and makes Vibe ignore <code>--auto-approve</code> and <code>--yolo</code>. Per-tool permissions still apply.
+</div>
+
+## Build your project config
+
+Draft the project config for vibe-todo here, then test a few commands to see whether Vibe would run them, ask, or block them. Your tutor checks the real file on your machine.
+
+<ConfigBuilder />
+
+## Good habits
+
+- Commit before risky runs, so you can roll back.
+- Start in `ask` on code you don't know.
+- Keep `auto-approve` for containers, CI runners, and throwaway VMs, never on a machine with SSH keys or cloud credentials.
+- Keep tools that touch external systems on `permission = "ask"`.
+
+Learn more in [Safety, approvals, and permissions](https://docs.mistral.ai/vibe/code/safety-approvals-permissions).

@@ -1,0 +1,124 @@
+---
+// Vibe School: worked example with 2 agents, 2 skills and 2 instruction files.
+export const prerender = true;
+
+import { Code } from "astro:components";
+import Base from "../../layouts/Base.astro";
+
+const raw = import.meta.glob(
+	[
+		"../../examples/agents-skills-instructions/**/*",
+		"../../examples/agents-skills-instructions/.vibe/**/*",
+		"../../examples/agents-skills-instructions/.gitignore",
+	],
+	{ query: "?raw", import: "default", eager: true },
+) as Record<string, string>;
+
+const prefix = "../../examples/agents-skills-instructions/";
+const ORDER = [
+	"AGENTS.md",
+	"tests/AGENTS.md",
+	".vibe/config.toml",
+	".vibe/agents/builder.toml",
+	".vibe/agents/reviewer.toml",
+	".vibe/skills/new-command/SKILL.md",
+	".vibe/skills/code-review/SKILL.md",
+];
+const ROLE: Record<string, string> = {
+	"AGENTS.md": "Instruction file 1: project-wide rules, loaded in every session.",
+	"tests/AGENTS.md": "Instruction file 2: test rules, added when Vibe reads a file under tests/.",
+	".vibe/config.toml": "Project config: starts sessions in the builder agent.",
+	".vibe/agents/builder.toml": "Custom agent 1: you pick it. Edits files, runs the tests, then spawns the reviewer.",
+	".vibe/agents/reviewer.toml": "Custom agent 2: a read-only subagent that the builder spawns.",
+	".vibe/skills/new-command/SKILL.md": "Skill 1: how to add a new CLI command, used by the builder.",
+	".vibe/skills/code-review/SKILL.md": "Skill 2: review checklist and output format, used by the reviewer.",
+};
+
+const all = Object.entries(raw)
+	.map(([p, content]) => ({ path: p.slice(prefix.length), content }))
+	.filter((f, i, arr) => arr.findIndex((g) => g.path === f.path) === i)
+	.filter((f) => !f.path.endsWith("README.md"));
+
+const rank = (p: string) => {
+	const i = ORDER.indexOf(p);
+	return i === -1 ? ORDER.length : i;
+};
+all.sort((a, b) => rank(a.path) - rank(b.path) || a.path.localeCompare(b.path));
+const config = all.filter((f) => ORDER.includes(f.path));
+const app = all.filter((f) => !ORDER.includes(f.path));
+
+const lang = (p: string) =>
+	p.endsWith(".toml") ? "toml" : p.endsWith(".md") ? "markdown" : p.endsWith(".py") ? "python" : "text";
+
+const tree = `agents-skills-instructions/
+├── AGENTS.md                    instruction file 1 (project-wide)
+├── .vibe/
+│   ├── config.toml              project config
+│   ├── agents/
+│   │   ├── builder.toml         custom agent 1
+│   │   └── reviewer.toml        custom agent 2 (read-only)
+│   └── skills/
+│       ├── new-command/SKILL.md skill 1
+│       └── code-review/SKILL.md skill 2
+├── tests/
+│   ├── AGENTS.md                instruction file 2 (tests/ only)
+│   └── test_cli.py
+└── todo/                        the tiny Python app the agents work on
+    ├── cli.py
+    └── store.py`;
+---
+
+<Base title="Example: agents, skills and instructions" description="A minimal, runnable Vibe project with 2 custom agents, 2 skills and 2 instruction files.">
+  <div class="mb-8 rise" style="--d:0">
+    <a href="/" class="label hover:text-[var(--text)]">&larr; Course</a>
+  </div>
+
+  <header class="mb-8 rise" style="--d:1">
+    <h1 class="font-display text-4xl sm:text-5xl leading-[1.02] tracking-[-0.02em]">Example: agents, skills and instructions</h1>
+    <p class="text-[var(--text-muted)] mt-2 text-lg">A minimal, runnable Vibe project with 2 custom agents, 2 skills and 2 instruction files, and how they link together.</p>
+  </header>
+
+  <article class="prose dark:prose-invert max-w-none">
+    <p>
+      <a href="/examples/agents-skills-instructions.zip" download>Download the example (.zip)</a>, unzip it, then run <code>vibe</code> inside the folder and answer <strong>Trust folder</strong> when asked. Project-local <code>.vibe/</code> config is ignored in untrusted folders.
+    </p>
+
+    <p>
+      This is where the course project, <code>vibe-todo</code>, stands after the <a href="/lessons/agents">Agents</a> lesson: the instructions, skills and agents. Your copy also has the project bash allowlist from <a href="/lessons/permissions">Permissions</a>, which this example leaves out. Later lessons add an MCP server (<a href="/lessons/mcp">MCP</a>), a test-running hook (<a href="/lessons/hooks">Hooks</a>) and a small plugin (<a href="/lessons/plugins">Plugins</a>). Starting from scratch? Get the <a href="/examples/starter.zip" download>starter project</a>.
+    </p>
+
+    <h2>Project structure</h2>
+    <pre><code>{tree}</code></pre>
+
+    <h2>How the pieces link</h2>
+    <ul>
+      <li><strong>Instruction files</strong> (<code>AGENTS.md</code>) load automatically: the root file at startup, and <code>tests/AGENTS.md</code> when Vibe first reads a file under <code>tests/</code>.</li>
+      <li><strong>Agents</strong> live in <code>.vibe/agents/*.toml</code>. <code>config.toml</code> makes <code>builder</code> the default (or run <code>vibe --agent builder</code>). Each agent sets its instructions, tools, permissions and <code>enabled_skills</code>. <code>reviewer.toml</code> has <code>agent_type = "subagent"</code>, so only the builder can start it.</li>
+      <li><strong>Skills</strong> live in <code>.vibe/skills/&lt;name&gt;/SKILL.md</code>. The model sees each name and description and loads the full instructions when a task matches. The agent instructions also tell it which skill to load.</li>
+    </ul>
+    <p>
+      Try it: run <code>vibe</code> and ask <em>"Add a remove command that deletes a task by id"</em>. The builder loads <code>new-command</code>, writes code and tests, runs them, then the reviewer checks the change.
+    </p>
+    <p>
+      Lessons that use this example: <a href="/lessons/instructions">Instructions</a>, <a href="/lessons/skills">Skills</a> and <a href="/lessons/agents">Agents</a>.
+    </p>
+
+    <h2>Configuration files</h2>
+    {config.map((f) => (
+      <section>
+        <h3><code>{f.path}</code></h3>
+        <p>{ROLE[f.path]}</p>
+        <Code code={f.content} lang={lang(f.path)} theme="github-dark" wrap />
+      </section>
+    ))}
+
+    <h2>The app</h2>
+    <p>A tiny todo CLI in Python so the agents have something real to work on.</p>
+    {app.map((f) => (
+      <details>
+        <summary><code>{f.path}</code></summary>
+        <Code code={f.content} lang={lang(f.path)} theme="github-dark" wrap />
+      </details>
+    ))}
+  </article>
+</Base>

@@ -1,0 +1,146 @@
+---
+title: "Surfaces"
+slug: surfaces
+description: "Choose between Work and Code, and pick the right Code surface for each task."
+order: 3
+track: start
+surfaces: [cli, vscode, desktop, code-web, work]
+quiz: true
+goals:
+  - "When to use Vibe Work and when to use Vibe Code"
+  - "How the CLI, VS Code, Desktop, and Code Web differ"
+  - "What config and sessions carry over between surfaces"
+  - "How to run Vibe in JetBrains and Zed through ACP"
+minutes: 10
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. Work vs Code. Work is the productivity mode (Vibe web and mobile
+     apps at chat.mistral.ai, and Vibe Desktop): multi-step tasks across
+     connectors like Gmail, Slack, Notion and GitHub, with a fast/think
+     toggle (or a reasoning level in the model menu, depending on the
+     account), approvals before sensitive actions, skills, projects and
+     scheduled tasks. Code is the developer mode: it reads files, edits
+     code, runs commands and opens pull requests. Rule of thumb: if the
+     task depends on a codebase, terminal or IDE, use Code; if it lives
+     across apps, documents and business tools, use Work.
+
+  2. The four Code surfaces. The CLI (terminal-native, scriptable, the
+     only surface with a non-interactive mode, `vibe --prompt`, for CI
+     and automation). The VS Code extension (Vibe in a side panel with
+     editor context: active file, selection, diffs; no CLI install
+     needed). Vibe Code Web (cloud sessions in a managed sandbox against
+     GitHub or GitLab repositories, producing branches and pull requests, no local
+     setup). Vibe Desktop (macOS and Windows app with local sessions on
+     your checkout and cloud sessions, plus Work in the same app; Linux
+     support is coming soon). In Desktop on macOS, Shift+Cmd+1 switches
+     to Work and Shift+Cmd+2 to Code (1 is Work, 2 is Code).
+
+  3. What's shared. The CLI and the VS Code extension share the same
+     configuration and sessions in ~/.vibe/ (agents, skills, MCP servers,
+     profiles, conversation history): start a session in one and resume it
+     in the other. Desktop local sessions share the CLI's core engine and
+     session logs but don't embed the CLI, and their tools and prompts can
+     differ. Code Web runs in the cloud with its own sandbox. Sharing an
+     engine doesn't mean every feature or setting is identical everywhere.
+
+  4. Other IDEs through ACP. Vibe implements the Agent Client Protocol
+     and is published in the ACP registry, so it runs in ACP clients
+     such as JetBrains IDEs (Settings > Tools > AI Assistant > Agents,
+     search Mistral Vibe, from JetBrains 2025.3.2 with the AI Assistant
+     plugin) or Zed (point `agent_servers` at the `vibe-acp` command the
+     CLI installs). It uses the same configuration and credentials. The
+     deprecated Mistral Code Enterprise JetBrains plugin should not be used.
+
+  Then fetch the student's profile with
+  `curl -s {origin}/api/profile/<studentId>` and tell them which surface
+  you think you are running in (CLI, VS Code extension, or Desktop local
+  session), based on your own context. Ask which surface they expect to
+  use most, and whether there are others they want to learn.
+
+  If the student says they only plan to use Vibe Work (in the browser at
+  chat.mistral.ai or in Vibe Desktop), that's a complete answer: add
+  "work" to their surfaces and tell them their next lessons are Work,
+  Projects, Connectors, Canvas and Automations, which they can do in the
+  browser by following the checklist on each lesson page and marking it
+  complete there. They don't need Vibe Code installed for those.
+
+  Verify completion by the student naming the surface they'll use most.
+  If that surface (or the one you are running in) is missing from the
+  profile's "surfaces" array, add it with a PUT to
+  {origin}/api/profile/<studentId>, keeping the existing entries. Valid
+  values: "cli", "vscode", "desktop", "code-web", "work".
+---
+
+import SurfacePicker from '../../components/SurfacePicker.astro'
+
+Vibe is one agent with many front doors. You can reach it from a terminal, from your editor, from a desktop app, or from a browser, and each surface suits a different kind of task. This lesson helps you pick the right one, and explains what carries over when you switch.
+
+<div class="callout">
+Only here for Vibe Work? You don't need to install anything. Read this page, then go to <a href="/lessons/work">Work</a>. The Work lessons run in your browser at chat.mistral.ai, each with a checklist you can follow on your own.
+</div>
+
+## Work or Code
+
+Vibe has two modes ([docs](https://docs.mistral.ai/vibe/choose-chat-work-code)):
+
+- **Work** is for tasks that live across apps, documents, and business tools. It runs in the Vibe web and mobile apps and in Vibe Desktop, uses [connectors](/glossary#connector) like Gmail, Slack, Notion, Linear, and GitHub, and lets you switch between quick answers and deeper, multi-step work with a **fast/think toggle**, or a reasoning level in the model menu, depending on your account.
+- **Code** is for tasks that depend on a codebase, a terminal, or an IDE. It reads files, edits code, runs commands, and opens pull requests.
+
+Some typical prompts:
+
+| Work | Code |
+|---|---|
+| Summarize this 80-page contract and flag the renewal risks. | Explain how authentication works in this repo. |
+| Draft replies to my unread emails from the legal team. | Add unit tests for the `parseInvoice` function. |
+| Research the top 5 competitors in our space and create a one-page brief. | Run the test suite, fix what fails, and open a PR. |
+
+## The four Code surfaces
+
+- **CLI**: runs in any terminal, with full access to your shell and working tree. It's the most flexible surface and the only one with a non-interactive mode (`vibe --prompt`) for scripts and CI.
+- **VS Code extension**: Vibe in a side panel. It adds **editor context**: the active file, your selection, diffs, and source control. No separate CLI install needed.
+- **Vibe Desktop**: one app for macOS and Windows that runs **local sessions** on your checkout and **cloud sessions** in a sandbox, with a built-in browser, terminal, file viewer, and pull request panel. Work lives in the same app. Linux support is coming soon.
+- **Vibe Code Web**: cloud sessions in a managed sandbox, working directly against GitHub or GitLab repositories. Good for long tasks that end in a branch or pull request, with no local setup.
+
+| | CLI | VS Code extension | Vibe Code Web | Vibe Desktop |
+|---|---|---|---|---|
+| Local install | Required | Required | None | Required (the app) |
+| Repository access | Local clone | Local clone | Directly via GitHub or GitLab | Local clone (local sessions), via GitHub (cloud sessions) |
+| Filesystem and shell | Local working tree | Local working tree, through ACP | Remote sandbox | Local (local sessions), remote sandbox (cloud sessions) |
+| Custom agents, skills, MCP servers, connectors | Yes | Yes | Yes | Yes |
+| Non-interactive mode | Yes (`vibe --prompt`) | No | No | No |
+| Best fit | Terminal-first work, automation, CI | Editor-native work and visual review | Remote repository tasks without local setup | Cloud and local sessions in one app |
+
+Full comparison: [Choose CLI, VS Code, web, or Desktop sessions](https://docs.mistral.ai/vibe/code/choose-cli-vscode-web-sessions).
+
+## Which surface for this task?
+
+Answer three questions to see which surface fits a task. Try it with something you need to do this week.
+
+<SurfacePicker />
+
+## What's shared between surfaces
+
+- **CLI and VS Code extension** share the same configuration and sessions in `~/.vibe/`: agents, skills, MCP servers, profiles, and conversation history. Start a session in the terminal and resume it in VS Code, or the other way around.
+- **Desktop local sessions** share the CLI's core engine and session logs, but Desktop doesn't embed the CLI. Tools and prompts can differ.
+- **Code Web and Desktop cloud sessions** run in a managed cloud sandbox, not on your machine.
+
+To see one task travel through every surface, do the [Work across surfaces](/exercises/work-across-surfaces) exercise after the lessons.
+
+<div class="callout">
+The Code lessons, from <a href="/lessons/configuration">Configuration</a> on, build one project step by step: <code>vibe-todo</code>, a tiny Python todo CLI that ends up with its own instructions, skills, agents, hooks, and plugin in a project <code>.vibe/</code> folder. Personal settings live in <code>~/.vibe/</code>. Both apply in the CLI, the VS Code extension, and Desktop local sessions.
+</div>
+
+## Other IDEs
+
+Vibe implements the [Agent Client Protocol](/glossary#acp) (ACP) and is listed in the ACP registry, so it also runs in ACP-compatible clients, with the same configuration and credentials:
+
+- **JetBrains IDEs** (2025.3.2 or later, with the AI Assistant plugin): open `Settings`, go to `Tools > AI Assistant > Agents`, search for `Mistral Vibe`, and click `Install`. Then pick `Mistral Vibe` in the `AI Chat` agent selector.
+- **Clients without a registry**, such as Zed: install the CLI and point the client at the `vibe-acp` command, for example under `agent_servers` in Zed's settings.
+
+Don't use the old Mistral Code Enterprise JetBrains plugin: it's deprecated. See [Use Vibe in other IDEs](https://docs.mistral.ai/vibe/code/use-vibe-in-other-ides).
+
+## Where to go next
+
+The next lessons take each Code surface in turn: [CLI](/lessons/cli), [VS Code](/lessons/vscode), [Desktop](/lessons/desktop), and [Code Web](/lessons/code-web). [Work](/lessons/work) gets its own track later in the course. If you only use Vibe Work, skip ahead to it now.

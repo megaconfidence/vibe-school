@@ -1,0 +1,315 @@
+---
+title: "Hooks"
+slug: hooks
+description: "Run your own scripts at points in Vibe's lifecycle to block risky actions and add context."
+order: 17
+track: code
+surfaces: [cli, vscode, desktop]
+quiz: true
+goals:
+  - "Know where hooks live and how to declare one"
+  - "Pick the right lifecycle event"
+  - "Follow the hook input and output contract"
+  - "Run your tests after every edit"
+minutes: 25
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. What hooks are and where they live: shell commands Vibe runs at
+     lifecycle events to gate, audit, or rewrite what the agent does, or
+     to notify you. They're declared as [[hooks]] tables in hooks.toml,
+     separate from config.toml: ./.vibe/hooks.toml in the working
+     directory (project, loaded first, trusted folders only) and
+     ~/.vibe/hooks.toml (user). When the same name is in both, the
+     project entry wins. Subagents inherit the parent's hooks. They take
+     effect on the next run.
+
+  2. Fields and events: name, type and command are required; match,
+     timeout (default 60 seconds), strict and description are optional.
+     Types: pre_tool (before the permission prompt, can deny or rewrite
+     tool_input), post_tool (only if the tool body ran, can replace or
+     append to the output), pre_agent (before the model reads your
+     message), pre_llm (before each call to the model, can stop the
+     turn), post_llm (after each model response, deny asks the model to
+     try again), post_agent (after a turn, deny asks the agent to retry;
+     post_llm and post_agent share 3 retries per turn),
+     notification (approval_requested, question_asked, turn_completed,
+     turn_failed; runs in the background, output ignored),
+     session_start (can add context) and session_end. match is an
+     fnmatch glob or a re: regex, case-insensitive; for tool hooks it
+     matches the tool name ("bash" works). Shell guards should match
+     "re:bash|process_start" because background commands use
+     process_start.
+
+  3. The contract: Vibe sends a JSON object on stdin with session_id,
+     parent_session_id, transcript_path, cwd and hook_event_name, plus
+     event fields. The hook answers with its exit code and stdout. Exit
+     0 with empty stdout passes through. Exit 0 with a JSON object acts
+     on it: decision ("allow" or "deny"), reason, system_message (shown
+     in the UI), hook_specific_output (tool_input, prompt,
+     additional_context). Anything else, a non-zero exit, or a timeout is
+     a failure: a warning by default, a denial or block with strict =
+     true (pre_tool, post_tool, pre_agent, pre_llm, post_llm). On a
+     failure the reason comes from stderr, then stdout, then the exit
+     code. stderr is for diagnostics.
+
+  4. Common patterns from the docs: a post_tool hook matching
+     "re:edit|write_file" that runs a formatter such as ruff and tells
+     the agent with additional_context; a strict pre_tool guard that
+     denies rm -rf; a notification hook that alerts you when Vibe needs
+     approval or finishes; a session_start hook that loads a context
+     file as additional_context.
+
+  Then the hands-on part, in vibe-todo (if the folder is missing, fetch
+  the starter as in the Configuration lesson). Add a project hook that
+  runs the tests after every Python edit and tells the agent when they
+  fail, so the check can't be forgotten.
+
+  1. Create vibe-todo/.vibe/hooks/run_tests.py:
+       import json, subprocess, sys
+       from pathlib import Path
+
+       payload = json.load(sys.stdin)
+       if payload.get("tool_status") != "success":
+           sys.exit(0)
+       path = Path((payload.get("tool_input") or {}).get("file_path", ""))
+       if path.suffix != ".py":
+           sys.exit(0)
+       result = subprocess.run(
+           [sys.executable, "-m", "unittest", "-q"],
+           cwd=payload["cwd"], capture_output=True, text=True,
+       )
+       if result.returncode == 0:
+           print(json.dumps({"system_message": "vibe-todo tests pass"}))
+       else:
+           print(json.dumps({"hook_specific_output": {
+               "additional_context": "The test suite fails after this edit:\n" + result.stderr[-2000:]
+           }}))
+     It only uses the standard library, exits 0 with empty output when
+     there is nothing to do, and prints one JSON object otherwise.
+
+  2. Create vibe-todo/.vibe/hooks.toml (if it exists, append and keep
+     existing hooks):
+       [[hooks]]
+       name = "run-tests"
+       type = "post_tool"
+       match = "re:edit|write_file"
+       command = "python3 .vibe/hooks/run_tests.py"
+       timeout = 60
+       description = "Run the vibe-todo tests after each Python edit."
+     Hooks run in the session's working directory, so start Vibe in the
+     vibe-todo root. On Windows, use `python` instead of `python3`; hooks
+     run in Git Bash when it's installed, otherwise PowerShell.
+
+  3. Try it: start a new session in vibe-todo (hooks load at session
+     start; VS Code: Mod+N; Desktop: New Session). Ask Vibe to "add a
+     docstring to cmd_list in todo/cli.py". After the edit, the CLI shows
+     "vibe-todo tests pass". The VS Code extension doesn't display a
+     hook's system_message (and Desktop may not either), so there the
+     hook runs silently on success. Optionally ask it to break a test on purpose
+     to see the failure reach the agent, then revert with `git checkout .`.
+
+  4. Optional, personal: a notification hook in ~/.vibe/hooks.toml (back
+     it up first if it exists) with type = "notification", match =
+     "turn_completed", and a command for their OS (macOS `say "Vibe is
+     done"`, Linux `notify-send "Vibe" "Vibe is done"`).
+
+  5. Commit: `git add .vibe && git commit -m "Run tests after each edit"`.
+
+  Verify completion by checking vibe-todo/.vibe/hooks.toml parses and has
+  a [[hooks]] entry with type = "post_tool" and a command, for example
+  python3 -c "import tomllib;print(tomllib.load(open('.vibe/hooks.toml','rb')))"
+  run in vibe-todo (needs Python 3.11+; use `python` on Windows; if
+  tomllib is missing run the same code with
+  `uv run --python 3.12 python -c "..."`), and that the script it calls
+  exists. Then test the script directly: pipe
+  {"tool_status":"success","tool_input":{"file_path":"todo/cli.py"},"cwd":"<vibe-todo path>"}
+  into `python3 .vibe/hooks/run_tests.py` and confirm it prints a JSON
+  object. Finally, by surface: in the CLI, ask the student to confirm
+  they saw the "vibe-todo tests pass" notice after an edit; in VS Code
+  or Desktop, which don't show that notice, confirm the edit succeeded
+  and rely on the direct script test above. Report artifacts: hook run-tests.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+[Hooks](/glossary#hook) run your own shell commands at fixed points in a Vibe session: before a tool runs, after it runs, when you send a message, when the agent finishes. Use them to block dangerous commands, format files after every edit, load context at startup, or ping you when Vibe needs you. Unlike instructions in `AGENTS.md`, a hook always runs: the model can't forget it.
+
+## In your project
+
+This lesson adds a project hook to `vibe-todo` that runs the tests after every Python edit and tells the agent when they fail:
+
+```text
+vibe-todo/
+└── .vibe/
+    ├── hooks.toml          # new: run-tests, a post_tool hook on edit and write_file
+    └── hooks/
+        └── run_tests.py    # new: runs python3 -m unittest, reports the result
+```
+
+
+## Where hooks live
+
+Hooks go in a `hooks.toml` file, separate from `config.toml`:
+
+- **Project**: `./.vibe/hooks.toml` in the working directory. Loaded first, and only in a [trusted folder](/glossary#trusted-folder).
+- **User**: `~/.vibe/hooks.toml`. Loaded second, applies everywhere.
+
+If both files declare a hook with the same `name`, the project one wins. Subagents inherit the parent's hooks, so a policy also covers work they do. A [plugin](/lessons/plugins) can ship hooks too.
+
+## Declare a hook
+
+Each hook is a `[[hooks]]` table:
+
+```toml
+[[hooks]]
+name = "deny-rm-rf"
+type = "pre_tool"
+match = "re:bash|process_start"
+command = "python3 .vibe/hooks/guard-bash.py"
+timeout = 60.0
+strict = true
+description = "Reject dangerous shell commands."
+```
+
+| Field | Required | Details |
+|---|---|---|
+| `name` | yes | Unique identifier. |
+| `type` | yes | The event, see below. |
+| `command` | yes | Shell command to run. Receives the payload on `stdin`. |
+| `match` | no | Glob, or regex with `re:`. Case-insensitive. Default: everything. |
+| `timeout` | no | Seconds before the hook is killed. Default `60`. |
+| `strict` | no | For `pre_tool`, `post_tool`, `pre_agent`, `pre_llm`, `post_llm`: turn failures into denials, cleared output, blocked messages, or an ended turn instead of warnings. |
+| `description` | no | Shown in diagnostics. |
+
+## Events
+
+| Type | When it fires | `match` selects | Can do |
+|---|---|---|---|
+| `pre_tool` | Before each tool call, before the permission prompt | Tool name (`bash`, `file_system.bash`) | Deny the call, or rewrite its arguments |
+| `post_tool` | After a tool actually ran | Tool name | Replace or append to the output the model sees |
+| `pre_agent` | After you send a message, before the model reads it | Agent name (`main` for the main agent) | Block the message, rewrite it, or add context |
+| `pre_llm` | Before each call to the model (several times per turn when tools run, so keep it fast) | Agent name | Deny to stop the turn |
+| `post_llm` | After each model response, before Vibe acts on it | Agent name | Deny to discard the response and ask the model to try again |
+| `post_agent` | After a turn ends with no pending tool calls | Agent name | Deny to ask the agent to retry |
+| `notification` | Vibe needs you or a turn ends | `approval_requested`, `question_asked`, `turn_completed`, `turn_failed` | Nothing: runs in the background, output ignored |
+| `session_start` | A session starts | `startup`, `resume`, `clear`, `fork` | Add context for the model |
+| `session_end` | A session ends | `exit`, `clear`, `other` | Nothing: runs in the background |
+
+`post_llm` and `post_agent` share one budget of 3 retries per turn. Past it, the response is accepted.
+
+<div class="callout">
+Commands the agent starts in the background go through <code>process_start</code>, not <code>bash</code>. Shell guards should use <code>match = "re:bash|process_start"</code>.
+</div>
+
+## The contract
+
+Vibe starts the hook with a JSON object on `stdin`: `session_id`, `parent_session_id`, `transcript_path`, `cwd`, `hook_event_name`, plus the event's own fields (for `pre_tool`: `tool_name`, `tool_call_id`, `tool_input`).
+
+The hook answers with its **exit code** and **stdout**:
+
+| Exit and stdout | Effect |
+|---|---|
+| Exit `0`, empty stdout | Pass through. |
+| Exit `0`, a JSON object | Vibe acts on its fields. |
+| Exit `0`, anything else | Failure: a warning, or a denial with `strict = true`. |
+| Non-zero exit or timeout | Failure. The reason comes from `stderr`, then `stdout` if `stderr` is empty, then the exit code. |
+
+The JSON fields:
+
+```json
+{
+  "decision": "deny",
+  "reason": "rm -rf is not allowed here.",
+  "system_message": "Blocked a dangerous command."
+}
+```
+
+`decision` defaults to `"allow"`. On a `pre_tool` deny, `reason` becomes the tool error the model sees. `system_message` is shown to you only. `hook_specific_output` holds event-specific fields: `tool_input` (`pre_tool`), `prompt` (`pre_agent`), or `additional_context` (`post_tool`, `pre_agent`, `session_start`). Use `stderr` for logs.
+
+## Examples
+
+**Run the tests after each edit.** This is the `vibe-todo` hook. It fires after `edit` or `write_file` runs, and only acts on Python files:
+
+```toml
+# vibe-todo/.vibe/hooks.toml
+[[hooks]]
+name = "run-tests"
+type = "post_tool"
+match = "re:edit|write_file"
+command = "python3 .vibe/hooks/run_tests.py"
+timeout = 60
+description = "Run the vibe-todo tests after each Python edit."
+```
+
+```python
+# vibe-todo/.vibe/hooks/run_tests.py
+import json, subprocess, sys
+from pathlib import Path
+
+payload = json.load(sys.stdin)
+if payload.get("tool_status") != "success":
+    sys.exit(0)
+path = Path((payload.get("tool_input") or {}).get("file_path", ""))
+if path.suffix != ".py":
+    sys.exit(0)
+
+result = subprocess.run(
+    [sys.executable, "-m", "unittest", "-q"],
+    cwd=payload["cwd"], capture_output=True, text=True,
+)
+if result.returncode == 0:
+    print(json.dumps({"system_message": "vibe-todo tests pass"}))
+else:
+    print(json.dumps({"hook_specific_output": {
+        "additional_context": "The test suite fails after this edit:\n" + result.stderr[-2000:]
+    }}))
+```
+
+When the tests pass, the CLI shows a short message and the model sees nothing extra. The VS Code extension doesn't display a hook's `system_message`, so there a passing run is silent. When they fail, the failure is appended to the tool output the model reads, so it can fix the problem in its next step. Hooks run in the session's working directory, so start Vibe in the project root. On Windows, use `python` in `command`; hooks run in Git Bash when it's installed, otherwise PowerShell.
+
+**Format after each edit.** The [hooks documentation](https://docs.mistral.ai/vibe/code/cli/hooks#example) has a similar `post_tool` hook that runs Ruff and tells the agent when a file changed.
+
+**Get notified.** Hear when Vibe needs approval or finishes:
+
+```toml
+[[hooks]]
+name = "notify-me"
+type = "notification"
+match = "re:approval_requested|turn_completed"
+command = "say 'Vibe needs you'"
+```
+
+**Load context at startup.** Feed a file to the model at the start of each new session:
+
+```toml
+[[hooks]]
+name = "load-context"
+type = "session_start"
+match = "startup"
+command = "jq -Rs '{hook_specific_output: {additional_context: .}}' .vibe/context.md"
+```
+
+## Where hooks run
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+The CLI reads both `hooks.toml` files when a session starts. Start a new session after you edit them. Config errors, such as invalid TOML or a missing field, show up as warnings and the broken hook is skipped.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The extension shares `~/.vibe/` and project `.vibe/` folders with the CLI, so the same `hooks.toml` files apply. Start a new conversation with `Mod+N` after editing them.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Desktop local sessions share the CLI's core engine. Hooks also see Desktop events: `session_end` fires with `exit` when Desktop archives a session. Start a new session after editing `hooks.toml`.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+Learn more in the [hooks documentation](https://docs.mistral.ai/vibe/code/cli/hooks).

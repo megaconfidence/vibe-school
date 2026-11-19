@@ -1,0 +1,571 @@
+---
+// Copyright (c) 2026 Zeke Sikelianos
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+// Modified for Vibe School.
+// Vibe School homepage: hero and onboarding for visitors, course dashboard
+// (Vibe Pass, setup panel, tracks) for enrolled students.
+
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import { PATH_IDS, PATH_LABELS } from "../lib/paths";
+import { SETUP_ROWS } from "../lib/setup";
+import {
+	SURFACE_BLURBS,
+	SURFACE_ICONS,
+	SURFACE_LABELS,
+	SURFACES,
+	TRACK_BLURBS,
+	TRACK_ICONS,
+	TRACK_LABELS,
+	TRACKS,
+} from "../lib/tracks";
+
+export const prerender = true;
+
+const lessons = (await getCollection("lessons")).sort((a, b) => a.data.order - b.data.order);
+const exercises = (await getCollection("exercises")).sort((a, b) => a.data.order - b.data.order);
+
+const groups = TRACKS.map((track) => ({
+	track,
+	label: TRACK_LABELS[track],
+	blurb: TRACK_BLURBS[track],
+	icon: TRACK_ICONS[track],
+	lessons: lessons.filter((l) => l.data.track === track),
+})).filter((g) => g.lessons.length > 0);
+
+const roles = [
+	{ id: "developer", label: "Developer", blurb: "I write code and want Vibe in my editor or terminal.", icon: "/pixel/tool.svg" },
+	{ id: "team-lead", label: "Team lead", blurb: "I'm rolling Vibe out to a team or championing it.", icon: "/pixel/trophy.svg" },
+	{ id: "knowledge-worker", label: "Knowledge worker", blurb: "I want research, documents and tasks done.", icon: "/pixel/briefcase.svg" },
+];
+
+// Pixel M: 7 x 5 cells, sunset bands top to bottom (official geometry).
+const M_CELLS: [number, number, string][] = [
+	[1, 0, "#FFAF01"], [5, 0, "#FFAF01"],
+	[1, 1, "#FF8204"], [2, 1, "#FF8204"], [4, 1, "#FF8204"], [5, 1, "#FF8204"],
+	[1, 2, "#FA500F"], [2, 2, "#FA500F"], [3, 2, "#FA500F"], [4, 2, "#FA500F"], [5, 2, "#FA500F"],
+	[1, 3, "#E51300"], [3, 3, "#E51300"], [5, 3, "#E51300"],
+	[0, 4, "#C4001D"], [1, 4, "#C4001D"], [2, 4, "#C4001D"], [4, 4, "#C4001D"], [5, 4, "#C4001D"], [6, 4, "#C4001D"],
+];
+---
+
+<Base wide>
+  <!-- ============ Visitor: hero + onboarding ============ -->
+  <section id="visitor" class="grid-bg -mx-5 px-5 pb-14 border-b hairline">
+    <div class="grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] gap-12 items-center pt-6 lg:pt-12">
+      <div class="min-w-0 rise" style="--d:0">
+        <p class="label leading-relaxed">Mistral Vibe · CLI · VS Code · Desktop · Code Web · Work</p>
+        <h1 class="mt-5 font-display text-[2.75rem] sm:text-6xl lg:text-7xl leading-[0.95] tracking-[-0.02em]">
+          Learn Vibe from <span class="text-[var(--accent-text)]">zero to 60.</span>
+        </h1>
+        <p class="mt-6 text-lg text-[var(--text-muted)] max-w-xl">
+          A free course taught by Vibe itself. Each lesson hands a prompt to the Vibe on your machine. It teaches you, checks your work, and the page updates as you go.
+        </p>
+        <ul class="mt-6 grid gap-2 text-sm text-[var(--text-muted)] max-w-xl">
+          <li class="flex gap-3"><span class="label w-6 shrink-0 pt-0.5">01</span><span>Build one real project, <span class="font-mono text-[var(--text)]">vibe-todo</span>, lesson by lesson.</span></li>
+          <li class="flex gap-3"><span class="label w-6 shrink-0 pt-0.5">02</span><span>Finish with 2 agents, 2 skills, 2 instruction files, a hook and a plugin.</span></li>
+          <li class="flex gap-3"><span class="label w-6 shrink-0 pt-0.5">03</span><span>Use every surface: terminal, editor, desktop app, cloud and Work.</span></li>
+        </ul>
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <a href="#start" class="btn btn-primary px-6 py-3 text-base">Start the course <span class="arrow" aria-hidden="true">&rarr;</span></a>
+          <a href="/examples/agents-skills-instructions" class="btn btn-ghost px-5 py-3 text-base">See the example project</a>
+        </div>
+        <p class="mt-4 text-xs text-[var(--text-label)]">Free. No account. Only your progress is stored.</p>
+      </div>
+
+      <div class="panel p-6 sm:p-8 relative overflow-hidden min-w-0 hidden sm:block rise lift" style="--d:2" aria-hidden="true">
+        <div class="flex items-start justify-between">
+          <p class="label">Vibe Pass</p>
+          <p class="label">No. 0060</p>
+        </div>
+        <svg viewBox="0 0 7 5" class="pixel mt-8 w-40 h-auto" shape-rendering="crispEdges">
+          {M_CELLS.map(([x, y, c]) => <rect x={x} y={y} width="1" height="1" fill={c} />)}
+        </svg>
+        <p class="mt-8 font-mono text-xl">steady-mistral-4821</p>
+        <div class="mt-6 flex gap-3">
+          {SURFACES.map((s) => <img src={SURFACE_ICONS[s]} alt="" class="pixel w-8 h-8" width="32" height="32" />)}
+        </div>
+        <img src="/pixel/walking-orange.svg" alt="" class="pixel absolute right-4 bottom-4 w-16 h-16" width="64" height="64" />
+      </div>
+    </div>
+  </section>
+
+  <section id="start" class="py-14 scroll-mt-16" aria-labelledby="start-heading">
+    <div id="onboard" class="max-w-4xl">
+      <p class="label">Enroll</p>
+      <h2 id="start-heading" class="mt-3 font-display text-3xl sm:text-4xl tracking-tight">Where will you use Vibe first?</h2>
+      <p class="mt-2 text-[var(--text-muted)]">Pick a surface and a role. Lessons show your surface first, and the course highlights a path for you. You can change both later.</p>
+
+      <fieldset class="mt-8">
+        <legend class="label mb-3">1 · Your main surface</legend>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 min-w-0" role="radiogroup" aria-label="Main surface">
+          {SURFACES.map((s, i) => (
+            <button type="button" class="choice p-4 cursor-pointer" role="radio" aria-checked={i === 0 ? "true" : "false"} data-surface={s}>
+              <img src={SURFACE_ICONS[s]} alt="" class="pixel w-8 h-8" width="32" height="32" />
+              <span class="block mt-3 font-display text-lg leading-tight">{SURFACE_LABELS[s]}</span>
+              <span class="block mt-1 text-xs text-[var(--text-muted)]">{SURFACE_BLURBS[s]}</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset class="mt-8">
+        <legend class="label mb-3">2 · Your role</legend>
+        <div class="grid sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Role">
+          {roles.map((r, i) => (
+            <button type="button" class="choice p-4 cursor-pointer flex gap-4 items-start" role="radio" aria-checked={i === 0 ? "true" : "false"} data-role={r.id}>
+              <img src={r.icon} alt="" class="pixel w-8 h-8 shrink-0" width="32" height="32" />
+              <span>
+                <span class="block font-display text-lg leading-tight">{r.label}</span>
+                <span class="block mt-1 text-xs text-[var(--text-muted)]">{r.blurb}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      <div class="mt-8 flex flex-wrap items-center gap-4">
+        <button id="enroll-button" type="button" class="btn btn-primary px-6 py-3 text-base">Get my Vibe Pass <span class="arrow" aria-hidden="true">&rarr;</span></button>
+        <p id="enroll-status" class="text-sm text-[var(--text-muted)]" role="status" aria-live="polite"></p>
+      </div>
+      <p id="enroll-error" class="hidden mt-3 text-sm text-[var(--accent-text)]" role="alert">Something went wrong. Try again. If it keeps happening, clear site data or turn off browser extensions for this site.</p>
+    </div>
+  </section>
+
+  <!-- ============ Enrolled: dashboard ============ -->
+  <!-- One clear next step first; everything else is a click away. -->
+  <section id="dashboard" class="max-w-3xl mx-auto" aria-labelledby="dash-heading">
+    <!-- One card: how far you are, and the one thing to do next -->
+    <div id="up-next" class="panel overflow-hidden rise" style="--d:0">
+      <div class="px-6 sm:px-8 pt-6 sm:pt-7">
+        <div class="flex items-center gap-4">
+          <svg id="pass-m" viewBox="0 0 7 5" class="pixel m-build w-10 h-auto shrink-0" shape-rendering="crispEdges" aria-hidden="true">
+            {M_CELLS.map(([x, y, c], i) => <rect x={x} y={y} width="1" height="1" fill={c} style={`--i:${i}`} />)}
+          </svg>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-baseline justify-between gap-x-4">
+              <h1 id="dash-heading" class="font-display text-xl tracking-tight"><span id="progress-headline">Your course</span></h1>
+              <p class="label"><span id="progress-count">0 of 0</span> · <span id="path-name">Full course</span></p>
+            </div>
+            <div class="progress-track mt-2" role="progressbar" aria-labelledby="dash-heading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar">
+              <div id="progress-fill" class="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="up-next-body" class="px-6 sm:px-8 pt-8 pb-7">
+        <p class="label" id="up-next-kicker">Up next</p>
+        <h2 class="mt-2 font-display text-3xl sm:text-4xl tracking-tight" id="up-next-title">Installation</h2>
+        <p class="mt-2 text-[var(--text-muted)] max-w-xl" id="up-next-desc"></p>
+        <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+          <a id="up-next-cta" href="/lessons/installation" class="btn btn-primary px-6 py-3 text-base">Start lesson <span class="arrow" aria-hidden="true">&rarr;</span></a>
+          <span class="label" id="up-next-meta"></span>
+        </div>
+      </div>
+      <div id="course-done" class="hidden px-6 sm:px-8 pt-8 pb-7">
+        <div class="flex items-center gap-4">
+          <img src="/pixel/trophy.svg" alt="" class="pixel w-12 h-12" width="48" height="48" />
+          <div>
+            <p class="font-display text-2xl">You hit 60.</p>
+            <p class="text-sm text-[var(--text-muted)]">Every lesson on your path is done. Try an exercise, or switch to the full course.</p>
+          </div>
+        </div>
+      </div>
+      <div id="plugin-tip" class="hidden items-center gap-3 px-6 sm:px-8 py-3 border-t hairline sunk text-sm text-[var(--text-muted)]">
+        <p class="flex-1">Skip copying prompts: install the <a href="/plugin" class="theme-link">Vibe School plugin</a>, then type <code class="font-mono">/vibe-school:next</code>.</p>
+        <button type="button" id="plugin-tip-close" class="label hover:text-[var(--text)] cursor-pointer" aria-label="Dismiss tip">Dismiss</button>
+      </div>
+    </div>
+
+    <!-- Your pass, on one quiet line -->
+    <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 px-1 rise" style="--d:1">
+      <ul class="flex gap-2.5" aria-label="Surfaces you've used">
+        {SURFACES.map((s) => (
+          <li class="surface-dot" data-surface-dot={s} title={SURFACE_LABELS[s]}>
+            <img src={SURFACE_ICONS[s]} alt="" class="pixel w-8 h-8" width="32" height="32" />
+            <span class="sr-only">{SURFACE_LABELS[s]}: <span class="surface-state">not yet</span></span>
+          </li>
+        ))}
+      </ul>
+      <p class="text-xs text-[var(--text-muted)]">
+        <span class="label">Vibe Pass</span> <span id="pass-id" class="font-mono text-[var(--text)]"></span>
+        <span id="pass-since" class="hidden sm:inline ml-1"></span>
+      </p>
+    </div>
+
+    <!-- Your Vibe setup: only once the project exists -->
+    <details id="setup-panel" class="panel mt-8 hidden group rise" style="--d:2">
+      <summary class="cursor-pointer list-none p-4 flex items-center gap-3">
+        <img src="/pixel/m-book.svg" alt="" class="pixel w-8 h-8" width="32" height="32" />
+        <span class="min-w-0 flex-1">
+          <span class="block font-medium">Your project: <code class="font-mono">vibe-todo/</code></span>
+          <span class="block text-sm text-[var(--text-muted)]"><span id="setup-count">0</span> of {SETUP_ROWS.length} pieces built</span>
+        </span>
+        <span class="label group-open:hidden">Show</span><span class="label hidden group-open:inline">Hide</span>
+      </summary>
+      <div class="px-4 pb-4">
+        <ul class="grid sm:grid-cols-2 gap-x-6 min-w-0">
+          {SETUP_ROWS.map((row) => (
+            <li class="tree-row flex items-baseline gap-2 py-1.5 border-b hairline" data-setup-kind={row.kind} data-setup-lesson={row.lesson}>
+              <span class="tick w-3" aria-hidden="true">&#9632;</span>
+              <a href={`/lessons/${row.lesson}`} class="hover:underline">{row.label}</a>
+              <span class="setup-names ml-auto truncate text-[0.7rem] text-right" data-default-path={row.path}>{row.path}</span>
+            </li>
+          ))}
+        </ul>
+        <a href="/examples/agents-skills-instructions" class="mt-3 inline-block text-sm theme-link">Compare with the reference project</a>
+      </div>
+    </details>
+
+    <!-- All lessons: only your path, current section open -->
+    <section id="all-lessons" class="mt-12 scroll-mt-20 rise" style="--d:3" aria-labelledby="lessons-heading">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <h2 id="lessons-heading" class="font-display text-2xl tracking-tight">Your lessons</h2>
+        <details id="path-picker" class="relative">
+          <summary class="cursor-pointer list-none text-sm theme-link">Change path</summary>
+          <div class="absolute right-0 z-10 mt-2 w-64 panel p-2 shadow-lg grid gap-1" role="radiogroup" aria-label="Learning path">
+            {PATH_IDS.map((p) => (
+              <button type="button" role="radio" aria-checked="false" class="choice px-3 py-2 text-sm text-left cursor-pointer" data-path={p}>{PATH_LABELS[p]}</button>
+            ))}
+          </div>
+        </details>
+      </div>
+      <p id="path-note" class="mt-1 text-sm text-[var(--text-muted)]"></p>
+
+      <div class="mt-4 panel overflow-hidden divide-y divide-[var(--hair)]">
+        {groups.map((g) => (
+          <details class="track-group" data-track={g.track} data-track-slugs={g.lessons.map((l) => l.data.slug).join(",")}>
+            <summary class="cursor-pointer list-none flex items-center gap-4 px-4 py-3 hover:bg-[var(--bg-sunk)] transition-colors">
+              <img src={g.icon} alt="" class="pixel w-8 h-8" width="32" height="32" />
+              <span class="min-w-0 flex-1">
+                <span class="block font-display text-lg tracking-tight">{g.label}</span>
+                <span class="track-status block text-xs text-[var(--text-muted)]"></span>
+              </span>
+              <span class="label progress-count w-10 text-right"></span>
+            </summary>
+            <ol class="border-t hairline sunk-soft">
+              {g.lessons.map((lesson) => {
+                const href = `/lessons/${lesson.data.slug}`;
+                return (
+                  <li data-lesson-slug={lesson.data.slug} class="border-b hairline last:border-b-0">
+                    <a href={href} class="lesson-row lesson-link flex items-center gap-4 px-4 py-3">
+                      <span class="lesson-status flex h-5 w-5 shrink-0 items-center justify-center border hairline" aria-hidden="true">
+                        <span class="lesson-status-dot h-1.5 w-1.5 bg-[var(--text-label)]"></span>
+                        <span class="lesson-check hidden text-[0.65rem] font-bold">&#10003;</span>
+                      </span>
+                      <span class="label w-6 shrink-0">{String(lesson.data.order).padStart(2, "0")}</span>
+                      <span class="min-w-0 flex-1">
+                        <span class="lesson-title font-medium">{lesson.data.title}</span>
+                        <span class="block text-sm text-[var(--text-muted)] line-clamp-2">{lesson.data.description}</span>
+                      </span>
+                      {lesson.data.minutes && <span class="label shrink-0 hidden sm:inline">{lesson.data.minutes} min</span>}
+                      <span class="sr-only lesson-sr-state"></span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ol>
+          </details>
+        ))}
+      </div>
+      <button type="button" id="show-all" class="mt-4 text-sm theme-link">Show all 26 lessons</button>
+    </section>
+
+    <!-- Exercises: after the lessons, out of the way until then -->
+    <details id="exercises-panel" class="mt-6 panel overflow-hidden rise" style="--d:4">
+      <summary class="cursor-pointer list-none flex items-center gap-4 px-4 py-3">
+        <img src="/pixel/rocket.svg" alt="" class="pixel w-8 h-8" width="32" height="32" />
+        <span class="min-w-0 flex-1">
+          <span class="block font-display text-lg tracking-tight">Exercises</span>
+          <span class="block text-xs text-[var(--text-muted)]">Open-ended projects for after the lessons. <span id="ex-count"></span></span>
+        </span>
+      </summary>
+      <ol class="border-t hairline">
+        {exercises.map((ex) => (
+          <li data-exercise-slug={ex.data.slug} data-exercise-surfaces={ex.data.surfaces.join(",")} class="border-b hairline last:border-b-0">
+            <a href={`/exercises/${ex.data.slug}`} class="lesson-link flex items-center gap-4 px-4 py-3">
+              <span class="exercise-status flex h-5 w-5 shrink-0 items-center justify-center border hairline" aria-hidden="true">
+                <span class="exercise-status-dot h-1.5 w-1.5 bg-[var(--text-label)]"></span>
+                <span class="exercise-check hidden text-[0.65rem] font-bold">&#10003;</span>
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="lesson-title font-medium">{ex.data.title}</span>
+                <span class="block text-sm text-[var(--text-muted)] line-clamp-2">{ex.data.description}</span>
+              </span>
+              <span class="hidden md:flex gap-1 shrink-0">{ex.data.surfaces.map((sf) => <span class="surface-chip">{SURFACE_LABELS[sf]}</span>)}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <p class="px-4 py-3 border-t hairline text-sm"><a href="/exercises" class="theme-link">All exercises</a></p>
+    </details>
+  </section>
+
+  <!-- ============ About Vibe (visitors) ============ -->
+  <section id="explainer" class="pt-4 pb-10" aria-labelledby="explainer-heading">
+    <h2 id="explainer-heading" class="label">New to Vibe?</h2>
+    <div class="mt-5 grid md:grid-cols-3 gap-x-10 gap-y-8">
+      <div class="flex gap-4">
+        <img src="/pixel/computer.svg" alt="" class="pixel w-8 h-8 shrink-0" width="32" height="32" />
+        <div>
+          <h3 class="font-display text-lg">What Vibe is</h3>
+          <p class="mt-1 text-sm text-[var(--text-muted)]">Mistral's agent for coding and everyday work. You describe the outcome; Vibe reads, writes, runs commands and calls tools, and asks before anything risky.</p>
+        </div>
+      </div>
+      <div class="flex gap-4">
+        <img src="/pixel/layers-stack.svg" alt="" class="pixel w-8 h-8 shrink-0" width="32" height="32" />
+        <div>
+          <h3 class="font-display text-lg">Two modes, five surfaces</h3>
+          <p class="mt-1 text-sm text-[var(--text-muted)]"><strong class="font-medium text-[var(--text)]">Vibe Code</strong> runs in the CLI, VS Code, Desktop and Code Web. <strong class="font-medium text-[var(--text)]">Vibe Work</strong> handles research, documents and tasks in chat.mistral.ai and Desktop.</p>
+        </div>
+      </div>
+      <div class="flex gap-4">
+        <img src="/pixel/m-lightbulb.svg" alt="" class="pixel w-8 h-8 shrink-0" width="32" height="32" />
+        <div>
+          <h3 class="font-display text-lg">No copying with the plugin</h3>
+          <p class="mt-1 text-sm text-[var(--text-muted)]">Install the <a class="theme-link" href="/plugin">Vibe School plugin</a> and type <code class="font-mono">/vibe-school:next</code> to start each lesson from Vibe.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="home-data" hidden data-lesson-count={lessons.length}></div>
+
+  <script>
+    // Bundled (not inline) so it shares tested logic from src/lib.
+    import { defaultPath, exerciseFits, PATH_LABELS, PATH_SURFACE, type PathId } from "../lib/paths";
+
+    // biome-ignore lint/suspicious/noExplicitAny: window.school is plain JS (public/school.js)
+    const school = (window as unknown as { school: any }).school;
+    const $ = (id: string) => document.getElementById(id) as HTMLElement;
+
+    // A radio group with roving tabindex, arrows, Home and End.
+    function radio(attr: string, onPick?: (v: string) => void) {
+      const items = Array.from(document.querySelectorAll<HTMLElement>(`button[${attr}]`));
+      const pick = (el: HTMLElement) => {
+        for (const b of items) b.setAttribute("aria-checked", b === el ? "true" : "false");
+        onPick?.(el.getAttribute(attr) || "");
+      };
+      const sync = school.rovingGroup(items, "aria-checked", pick);
+      return {
+        value: () => items.find((b) => b.getAttribute("aria-checked") === "true")?.getAttribute(attr) ?? null,
+        set: (v: string) => {
+          const el = items.find((b) => b.getAttribute(attr) === v);
+          if (el) {
+            for (const b of items) b.setAttribute("aria-checked", b === el ? "true" : "false");
+            sync();
+          }
+        },
+      };
+    }
+
+    const surfacePick = radio("data-surface");
+    const rolePick = radio("data-role");
+    if (school.getSurface()) surfacePick.set(school.getSurface());
+    if (school.getRole()) rolePick.set(school.getRole());
+
+    // ---- Path ----
+    let showAll = false;
+    // school.getPath() applies the same default as defaultPath().
+    const currentPath = (): PathId => school.getPath();
+    const pathPick = radio("data-path", (p) => {
+      school.setPath(p);
+      school.refreshHeader?.();
+      showAll = false;
+      ($("path-picker") as HTMLDetailsElement).open = false;
+      render();
+    });
+
+    const HEADLINES: [number, string][] = [
+      [100, "You hit 60."],
+      [75, "Nearly there."],
+      [50, "Halfway to 60."],
+      [25, "Picking up speed."],
+      [1, "Good start."],
+      [0, "Let's get going."],
+    ];
+
+    // ---- Render the whole dashboard from progress ----
+    function render() {
+      const id = school.getStudentId();
+      if (!id) return;
+      const path = currentPath();
+      pathPick.set(path);
+      const pathList: string[] | null = school.pathLessons(path);
+      const prog = school.pathProgress(path);
+
+      // Progress strip
+      $("progress-headline").textContent = (HEADLINES.find(([at]) => prog.pct >= at) || HEADLINES[5])[1];
+      $("progress-count").textContent = `${prog.done} of ${prog.total} lessons`;
+      $("path-name").textContent = PATH_LABELS[path];
+      $("progress-fill").style.width = `${prog.pct}%`;
+      $("progress-bar").setAttribute("aria-valuenow", String(prog.pct));
+      $("progress-bar").setAttribute("aria-valuetext", `${prog.done} of ${prog.total} lessons done`);
+
+      // Up next
+      const next = prog.next;
+      $("course-done").classList.toggle("hidden", !!next);
+      $("up-next-body").classList.toggle("hidden", !next);
+      if (next) {
+        const started = school.isLessonVisited(next.slug);
+        $("up-next-kicker").textContent = started ? "Pick up where you left off" : prog.done === 0 ? "Start here" : "Up next";
+        $("up-next-title").textContent = `${String(next.order).padStart(2, "0")} · ${next.title}`;
+        $("up-next-desc").textContent = next.description;
+        $("up-next-meta").textContent = next.minutes ? `About ${next.minutes} min` : "";
+        const cta = $("up-next-cta") as HTMLAnchorElement;
+        cta.href = `/lessons/${next.slug}`;
+        cta.firstChild!.textContent = started ? "Continue lesson " : "Start lesson ";
+      }
+
+      // After the Interview, suggest the plugin until it's picked or dismissed
+      const tipOff =
+        !next ||
+        path === "work" ||
+        !school.isLessonComplete("interview") ||
+        school.read("school:launch") === "plugin" ||
+        school.read("school:tip-plugin") === "off";
+      $("plugin-tip").classList.toggle("hidden", tipOff);
+      $("plugin-tip").classList.toggle("flex", !tipOff);
+
+      // Pass and surfaces
+      $("pass-id").textContent = id;
+      const p = school.getCachedProgress() || {};
+      if (p.createdAt) {
+        $("pass-since").textContent = `· since ${new Date(p.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+      }
+      const used: string[] = school.getSurfacesUsed();
+      for (const el of document.querySelectorAll<HTMLElement>("[data-surface-dot]")) {
+        const on = used.includes(el.dataset.surfaceDot || "");
+        el.classList.toggle("is-used", on);
+        const state = el.querySelector(".surface-state");
+        if (state) state.textContent = on ? "used" : "not yet";
+      }
+
+      // Setup panel: only once the project exists, never on the Work path
+      const arts: { kind: string; name?: string }[] = school.getArtifacts();
+      const projectStarted = arts.length > 0 || school.isLessonComplete("configuration") || school.isLessonVisited("configuration");
+      $("setup-panel").classList.toggle("hidden", !projectStarted || path === "work");
+      let built = 0;
+      for (const row of document.querySelectorAll<HTMLElement>("[data-setup-kind]")) {
+        const mine = arts.filter((a) => a.kind === row.dataset.setupKind);
+        const isDone = mine.length > 0 || school.isLessonComplete(row.dataset.setupLesson);
+        row.classList.toggle("is-done", isDone);
+        if (isDone) built++;
+        const names = row.querySelector<HTMLElement>(".setup-names");
+        if (!names) continue;
+        const named = mine.map((a) => a.name).filter(Boolean) as string[];
+        // textContent only: artifact names come from the API.
+        names.textContent = named.length ? named.join(", ") : names.dataset.defaultPath || "";
+        if (named.length) names.title = named.join(", ");
+        else names.removeAttribute("title");
+      }
+      $("setup-count").textContent = String(built);
+
+      // Lessons: only the path (unless "show all"), current section open
+      const visible = (slug: string) => showAll || !pathList || pathList.includes(slug);
+      for (const li of document.querySelectorAll<HTMLElement>("#all-lessons [data-lesson-slug]")) {
+        const slug = li.dataset.lessonSlug || "";
+        li.hidden = !visible(slug);
+        const done = school.isLessonComplete(slug);
+        const row = li.querySelector(".lesson-row");
+        row?.classList.toggle("lesson-row--next", !!next && slug === next.slug);
+        row?.classList.toggle("off-path", !!pathList && !pathList.includes(slug));
+        const sr = li.querySelector(".lesson-sr-state");
+        if (sr) sr.textContent = done ? "(done)" : next && slug === next.slug ? "(up next)" : "";
+      }
+      let firstRender = !document.body.dataset.groupsSet;
+      for (const g of document.querySelectorAll<HTMLDetailsElement>(".track-group")) {
+        const slugs = (g.dataset.trackSlugs || "").split(",").filter(visible);
+        g.hidden = slugs.length === 0;
+        const done = slugs.filter((s) => school.isLessonComplete(s)).length;
+        const count = g.querySelector(".progress-count");
+        if (count) count.textContent = `${done}/${slugs.length}`;
+        const status = g.querySelector(".track-status");
+        const hasNext = !!next && slugs.includes(next.slug);
+        if (status) status.textContent = done === slugs.length && slugs.length ? "Done" : hasNext ? "In progress" : done ? `${done} done` : "Not started";
+        // Open only the section with the next lesson, once; then respect the learner.
+        if (firstRender) g.open = hasNext;
+      }
+      document.body.dataset.groupsSet = "1";
+      firstRender = false;
+      const total = school.course().length;
+      const showAllBtn = $("show-all");
+      showAllBtn.hidden = !pathList;
+      showAllBtn.textContent = showAll ? "Show only my path" : `Show all ${total} lessons`;
+      $("path-note").textContent = pathList
+        ? showAll
+          ? `Showing all ${total} lessons. Lessons outside your path are quieter.`
+          : `${pathList.length} lessons on the ${PATH_LABELS[path]} path.`
+        : `All ${total} lessons, in order.`;
+
+      // Exercises: only the ones you can do on your path's surface
+      let exShown = 0;
+      for (const li of document.querySelectorAll<HTMLElement>("[data-exercise-surfaces]")) {
+        const fits = exerciseFits(path, (li.dataset.exerciseSurfaces || "").split(","));
+        li.hidden = !fits;
+        if (fits) exShown++;
+      }
+      $("ex-count").textContent = PATH_SURFACE[path] ? `${exShown} for your path.` : `${exShown} to choose from.`;
+    }
+
+    $("plugin-tip-close").addEventListener("click", () => {
+      school.write("school:tip-plugin", "off");
+      render();
+    });
+
+    $("show-all").addEventListener("click", () => {
+      showAll = !showAll;
+      render();
+    });
+
+    function showDashboard(animate: boolean) {
+      document.documentElement.classList.add("is-enrolled");
+      render();
+      school.updateAllCheckmarks();
+      if (animate) {
+        const m = $("pass-m");
+        m.classList.remove("is-building");
+        void m.getBoundingClientRect();
+        m.classList.add("is-building");
+      }
+    }
+
+    school.onProgress(render);
+
+    const btn = $("enroll-button") as HTMLButtonElement;
+    const statusEl = $("enroll-status");
+    const errorEl = $("enroll-error");
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      errorEl.classList.add("hidden");
+      statusEl.textContent = "Printing your Vibe Pass...";
+      const surface = surfacePick.value() || "cli";
+      const role = rolePick.value() || "developer";
+      school.setSurface(surface);
+      school.setRole(role);
+      try {
+        await school.enroll();
+        school.setPath(defaultPath(role, surface));
+        await school.saveProfile({ role, surfaces: [surface] });
+        school.updateEnrolledIndicator();
+        school.refreshHeader?.();
+        window.scrollTo({ top: 0 });
+        showDashboard(true);
+        const heading = $("dash-heading");
+        heading.setAttribute("tabindex", "-1");
+        heading.focus();
+      } catch (e) {
+        console.error("Enrollment failed", e);
+        errorEl.classList.remove("hidden");
+        statusEl.textContent = "";
+        btn.disabled = false;
+      }
+    });
+
+    if (school.getStudentId()) {
+      showDashboard(false);
+      school.ready.then(render);
+    }
+  </script>
+</Base>

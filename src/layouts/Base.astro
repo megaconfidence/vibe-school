@@ -1,0 +1,277 @@
+---
+// Copyright (c) 2026 Zeke Sikelianos
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+// Modified for Vibe School.
+// Vibe School page shell: top bar, optional track rail, footer.
+
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
+import "../styles/main.css";
+import { getCollection } from "astro:content";
+import { PATHS } from "../lib/paths";
+import { TRACK_LABELS, type Track } from "../lib/tracks";
+
+interface Props {
+	title?: string;
+	description?: string;
+	/** Show the lessons of this track in a left rail (lesson pages). */
+	rail?: Track;
+	/** Wider main column for the homepage and dashboards. */
+	wide?: boolean;
+}
+
+const {
+	title,
+	description = "Learn Mistral Vibe on every surface: CLI, VS Code, Desktop, Code Web and Work.",
+	rail,
+	wide = false,
+} = Astro.props;
+const pageTitle = title ? `${title} · Vibe School` : "Vibe School";
+const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
+
+const lessons = (await getCollection("lessons")).sort((a, b) => a.data.order - b.data.order);
+const railLessons = rail ? lessons.filter((l) => l.data.track === rail) : [];
+// Every lesson in order, so any page can work out "up next" and progress.
+const courseIndex = lessons.map((l) => ({
+	slug: l.data.slug,
+	title: l.data.title,
+	order: l.data.order,
+	track: l.data.track,
+	description: l.data.description,
+	minutes: l.data.minutes ?? null,
+	surfaces: l.data.surfaces,
+}));
+
+const nav = [
+	{ href: "/", label: "Course" },
+	{ href: "/exercises", label: "Exercises" },
+	{ href: "/examples/agents-skills-instructions", label: "Example" },
+	{ href: "/cheatsheet", label: "Cheatsheet" },
+	{ href: "/glossary", label: "Glossary" },
+];
+const footerLinks = [
+	{ href: "/about", label: "About" },
+	{ href: "/tips", label: "Tips" },
+	{ href: "/troubleshooting", label: "Troubleshooting" },
+	{ href: "/contributing", label: "Contributing" },
+	{ href: "/llms.txt", label: "llms.txt" },
+];
+const isActive = (href: string) =>
+	href === "/" ? currentPath === "/" : currentPath === href || currentPath.startsWith(`${href}/`);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="light dark" />
+    <title>{pageTitle}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script is:inline>
+      // Theme: saved choice, else OS preference. Runs before paint.
+      (function () {
+        var saved = null;
+        try { saved = localStorage.getItem("school:theme"); } catch (e) {}
+        var mq = window.matchMedia("(prefers-color-scheme: dark)");
+        function apply() {
+          var dark = saved ? saved === "dark" : mq.matches;
+          document.documentElement.classList.toggle("dark", dark);
+        }
+        apply();
+        mq.addEventListener("change", function () { if (!saved) apply(); });
+        window.__setTheme = function (t) {
+          saved = t;
+          try { localStorage.setItem("school:theme", t); } catch (e) {}
+          apply();
+        };
+      })();
+    </script>
+    <script is:inline define:vars={{ paths: PATHS, course: courseIndex }}>window.__schoolPaths = paths; window.__schoolCourse = course;</script>
+    <script is:inline src="/school.js"></script>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 btn btn-primary px-3 py-2 text-sm">Skip to content</a>
+    <div class="sunset-bar" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+
+    <header class="site-header sticky top-0 z-40 border-b hairline backdrop-blur" style="background: color-mix(in srgb, var(--bg) 88%, transparent);">
+      <div class="mx-auto max-w-6xl px-5 h-14 flex items-center gap-6">
+        <a href="/" class="flex items-center gap-2.5 shrink-0" aria-label="Vibe School home">
+          <img src="/brand/symbol-gradient.svg" alt="" class="w-6 h-6" width="24" height="24" />
+          <span class="font-display text-[1.15rem] tracking-tight">Vibe School</span>
+        </a>
+        <nav aria-label="Main" class="hidden md:flex items-center gap-1 text-sm">
+          {nav.map((l) => (
+            <a
+              href={l.href}
+              aria-current={isActive(l.href) ? "page" : undefined}
+              class:list={[
+                "px-2.5 py-1.5 rounded-sm transition-colors",
+                isActive(l.href) ? "text-[var(--text)] bg-[var(--bg-sunk)]" : "text-[var(--text-muted)] hover:text-[var(--text)]",
+              ]}
+            >{l.label}</a>
+          ))}
+        </nav>
+        <div class="ml-auto flex items-center gap-2">
+          <a href="/" data-enrolled-only class="hidden items-center gap-2 hover:text-[var(--text)] whitespace-nowrap text-[var(--text-muted)]" id="header-progress">
+            <span class="w-16 sm:w-24 progress-track"><span id="header-progress-fill" class="progress-fill block"></span></span>
+            <span class="label" id="header-progress-text">0/0</span>
+            <span class="sr-only">lessons done on your path</span>
+          </a>
+          <button id="theme-toggle" type="button" class="btn btn-ghost w-9 h-9" aria-label="Dark mode" aria-pressed="false">
+            <svg class="w-4 h-4 dark:hidden" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6 1h2v2H6zM6 13h2v2H6zM1 7h2v2H1zM13 7h2v2h-2zM3 3h2v2H3zM11 11h2v2h-2zM11 3h2v2h-2zM3 11h2v2H3zM5 5h6v6H5z" shape-rendering="crispEdges"/></svg>
+            <svg class="w-4 h-4 hidden dark:block" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6 2h4v2H6zM4 4h2v2H4zM3 6h2v4H3zM4 10h2v2H4zM6 12h6v2H6zM12 10h2v2h-2zM9 6h2v2H9zM10 8h2v2h-2z" shape-rendering="crispEdges"/></svg>
+          </button>
+          <button id="menu-toggle" type="button" class="md:hidden btn btn-ghost w-9 h-9" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+            <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2 3h12v2H2zM2 7h12v2H2zM2 11h12v2H2z"/></svg>
+          </button>
+        </div>
+      </div>
+      <nav id="mobile-menu" aria-label="Mobile menu" class="hidden md:hidden border-t hairline px-5 py-3">
+        {nav.concat(footerLinks.slice(0, 3)).map((l) => (
+          <a href={l.href} class="block py-2 text-[var(--text-muted)] hover:text-[var(--text)]" aria-current={isActive(l.href) ? "page" : undefined}>{l.label}</a>
+        ))}
+      </nav>
+    </header>
+
+    <div class:list={["flex-1 w-full mx-auto px-5", rail ? "max-w-6xl lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12" : wide ? "max-w-6xl" : "max-w-3xl"]}>
+      {rail && (
+        <aside class="hidden lg:block pt-10" aria-label={`${TRACK_LABELS[rail]} lessons`}>
+          <div class="sticky top-24">
+            <a href="/" class="label hover:text-[var(--text)]">&larr; {TRACK_LABELS[rail]}</a>
+            <ol class="mt-4 border-l hairline">
+              {railLessons.map((l) => {
+                const href = `/lessons/${l.data.slug}`;
+                const active = currentPath === href;
+                const num = String(l.data.order).padStart(2, "0");
+                return (
+                  <li data-rail-slug={l.data.slug} class="rail-item">
+                    <a
+                      href={href}
+                      aria-current={active ? "page" : undefined}
+                      class:list={[
+                        "flex items-baseline gap-3 -ml-px pl-4 py-1.5 text-sm border-l-2 transition-colors",
+                        active ? "border-[var(--accent)] text-[var(--text)]" : "border-transparent text-[var(--text-muted)] hover:text-[var(--text)]",
+                      ]}
+                    >
+                      <span class="rail-mark font-label text-[0.65rem] w-5 shrink-0 text-[var(--text-label)]" data-num={num}>{num}</span>
+                      <span>{l.data.title}</span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </aside>
+      )}
+      <main id="main" tabindex="-1" class="min-w-0 py-10 lg:py-12 focus:outline-none">
+        <slot />
+      </main>
+    </div>
+
+    <footer class="border-t hairline mt-16">
+      <div class="mx-auto max-w-6xl px-5 py-10 grid gap-8 sm:grid-cols-[1fr_auto] items-end">
+        <div>
+          <div class="flex items-center gap-3">
+            <img src="/pixel/sitting-orange.svg" alt="" class="pixel w-12 h-12" width="48" height="48" />
+            <p class="font-display text-lg">Built with Vibe, taught by Vibe.</p>
+          </div>
+          <p class="mt-2 text-sm text-[var(--text-muted)] max-w-md">
+            A free course for <a class="theme-link" href="https://docs.mistral.ai/vibe" target="_blank" rel="noopener noreferrer">Mistral Vibe</a>. Questions? Join the <a class="theme-link" href="https://discord.com/invite/mistralai" target="_blank" rel="noopener noreferrer">Mistral Discord</a>.
+          </p>
+        </div>
+        <nav aria-label="Footer" class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+          {footerLinks.map((l) => <a href={l.href} class="text-[var(--text-muted)] hover:text-[var(--text)]">{l.label}</a>)}
+          <a href="https://github.com/mistralai/mistral-vibe" target="_blank" rel="noopener noreferrer" class="text-[var(--text-muted)] hover:text-[var(--text)]">Vibe on GitHub</a>
+          <a id="footer-disenroll" href="/disenroll" data-enrolled-only class="hidden text-[var(--text-muted)] hover:text-[var(--text)]">Disenroll</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script is:inline>
+      (function () {
+        var toggle = document.getElementById("theme-toggle");
+        function syncToggle() {
+          if (toggle) toggle.setAttribute("aria-pressed", document.documentElement.classList.contains("dark") ? "true" : "false");
+        }
+        if (toggle) {
+          syncToggle();
+          toggle.addEventListener("click", function () {
+            window.__setTheme(document.documentElement.classList.contains("dark") ? "light" : "dark");
+            syncToggle();
+          });
+        }
+
+        var menuBtn = document.getElementById("menu-toggle");
+        var menu = document.getElementById("mobile-menu");
+        function setMenu(open) {
+          menu.classList.toggle("hidden", !open);
+          menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+          menuBtn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+        }
+        if (menuBtn && menu) {
+          menuBtn.addEventListener("click", function () { setMenu(menu.classList.contains("hidden")); });
+          document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape" && menuBtn.getAttribute("aria-expanded") === "true") { setMenu(false); menuBtn.focus(); }
+          });
+        }
+
+        // Copy buttons on code blocks in lesson notes and pages.
+        document.querySelectorAll(".prose pre").forEach(function (pre) {
+          if (pre.closest(".code-wrap")) return;
+          var wrap = document.createElement("div");
+          wrap.className = "code-wrap relative";
+          pre.parentNode.insertBefore(wrap, pre);
+          wrap.appendChild(pre);
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "copy-code";
+          b.textContent = "Copy";
+          b.setAttribute("aria-label", "Copy code");
+          b.addEventListener("click", function () {
+            var text = (pre.querySelector("code") || pre).innerText.replace(/\n$/, "");
+            window.school.copy(text).then(function () {
+              b.textContent = "Copied";
+              b.classList.add("is-copied");
+              setTimeout(function () { b.textContent = "Copy"; b.classList.remove("is-copied"); }, 1500);
+            }, function () { b.textContent = "Select to copy"; });
+          });
+          wrap.appendChild(b);
+        });
+
+        var school = window.school;
+        // A small progress meter in the header on every page.
+        function refreshHeader() {
+          var box = document.getElementById("header-progress");
+          if (!box || !school.getStudentId()) return;
+          var p = school.pathProgress();
+          box.classList.add("flex");
+          document.getElementById("header-progress-fill").style.width = p.pct + "%";
+          document.getElementById("header-progress-text").textContent = p.done + "/" + p.total;
+        }
+
+        school.refreshHeader = refreshHeader;
+        school.onProgress(refreshHeader);
+        school.updateEnrolledIndicator();
+        refreshHeader();
+        if (school.getStudentId()) {
+          school.updateAllCheckmarks();
+          school.fetchProgress().then(function () { school.updateAllCheckmarks(); });
+        }
+
+        // Poll for tutor-driven completions. Pauses while the tab is hidden.
+        setInterval(function () {
+          if (document.hidden || !school.getStudentId()) return;
+          school.fetchProgress().then(function () {
+            school.updateEnrolledIndicator();
+            refreshHeader();
+            school.updateAllCheckmarks();
+          });
+        }, 2000);
+      })();
+    </script>
+  </body>
+</html>

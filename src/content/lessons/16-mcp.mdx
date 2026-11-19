@@ -1,0 +1,255 @@
+---
+title: "MCP"
+slug: mcp
+description: "Connect Vibe to external tools with MCP servers and control which tools it can use."
+order: 16
+track: code
+surfaces: [cli, vscode, desktop]
+quiz: true
+goals:
+  - "Pick the right MCP transport"
+  - "Add a server from the command line or config.toml"
+  - "Sign in and browse a server's tools"
+  - "Set permissions on MCP tools"
+minutes: 20
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. What MCP is: the Model Context Protocol is an open standard for
+     exposing tools to agents. An MCP server's tools show up in Vibe like
+     built-in tools. Three transports: stdio (a local process Vibe starts
+     from a command), http, and streamable-http (remote servers; the
+     latter supports streaming responses). MCP servers are wired up by
+     the user; connectors are Mistral-managed integrations (account login,
+     curated list) that appear in the same /mcp browser, also reachable
+     as /connectors.
+
+  2. Adding servers: `vibe mcp add` writes to the user ~/.vibe/config.toml
+     without starting a session. Remote with OAuth: `vibe mcp add linear
+     --url https://mcp.linear.app/mcp` (opens the browser; --no-login
+     skips it, --scope requests scopes). Remote with a key: add
+     --api-key-env VAR or --header NAME=VALUE (headers are stored in
+     plaintext). Local: `--transport stdio --command uvx --arg ...`, with
+     repeatable --arg and --env. `vibe mcp remove <name>` removes a
+     server and its stored OAuth tokens. Inside a CLI session, `/mcp add
+     <url>` adds OAuth servers only. Servers can also be written by hand
+     as [[mcp_servers]] tables with name, transport, url or
+     command/args/env, startup_timeout_sec (default 10) and
+     tool_timeout_sec (default 60).
+
+  3. Signing in and browsing: OAuth tokens live in the OS keyring, not in
+     config.toml. In the CLI, /mcp lists servers and connectors, /mcp
+     <name> lists a server's tools, and /mcp status, /mcp login <name>
+     and /mcp logout <name> manage sign-in. The VS Code extension only
+     has /mcp status, login and logout: add and browse servers with the
+     CLI (the config is shared). Headless machines without a keyring (CI)
+     need static auth with api_key_env. Over SSH, forward the callback
+     port: ssh -L 47823:127.0.0.1:47823 <host>.
+
+  4. Tool names and permissions: MCP tools are named after the server
+     name plus the tool name (the docs show `{server_name}_{tool_name}`,
+     for example [tools.fetch_server_get]). Set per-tool permission
+     ("always", "ask", "never") like built-in tools, and filter with
+     enabled_tools / disabled_tools using exact names, globs
+     (fetch_server_*) or re: regexes. Administrators can block MCP with
+     enable_mcp = false.
+
+  Then the hands-on part, in vibe-todo (if the folder is missing, fetch
+  the starter as in the Configuration lesson). Add the fetch reference
+  server from the docs to the project config, so anyone who trusts the
+  repo gets it: it's free, local, and needs no account or secret. It
+  needs `uvx` (from uv) on PATH; check with `command -v uvx` (or
+  `Get-Command uvx` on Windows) first and help install uv if missing.
+
+  1. Explain that `vibe mcp add` always writes to the user
+     ~/.vibe/config.toml, so a project server is written by hand.
+     Append this to vibe-todo/.vibe/config.toml, keeping the existing
+     keys above it (top-level keys must stay above the first [[...]] or
+     [...] table):
+       [[mcp_servers]]
+       name = "fetch_server"
+       transport = "stdio"
+       command = "uvx"
+       args = ["mcp-server-fetch"]
+     Project and user servers are merged by name, so if the student
+     already has a user server called fetch_server, the project entry
+     replaces it in this project. If the student prefers to keep MCP
+     servers personal, run
+     `vibe mcp add fetch_server --transport stdio --command uvx --arg mcp-server-fetch`
+     instead (user config) and verify there.
+
+  2. Use it on the project. Have the student start a new session in
+     vibe-todo (CLI: a new vibe; VS Code: Mod+N; Desktop: New Session in
+     the Code tab). In the CLI, have them run `/mcp fetch_server` and
+     paste the tool list. Then ask: "Use the fetch_server tool to read
+     https://docs.python.org/3/library/argparse.html and tell me, without
+     editing anything, which argparse feature would let `list` take an
+     optional --done flag." Approve the tool call when asked.
+
+  3. Commit: `git add .vibe/config.toml && git commit -m "Add fetch MCP server"`.
+
+  Verify completion by reading vibe-todo/.vibe/config.toml (or, if they
+  chose the user route, ~/.vibe/config.toml or $VIBE_HOME/config.toml)
+  and confirming there is an [[mcp_servers]] entry with name =
+  "fetch_server", transport = "stdio", command = "uvx" and args
+  containing "mcp-server-fetch", and that the file still parses and
+  keeps any existing keys such as default_agent. Then ask the student to confirm a fetch_server
+  tool call ran and returned the page (and, in the CLI, to paste the
+  /mcp fetch_server tool list). Report artifacts: mcp fetch_server.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Vibe ships with tools for files and the shell. [MCP](/glossary#mcp) servers add more: an issue tracker, a database, a browser, your company's internal API. You add a server once, and its tools appear in every session next to the built-in ones.
+
+The [Model Context Protocol](https://modelcontextprotocol.io) is an open standard, so the same server works with Vibe and with other agents that speak MCP.
+
+## In your project
+
+This lesson gives `vibe-todo` its first MCP server, in the project config so everyone who trusts the repo gets it:
+
+```text
+vibe-todo/
+└── .vibe/
+    └── config.toml    # adds an [[mcp_servers]] entry: fetch_server (uvx mcp-server-fetch)
+```
+
+Then you'll use it to read the Python `argparse` docs and ask how the todo CLI could use them.
+
+
+## Transports
+
+| Transport | Use it when |
+|---|---|
+| `stdio` | The server is a local process Vibe starts from a command. |
+| `http` | The server is reachable over standard HTTP. |
+| `streamable-http` | The server is reachable over HTTP and supports streaming responses. |
+
+## Add a server from the command line
+
+`vibe mcp add` writes the server to your user `~/.vibe/config.toml` without starting a session.
+
+A remote server that uses **OAuth** only needs a name and a URL. Vibe opens your browser to sign in:
+
+```bash
+vibe mcp add linear --url https://mcp.linear.app/mcp
+```
+
+Pass `--no-login` to save it without signing in, and `--scope` (repeatable) to request specific scopes.
+
+A remote server that uses an **API key** reads it from an environment variable:
+
+```bash
+vibe mcp add mistralai \
+  --url https://api.mistral.ai/mcp \
+  --api-key-env MISTRAL_API_KEY
+```
+
+You can pass static headers with `--header NAME=VALUE` instead, but they're stored in plaintext, so keep secrets in `--api-key-env`.
+
+A **local** server uses the `stdio` transport. Repeat `--arg` for each argument and `--env NAME=VALUE` for each environment variable:
+
+```bash
+vibe mcp add fetch_server --transport stdio --command uvx --arg mcp-server-fetch
+```
+
+Remove a server with `vibe mcp remove <name>`. For an OAuth server, that also deletes its stored tokens. Run `vibe mcp add --help` for every option, including `--startup-timeout-sec` and `--tool-timeout-sec`.
+
+`vibe mcp add` only writes to your user config. For a server the whole project should get, or if you use VS Code or Desktop without the CLI on your `PATH`, write it in `config.toml` by hand, as shown next.
+
+## Or write it in config.toml
+
+Each server is a `[[mcp_servers]]` table. It works in `~/.vibe/config.toml` and in a project's `.vibe/config.toml` (loaded only in a [trusted folder](/glossary#trusted-folder)). Servers from both files are combined; when both define the same `name`, the project one wins. Keep top-level keys such as `default_agent` above the first table. For `vibe-todo`:
+
+```toml
+# vibe-todo/.vibe/config.toml (after the keys you already have)
+[[mcp_servers]]
+name = "fetch_server"
+transport = "stdio"
+command = "uvx"
+args = ["mcp-server-fetch"]
+```
+
+A stdio server can also take `env = { "LOG_LEVEL" = "info" }`. A remote server with OAuth looks like this:
+
+```toml
+[[mcp_servers]]
+name = "linear"
+transport = "streamable-http"
+url = "https://mcp.linear.app/mcp"
+
+[mcp_servers.auth]
+type = "oauth"
+scopes = []
+```
+
+`startup_timeout_sec` (default `10`) and `tool_timeout_sec` (default `60`) are optional on any server. For static auth, use `type = "static"` with `api_key_env` or `headers`. See the [configuration reference](https://docs.mistral.ai/vibe/code/cli/configuration-reference#mcp-servers) for every field.
+
+## Sign in and browse
+
+OAuth works with `http` and `streamable-http` servers. Vibe stores the tokens in your OS keyring, never in `config.toml`.
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+| Command | What it does |
+|---|---|
+| `/mcp` | Browse MCP servers and connectors (alias `/connectors`). |
+| `/mcp <name>` | List a server's tools. |
+| `/mcp add <url>` | Add an OAuth server and sign in. Accepts `--name`, `--scope`, `--transport`, `--no-login`. |
+| `/mcp status` | Show each server's status. |
+| `/mcp login <name>` | Sign in to an OAuth server. |
+| `/mcp logout <name>` | Sign out and delete its tokens. |
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The extension supports `/mcp status`, `/mcp login <alias>` and `/mcp logout <alias>`. To add or browse servers, use the CLI: both read the same `~/.vibe/config.toml`, so a server you add with `vibe mcp add` shows up in the extension too.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Vibe Desktop sessions support MCP servers and connectors. The command palette (`Cmd+K` on macOS) has a **Context** group with **My connectors**. The `vibe mcp` and `/mcp` commands in this lesson are CLI commands. Desktop shares the CLI's core engine, but its tools and prompts can differ.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+<div class="callout">
+Running Vibe on a remote machine over SSH? The OAuth callback goes to <code>http://127.0.0.1:47823/callback</code>, so forward that port before signing in: <code>ssh -L 47823:127.0.0.1:47823 &lt;host&gt;</code>. On CI machines without a keyring, use <code>api_key_env</code> instead of OAuth.
+</div>
+
+## Tool names and permissions
+
+Vibe prefixes every MCP tool with its server's `name`, so keep names short. Set permissions per tool, exactly like the built-in tools from the [Permissions](/lessons/permissions) lesson:
+
+```toml
+[tools.fetch_server_get]
+permission = "always"
+
+[tools.my_http_server_query]
+permission = "ask"
+```
+
+Or switch whole servers on and off with patterns (exact names, globs, or regex with `re:`):
+
+```toml
+disabled_tools = ["fetch_server_*"]
+```
+
+Every MCP tool adds a definition to the context window. Disable the ones you don't use, and check the cost with `/context`.
+
+## Connectors vs. MCP servers
+
+[Connectors](/glossary#connector) are Mistral-managed integrations, the same ones Vibe Work uses (see the [Connectors](/lessons/connectors) lesson). They show up in the same `/mcp` list.
+
+| | Connectors | MCP servers |
+|---|---|---|
+| **Configured by** | Mistral | You, with `vibe mcp add` or `config.toml` |
+| **Auth** | Account or service login | OAuth, headers, environment variables, or API keys |
+| **Best for** | Common services | Custom tools, private servers, experiments |
+
+In `/connectors`, press `Enter` to connect or list tools, `e` / `d` to enable or disable, and `r` to refresh. Set `enable_connectors = false` to turn connectors off entirely.
+
+Learn more in the [MCP servers](https://docs.mistral.ai/vibe/code/cli/mcp-servers) and [connectors](https://docs.mistral.ai/vibe/code/cli/connectors) documentation.

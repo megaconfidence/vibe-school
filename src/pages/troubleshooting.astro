@@ -1,0 +1,62 @@
+---
+// Copyright (c) 2026 Zeke Sikelianos
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+// Modified for Vibe School.
+export const prerender = true;
+
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Troubleshooting" description="Tips for solving problems with Vibe and this course.">
+  <div class="mb-8 rise" style="--d:0">
+    <a href="/" class="label hover:text-[var(--text)]">&larr; Course</a>
+  </div>
+
+  <header class="mb-8 rise" style="--d:1">
+    <h1 class="font-display text-4xl sm:text-5xl leading-[1.02] tracking-[-0.02em]">Troubleshooting</h1>
+    <p class="text-[var(--text-muted)] mt-2">Tips for solving problems with Vibe and this course.</p>
+  </header>
+
+  <article class="prose dark:prose-invert max-w-none">
+    <h2 id="ask-vibe"><a href="#ask-vibe" class="heading-anchor">Ask Vibe first</a></h2>
+    <p>
+      Vibe knows a lot about itself. Ask it things like "Why didn't you pick up my project skills?" or "Where is my config file?". It can read your configuration, check your logs (<code>/log</code> shows the path), and explain what went wrong.
+    </p>
+
+    <h2 id="vibe-not-found"><a href="#vibe-not-found" class="heading-anchor"><code>vibe</code>: command not found</a></h2>
+    <p>
+      If a new terminal says <code>vibe</code> is not found after installing with uv, run <code>uv tool update-shell</code> and open a new terminal. If an install or upgrade hangs or fails, reinstall on Python 3.14: <code>uv tool install --force --python 3.14 mistral-vibe</code>.
+    </p>
+
+    <h2 id="project-config-ignored"><a href="#project-config-ignored" class="heading-anchor">My project config, skills or AGENTS.md are ignored</a></h2>
+    <p>
+      Vibe only loads project files (<code>.vibe/</code>, <code>AGENTS.md</code>, project skills and hooks) in a <a href="/glossary#trusted-folder">trusted folder</a>. Run <code>/trusted-folders</code> to check, or start Vibe with <code>vibe --trust</code> for one session. Programmatic mode (<code>vibe -p</code>) never prompts for trust, so pass <code>--trust</code> there too.
+    </p>
+
+    <h2 id="changes-not-applied"><a href="#changes-not-applied" class="heading-anchor">My changes don't apply</a></h2>
+    <p>
+      Run <code>/reload</code> after editing configuration, <code>AGENTS.md</code> or skills. For new agents, hooks and plugins, start a new session, or restart Vibe if that doesn't help. Look for a <strong>Warnings</strong> box at the top of a new session: it lists settings and files Vibe couldn't use.
+    </p>
+
+    <h2 id="lesson-not-marked-complete"><a href="#lesson-not-marked-complete" class="heading-anchor">A lesson isn't marked complete</a></h2>
+    <p>
+      Ask Vibe to "mark the lesson complete in Vibe School". It needs your student ID (it's in the lesson prompt) and has to reach this site with <code>curl</code>. If you run Vibe with restricted shell permissions, approve the <code>curl</code> call when it asks. The page updates within a few seconds.
+    </p>
+
+    <h2 id="bugs-in-vibe"><a href="#bugs-in-vibe" class="heading-anchor">Bugs in Vibe itself</a></h2>
+    <p>
+      Check you're on the latest version with <code>vibe update</code>, and read <code>/release-notes</code>. Then search or open an issue on <a href="https://github.com/mistralai/mistral-vibe/issues" target="_blank" rel="noopener noreferrer">github.com/mistralai/mistral-vibe</a>, with your Vibe version (<code>vibe --version</code>), operating system, and steps to reproduce. For questions, ask the <a href="https://discord.com/invite/mistralai" target="_blank" rel="noopener noreferrer">Mistral community on Discord</a>.
+    </p>
+
+    <h2 id="read-the-source"><a href="#read-the-source" class="heading-anchor">Read the source</a></h2>
+    <p>
+      The Vibe CLI is <a href="https://github.com/mistralai/mistral-vibe" target="_blank" rel="noopener noreferrer">open source</a>. Clone it, start Vibe in the folder, and ask how a feature works: "How does Vibe decide which AGENTS.md files to load?"
+    </p>
+
+    <h2 id="start-over"><a href="#start-over" class="heading-anchor">Start the course over</a></h2>
+    <p>
+      To reset your progress or remove your student ID from this browser, go to <a href="/disenroll">Disenroll</a>. You can also ask Vibe to reset your progress for you.
+    </p>
+  </article>
+</Base>

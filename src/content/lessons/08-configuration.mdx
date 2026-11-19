@@ -1,0 +1,240 @@
+---
+title: "Configuration"
+slug: configuration
+description: "Get the course project, then read and change Vibe's settings in config.toml."
+order: 8
+track: code
+surfaces: [cli, vscode, desktop]
+quiz: true
+goals:
+  - "Set up vibe-todo, the project the Code lessons build"
+  - "Find the user and project config.toml files"
+  - "Change a setting and see which value wins"
+  - "Catch config mistakes with strict_config and the schema"
+minutes: 20
+checklist: []
+agentInstructions: |
+  This lesson starts the course project. From here to the Parallel work
+  lesson, every hands-on part adds a piece to one folder, vibe-todo: a
+  tiny Python todo CLI.
+
+  Cover these four topics:
+
+  1. Where configuration lives. The user file is ~/.vibe/config.toml
+     (TOML). It doesn't exist until you save a setting: until then Vibe
+     runs on built-in defaults. The VIBE_HOME environment variable moves
+     the whole ~/.vibe/ folder (config.toml, .env, agents/, prompts/,
+     skills/, plugins/, logs/). A project can also have .vibe/config.toml
+     (the closest one walking up from the working directory, not past the
+     home directory); it overrides the user file for the keys it sets,
+     and only loads in a trusted folder.
+
+  2. Changing settings. In the CLI, /config opens a settings browser that
+     shows each setting, its value and where it's set. Changes save to the
+     user file by default; the save target can be switched to the project
+     file or the current session only. /theme picks the theme (for example
+     auto, mistral-dark, mistral-light). You can also edit config.toml directly
+     and run /reload to apply it without restarting. The VS Code extension
+     has no settings panel yet: it uses the same config.toml as the CLI.
+
+  3. Precedence and environment variables. From highest to lowest: admin
+     config (from your Organization or Workspace, read-only in /config),
+     the active agent's settings, command-line flags and session-only
+     /config changes, VIBE_<KEY> environment variables (for example
+     VIBE_ACTIVE_MODEL), the project .vibe/config.toml, then the user
+     ~/.vibe/config.toml.
+
+  4. Checking your config. At startup Vibe warns about settings it
+     doesn't use, such as a misspelled key, and suggests the right name.
+     strict_config = true (or VIBE_STRICT_CONFIG=1) makes it refuse to
+     start instead, useful in CI. `vibe config schema` prints a JSON schema
+     of every setting for editor validation. If Vibe won't start after an
+     edit, move config.toml aside (for example to config.toml.bkp) and
+     restart with defaults.
+
+  Then the hands-on part, in three steps.
+
+  Step 1: get the project. Ask the student where to keep it (suggest
+  ~/vibe-school, which gives ~/vibe-school/vibe-todo). If a vibe-todo
+  folder with todo/cli.py already exists there, reuse it and skip the
+  download. Otherwise create the parent folder and download the starter,
+  which unzips to a vibe-todo/ folder:
+    macOS / Linux:
+      mkdir -p ~/vibe-school && cd ~/vibe-school
+      curl -fsSL {origin}/examples/starter.zip -o starter.zip && unzip -q starter.zip && rm starter.zip
+    Windows (PowerShell):
+      New-Item -ItemType Directory -Force "$HOME\vibe-school" | Out-Null; Set-Location "$HOME\vibe-school"
+      Invoke-WebRequest {origin}/examples/starter.zip -OutFile starter.zip; Expand-Archive starter.zip -DestinationPath .; Remove-Item starter.zip
+  It contains only the app: todo/ (cli.py, store.py, __init__.py,
+  __main__.py), tests/, README.md and .gitignore. It needs Python 3.10
+  or newer (use `python` instead of `python3` if that's the name on the
+  student's machine). Run `python3 -m unittest` in vibe-todo to check the
+  five tests pass. Then make it a git repository so later lessons can
+  diff, branch and merge: `git init`, `git add -A`,
+  `git commit -m "Starter"` (if git has no user.name or user.email yet,
+  help the student set them first).
+
+  Step 2: a project setting. Create vibe-todo/.vibe/config.toml with a
+  short comment and one project-scoped, harmless key:
+    # Project config for vibe-todo. Loaded only when this folder is trusted.
+    # It overrides ~/.vibe/config.toml for the keys it sets.
+    default_agent = "accept-edits"
+  Explain it states the default explicitly for everyone working in this
+  repo; the Agents lesson will change it to a custom agent. Commit it
+  (`git add .vibe && git commit -m "Add project config"`).
+
+  Step 3: a personal setting. Help the student change one user setting
+  of their choice. Offer a few safe options with their defaults: theme
+  ("auto", "mistral-dark", "mistral-light"), enable_notifications
+  (true), autocopy_to_clipboard (true), vim_keybindings (false),
+  cursor_blink (true). theme, vim_keybindings and cursor_blink only
+  affect the CLI's terminal interface, so for VS Code or Desktop
+  students suggest enable_notifications instead. In the CLI, they can
+  use /config or /theme themselves. Otherwise, edit ~/.vibe/config.toml
+  for them: if it exists, back it up first and change only that key; if
+  it doesn't, create it with just that key.
+
+  Finally, move the student into the project. CLI: exit, `cd` into
+  vibe-todo, start `vibe`, and choose Trust folder when Vibe asks (it
+  asks because of .vibe/; if it doesn't, run /trusted-folders and press
+  a to trust the folder). VS Code: File > Open Folder on vibe-todo and
+  start a new Vibe conversation. Desktop: in the Code tab, click New
+  Session and pick the vibe-todo folder as a local project. Tell them to
+  continue the rest of the course from a session in that folder.
+
+  Verify completion by checking that vibe-todo contains todo/cli.py and
+  a git repository with at least one commit (`git -C <path> log
+  --oneline -n 1`), that vibe-todo/.vibe/config.toml exists and sets
+  default_agent, and that ~/.vibe/config.toml (or $VIBE_HOME/config.toml)
+  contains the user setting the student chose, with the value they
+  picked. Report artifacts: project vibe-todo, config .vibe/config.toml.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Almost everything about Vibe Code is a setting: the default agent, the model, the theme, which tools are allowed, which MCP servers to load. All of it lives in one TOML file, `config.toml`, shared by the CLI and the VS Code extension. In this lesson you'll get the course project, find the settings files, learn how they stack up, and change one setting for yourself and one for the project.
+
+## In your project
+
+From this lesson on, the Code lessons build one project step by step: `vibe-todo`, a tiny Python todo CLI. Vibe downloads the starter for you, and this lesson adds its first Vibe file:
+
+```text
+~/vibe-school/vibe-todo/       # you choose the location
+├── .vibe/
+│   └── config.toml            # new: default_agent = "accept-edits"
+├── todo/                      # the app: cli.py, store.py
+├── tests/                     # unittest suite
+├── README.md
+└── .gitignore
+```
+
+Vibe also runs `git init` and commits the starter, so later lessons can show diffs, branches, and merges. Then you continue the course from inside the folder:
+
+- **CLI**: `cd ~/vibe-school/vibe-todo && vibe`, then choose **Trust folder**.
+- **VS Code**: **File › Open Folder** on `vibe-todo`, then start a new Vibe conversation.
+- **Desktop**: in the **Code** tab, click **New Session** and pick the `vibe-todo` folder as a local project.
+
+
+## Where the files live
+
+| File | Scope | Notes |
+|---|---|---|
+| `~/.vibe/config.toml` | Every session on your machine | Created the first time you save a setting. Until then, Vibe uses built-in defaults. |
+| `.vibe/config.toml` | One project | The closest one walking up from your working directory. Loads only in a [trusted folder](/glossary#trusted-folder). |
+
+Project settings override the same user settings; anything the project file doesn't set comes from your user file.
+
+To keep Vibe's files somewhere else, set `VIBE_HOME`:
+
+```bash
+export VIBE_HOME="/path/to/custom/vibe/home"
+```
+
+On Windows PowerShell, use `$env:VIBE_HOME = "C:\path\to\vibe-home"` for the current window, or `setx VIBE_HOME "C:\path\to\vibe-home"` to keep it for new terminals.
+
+That moves `config.toml` along with `.env`, `agents/`, `prompts/`, `skills/`, `plugins/`, and `logs/`.
+
+## Change a setting
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+Run `/config` to open the settings browser. Each setting shows its value and where it's set; type to filter, and press Enter to edit. Changes save to `~/.vibe/config.toml` by default. Use **Save to** in the editor to save to the project file or to the current session only.
+
+A few settings have their own shortcuts: `/theme` picks the theme, `/model` the model, and `/thinking` the thinking level.
+
+Prefer a text editor? Open the file directly, then run `/reload` to apply your changes without restarting:
+
+```bash
+open ~/.vibe/config.toml        # macOS
+xdg-open ~/.vibe/config.toml    # Linux
+```
+
+On Windows PowerShell: `notepad "$HOME\.vibe\config.toml"`.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The extension doesn't have its own settings panel yet. It runs the bundled Vibe agent with the same configuration as the CLI, so edit `~/.vibe/config.toml` (or ask Vibe to do it), then type `/reload` in the Vibe panel or start a new conversation. See [Extension settings](https://docs.mistral.ai/vibe/code/vs-code-extension/settings).
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+The `config.toml` settings in this lesson are documented for the CLI and the VS Code extension. Local sessions in Vibe Desktop share the CLI's core engine and session logs, but their tools and prompts can differ, so don't assume every key applies there. To follow along, ask your Desktop session to edit `~/.vibe/config.toml`, then start a **New Session** in the **Code** tab to pick up the change. Desktop's own controls, such as **Select approval policy** and **Select model** under the input, are covered in the [Permissions](/lessons/permissions) and [Models](/lessons/models) lessons.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+## A few useful keys
+
+```toml
+theme = "mistral-dark"          # "auto" (default), "mistral-dark", "mistral-light", and more
+default_agent = "accept-edits"  # the agent new sessions start in
+enable_notifications = true     # bell and title update when Vibe needs you
+autocopy_to_clipboard = true    # copy text when you release a mouse selection
+vim_keybindings = false         # vim Normal and Insert modes in the prompt
+enable_telemetry = true         # anonymous usage and error telemetry
+```
+
+Every key is listed in the [configuration reference](https://docs.mistral.ai/vibe/code/cli/configuration-reference). Models get their own lesson in [Models](/lessons/models), and tool permissions in [Permissions](/lessons/permissions).
+
+## Who wins
+
+When the same setting is defined in several places, Vibe applies them from highest to lowest priority:
+
+1. **Admin config** from your Organization or Workspace (read-only in `/config`)
+2. **The active agent's settings**
+3. **Command-line flags** and session-only changes from `/config`
+4. **`VIBE_<KEY>` environment variables**, for example `VIBE_ACTIVE_MODEL`
+5. **Project** `.vibe/config.toml`
+6. **User** `~/.vibe/config.toml`
+
+Any setting can be overridden for one run with its `VIBE_` variable:
+
+```bash
+VIBE_THEME=mistral-light vibe
+```
+
+On Windows PowerShell, set the variable first, then start Vibe: `$env:VIBE_THEME = "mistral-light"; vibe`. It stays set until you close that window.
+
+## Check your config
+
+- At startup, Vibe warns about settings it doesn't use, such as a misspelled key, and suggests the right name.
+- Set `strict_config = true` (or `VIBE_STRICT_CONFIG=1`) to make Vibe refuse to start instead, for example in CI.
+- `vibe config schema` prints a JSON schema of every setting, so your editor can validate `config.toml`.
+
+If Vibe won't start after an edit, move the file aside and start again with defaults:
+
+```bash
+mv ~/.vibe/config.toml ~/.vibe/config.toml.bkp
+vibe
+```
+
+On Windows PowerShell: `Rename-Item "$HOME\.vibe\config.toml" config.toml.bkp`, then run `vibe`.
+
+<div class="callout">
+API keys don't belong in <code>config.toml</code>. They live in your OS keyring or in <code>~/.vibe/.env</code>, which holds credentials only.
+</div>
+
+Learn more in the [configuration documentation](https://docs.mistral.ai/vibe/code/cli/configuration).

@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vibe-school",
+  "compatibility_date": "2026-07-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist/client"
+  },
+  // Public, non-secret values read by `astro.config.mjs` at build time and
+  // inlined into the prerendered HTML. Set to the deployed address. Prompts,
+  // llms.txt and the API use the address a page is served from instead.
+  "vars": {
+    "SITE_URL": "https://vibe-school.mistraldemo.workers.dev"
+  },
+  // KV namespace for student progress, created with
+  // `npx wrangler kv namespace create PROGRESS`. Local dev (`script/dev`)
+  // uses a local Miniflare KV instead, so this id is only used when deployed.
+  "kv_namespaces": [
+    {
+      "binding": "PROGRESS",
+      "id": "19f0ae37faa747b19940820f9a20fdca"
+    }
+  ],
+  // Workers Logs and Traces, viewable in the Cloudflare dashboard. Traces are
+  // sampled at 10% to keep volume low; logs keep every request.
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.1 }
+  }
+}

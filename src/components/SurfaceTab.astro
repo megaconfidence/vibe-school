@@ -1,0 +1,11 @@
+---
+// One panel inside <SurfaceTabs>. See SurfaceTabs.astro for usage.
+interface Props {
+  surface: "cli" | "vscode" | "desktop" | "code-web" | "work";
+}
+const { surface } = Astro.props;
+---
+
+<div data-surface-tab={surface} role="tabpanel">
+  <slot />
+</div>

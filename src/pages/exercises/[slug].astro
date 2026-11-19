@@ -1,0 +1,134 @@
+---
+// Copyright (c) 2026 Zeke Sikelianos
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+// Modified for Vibe School.
+//
+// Exercise page: same shape as a lesson page. Navigation never marks an
+// exercise complete.
+import { getCollection, render } from "astro:content";
+import AgentPrompt from "../../components/AgentPrompt.astro";
+import Base from "../../layouts/Base.astro";
+import { PATH_SURFACE } from "../../lib/paths";
+import { SURFACE_ICONS, SURFACE_LABELS } from "../../lib/tracks";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+	const exercises = await getCollection("exercises");
+	return exercises.map((exercise) => ({
+		params: { slug: exercise.data.slug },
+		props: { exercise },
+	}));
+}
+
+const { exercise } = Astro.props;
+const { Content } = await render(exercise);
+const d = exercise.data;
+
+const all = (await getCollection("exercises")).sort((a, b) => a.data.order - b.data.order);
+const i = all.findIndex((e) => e.data.slug === d.slug);
+const next = all[i + 1] ?? null;
+---
+
+<Base title={d.title} description={d.description}>
+  <div data-page-slug={d.slug} data-page-kind="exercise" data-page-surfaces={d.surfaces.join(",")}></div>
+  <div class="mb-8 flex items-center justify-between gap-4 rise" style="--d:0">
+    <a href="/exercises" class="label hover:text-[var(--text)]">&larr; Exercises</a>
+    <p class="label">Exercise {String(d.order).padStart(2, "0")}</p>
+  </div>
+
+  <header class="mb-8 rise" style="--d:1">
+    <h1 class="font-display text-4xl sm:text-5xl leading-[1.02] tracking-[-0.02em]">{d.title}</h1>
+    <p class="mt-3 text-lg text-[var(--text-muted)]">{d.description}</p>
+    {d.surfaces.length > 0 && (
+      <p class="mt-4 flex flex-wrap items-center gap-2 text-sm text-[var(--text-muted)]">
+        <span>Works in</span>
+        {d.surfaces.map((sf) => (
+          <span class="inline-flex items-center gap-1"><img src={SURFACE_ICONS[sf]} alt="" class="pixel w-4 h-4" width="16" height="16" /><span class="text-[var(--text)]">{SURFACE_LABELS[sf]}</span></span>
+        ))}
+      </p>
+    )}
+  </header>
+
+  <div id="exercise-completed-banner" class="theme-banner hidden mb-6 px-4 py-3 text-sm font-medium" role="status">
+    <span id="exercise-completed-text">You completed this exercise.</span>
+  </div>
+
+  <div id="exercise-enroll-nudge" class="hidden mb-8 panel px-4 py-3 text-sm text-[var(--text-muted)]">
+    <a href="/#start" class="theme-link font-medium">Get a Vibe Pass</a> to get your prompt for Vibe and track your progress.
+  </div>
+
+  <div class="mb-6 rise" style="--d:2">
+    <AgentPrompt title={d.title} slug={d.slug} kind="exercise" surfaces={d.surfaces} order={99} />
+  </div>
+
+  <details id="notes" class="notes">
+    <summary class="cursor-pointer list-none flex items-center gap-3 py-3 border-t hairline group">
+      <span class="min-w-0 flex-1">
+        <span class="block font-medium group-hover:text-[var(--accent-text)] transition-colors">The brief</span>
+        <span class="block text-sm text-[var(--text-muted)]">What to build, and how you'll know it's done.</span>
+      </span>
+      <span class="label notes-toggle"></span>
+    </summary>
+    <article class="prose dark:prose-invert max-w-none pb-6 pt-2">
+      <Content />
+    </article>
+  </details>
+
+  <nav class="mt-10 pt-6 border-t hairline" aria-label="Exercise">
+    <div class="flex flex-wrap items-center justify-end gap-4">
+      <button type="button" id="mark-complete" class="hidden text-sm text-[var(--text-muted)] hover:text-[var(--text)] underline underline-offset-4 decoration-[var(--hair-strong)]" title="Vibe usually marks exercises done for you.">Mark complete</button>
+      {next && (
+        <a id="ex-next" href={`/exercises/${next.data.slug}`} class="btn btn-primary px-5 py-3">Next: <span id="ex-next-title">{next.data.title}</span> <span class="arrow" aria-hidden="true">&rarr;</span></a>
+      )}
+      <a id="ex-all" href="/exercises" class="hidden btn btn-primary px-5 py-3">All exercises <span class="arrow" aria-hidden="true">&rarr;</span></a>
+    </div>
+  </nav>
+
+  <script is:inline define:vars={{ exerciseSlug: d.slug, PATH_SURFACE, ORDER: all.map((e) => ({ slug: e.data.slug, title: e.data.title, surfaces: e.data.surfaces })) }}>
+    (function () {
+      var school = window.school;
+      if (!school) return;
+      var $ = function (id) { return document.getElementById(id); };
+      if (!school.getStudentId()) {
+        $("exercise-enroll-nudge").classList.remove("hidden");
+        $("notes").open = true;
+        return;
+      }
+      // Next follows your path: skip exercises for surfaces you're not using.
+      var want = PATH_SURFACE[school.getPath()] || null;
+      if (want) {
+        var at = ORDER.findIndex(function (e) { return e.slug === exerciseSlug; });
+        var nx = ORDER.slice(at + 1).find(function (e) { return e.surfaces.indexOf(want) !== -1; });
+        var link = $("ex-next");
+        if (nx && link) {
+          link.href = "/exercises/" + nx.slug;
+          $("ex-next-title").textContent = nx.title;
+        } else {
+          if (link) link.classList.add("hidden");
+          $("ex-all").classList.remove("hidden");
+        }
+      }
+      var btn = $("mark-complete");
+      function render() {
+        var c = school.getExerciseCompletion(exerciseSlug);
+        var banner = $("exercise-completed-banner");
+        if (c && banner.classList.contains("hidden")) banner.classList.add("banner-in");
+        banner.classList.toggle("hidden", !c);
+        btn.classList.toggle("hidden", !!c);
+      }
+      btn.addEventListener("click", async function () {
+        btn.disabled = true;
+        btn.textContent = "Saving...";
+        var ok = await school.markExerciseComplete(exerciseSlug);
+        btn.disabled = false;
+        btn.textContent = "Mark complete";
+        if (ok) { school.updateAllCheckmarks(); render(); school.celebrate(btn); }
+      });
+      render();
+      school.ready.then(render);
+      school.onProgress(render);
+    })();
+  </script>
+</Base>

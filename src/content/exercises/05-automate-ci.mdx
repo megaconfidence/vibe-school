@@ -1,0 +1,176 @@
+---
+title: "Automate CI"
+slug: automate-ci
+description: "Run Vibe in GitHub Actions to summarize every pull request and post the summary as a comment."
+order: 5
+surfaces: [cli]
+agentInstructions: |
+  Guide the student through running Vibe unattended in GitHub Actions.
+  Adapt depth to their profile. Assume a GitHub repository they own;
+  if they have none, help them create a throwaway one.
+
+  Facts to rely on (don't invent more):
+  - Programmatic mode: `vibe -p "<prompt>"` (or --prompt-file PATH)
+    runs one task and exits. Useful flags: --max-turns N,
+    --max-price DOLLARS (indicative, based on model prices in config),
+    --max-tokens N, --time-limit SECONDS, --output text|json|streaming
+    (text prints only the final answer), --output-dir DIR (writes
+    export.json with token usage, cost, stop reason, outcome),
+    --enabled-tools TOOL (in programmatic mode, disables all others),
+    --trust (needed to load a project's .vibe/ config and AGENTS.md in
+    programmatic mode), --auto-approve / --yolo.
+  - Programmatic mode uses default_agent (accept-edits). Nobody can
+    answer approvals, so tool calls that need approval are denied and
+    reported on stderr. Only use --auto-approve in a sandboxed runner.
+  - Exit codes: 0 finished, 1 couldn't start, 2 API/runtime failure,
+    3 stopped before finishing (limit reached, stopped, or declined).
+  - The CLI reads the API key from the MISTRAL_API_KEY environment
+    variable.
+  - The official action is action.yml at the root of
+    github.com/mistralai/mistral-vibe. Inputs: `prompt` (required),
+    `MISTRAL_API_KEY` (required, passed as an input, not env),
+    `install_python` (default "true"), `python_version` (optional,
+    unsupported). It installs Python and uv, installs Vibe from the
+    action's own checkout (`uv sync`), and runs only
+    `vibe -p "$PROMPT_INPUT"` in the workspace. It exposes no outputs
+    and no extra flags: the answer appears in the job log. Reference it
+    as `mistralai/mistral-vibe@<ref>`, where ref is a release tag such
+    as v3.1.3 (check `vibe --version` and the repo's tags).
+
+  Steps:
+
+  1. Try programmatic mode locally first: in the repo, run
+     `vibe -p "Summarize this project in three bullet points" --max-turns 3 --output text`.
+     Then try --output json and explain the difference. Check the exit
+     code with `echo $?`.
+
+  2. Add the secret: in GitHub, Settings > Secrets and variables >
+     Actions, create MISTRAL_API_KEY with an API key from their Mistral
+     account. Or with gh: `gh secret set MISTRAL_API_KEY`. Never paste
+     the key into chat or commit it.
+
+  3. Write .github/workflows/vibe-pr-summary.yml based on the example
+     on this exercise page: on pull_request, check out with full history,
+     write the diff to pr.diff, run Vibe with --enabled-tools read_file,
+     --max-turns and --max-price, save the text output to summary.md,
+     and post it with `gh pr comment --body-file summary.md`. Grant the
+     job `pull-requests: write`. Adapt the prompt to what the student
+     wants in the summary.
+
+  4. Optionally add a second workflow using the official action with
+     workflow_dispatch, to compare: simpler, but the answer only shows
+     in the job log.
+
+  5. Commit on a branch, push, and open a test PR (`gh pr create`).
+     Watch the run with `gh run watch` or `gh run list`, and read the
+     log with `gh run view --log` if it fails. Common issues: missing
+     secret, missing pull-requests: write permission, PRs from forks
+     don't receive secrets, and denied tool calls listed on stderr.
+
+  6. Discuss safety: PR content is untrusted input that could carry a
+     prompt injection. Keep the tool set narrow (read_file only), keep
+     budgets low, and avoid --auto-approve outside a sandboxed runner.
+
+  The exercise is complete when a workflow file exists under
+  .github/workflows/ that runs Vibe, and a run has succeeded on a pull
+  request. Verify by listing the workflow file, then with
+  `gh run list --limit 5` (a successful run of the workflow) and
+  `gh pr view <number> --comments` (the summary comment is there).
+  Then mark the exercise complete with exerciseSlug "automate-ci".
+---
+
+
+Vibe doesn't need you at the keyboard. In [programmatic mode](/glossary#programmatic-mode) it takes one prompt, does the work, prints the result, and exits, which makes it a good fit for CI. In this exercise, you'll add a GitHub Actions workflow that summarizes every pull request and posts the summary as a comment.
+
+## Try it locally first
+
+```bash
+vibe -p "Summarize this project in three bullet points" --max-turns 3 --output text
+echo $?
+```
+
+`text` prints only the final answer. `json` prints the session messages as a JSON array when the run ends, and `streaming` prints one JSON object per message as it goes. The exit code tells a script how the run ended:
+
+| Exit code | Meaning |
+|---|---|
+| `0` | The agent finished. |
+| `1` | The run couldn't start, for example an invalid flag or config. |
+| `2` | The model API or the runtime failed. |
+| `3` | The agent stopped before finishing: a limit was reached, the run was stopped, or the model declined. |
+
+## A pull request summary workflow
+
+Add your API key as a repository secret named `MISTRAL_API_KEY`, then create `.github/workflows/vibe-pr-summary.yml`:
+
+```yaml
+name: Vibe PR summary
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  summary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+
+      - name: Install Vibe
+        run: uv tool install mistral-vibe
+
+      - name: Summarize the pull request
+        env:
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git diff "$BASE_SHA"...HEAD > pr.diff
+          vibe \
+            -p "Read pr.diff. Write a short Markdown summary of this pull request for reviewers: what changed, why, and any risks. Output only the summary." \
+            --enabled-tools read_file \
+            --max-turns 5 \
+            --max-price 0.50 \
+            --output text > summary.md
+
+      - name: Post the summary
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file summary.md
+```
+
+A few choices worth noticing:
+
+- **`--enabled-tools read_file`** gives the agent one tool. In programmatic mode, it disables all the others.
+- **`--max-turns` and `--max-price`** bound the run. The price limit relies on model prices in your config, so treat it as indicative, not a hard budget.
+- **No `--auto-approve`.** Tool calls that need approval are denied and reported on stderr. That's what you want for untrusted input.
+
+<div class="callout">
+Programmatic mode never prompts for trust, so it ignores a project's <code>.vibe/</code> config and <code>AGENTS.md</code> unless you pass <code>--trust</code>. Add it if you want your <a href="/lessons/instructions">project instructions</a> to apply in CI.
+</div>
+
+## The official action
+
+The `mistral-vibe` repository ships a composite action, [`action.yml`](https://github.com/mistralai/mistral-vibe/blob/main/action.yml). It installs Vibe and runs `vibe -p` with your prompt:
+
+```yaml
+- uses: mistralai/mistral-vibe@v3.1.3
+  with:
+    prompt: "Check the README for broken instructions and list them."
+    MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+```
+
+The key is passed as an **input**, not an environment variable. The action runs `vibe -p` with no extra flags and exposes no outputs, so the answer appears in the job log. Use it for quick jobs, and call the CLI directly, as above, when you need budgets, tool limits, or the output as a file.
+
+## Tips
+
+- **Forks don't get secrets.** Pull requests from forks run without `MISTRAL_API_KEY`. Test with a branch in your own repository.
+- **Keep an audit trail.** `--output-dir out/` writes `export.json` (version, token usage, cost, stop reason, outcome) and a copy of the session, which you can upload as an artifact.
+- **Treat PR content as untrusted.** A diff can contain text written to steer the agent. Keep tools narrow and budgets low.
+
+More in the [Automation](/lessons/automation) lesson and the [programmatic mode docs](https://docs.mistral.ai/vibe/code/cli/work-with-cli#programmatic-mode).

@@ -1,0 +1,281 @@
+---
+title: "Parallel work"
+slug: parallel
+description: "Run several Vibe agents at once with worktrees, subagents, and cloud sessions."
+order: 20
+track: code
+surfaces: [cli, desktop, code-web]
+quiz: true
+goals:
+  - "See why parallel agents overwrite each other"
+  - "Pick worktrees, subagents, or cloud sessions for a job"
+  - "Run two agents in separate worktrees"
+  - "Merge the results back together"
+minutes: 30
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. Why isolation matters: two sessions in the same checkout share the
+     same files, so parallel edits overwrite or conflict with each other.
+     A git worktree is a second checkout of the same repository, in its
+     own folder and on its own branch, sharing the same history. Separate
+     conversations alone don't isolate files. Worktrees isolate files, not
+     ports, environment variables, dependencies, or services: two dev
+     servers still can't share a port.
+
+  2. CLI worktrees: `vibe --worktree NAME` creates (or reuses) a worktree
+     under $VIBE_HOME/worktrees (default ~/.vibe/worktrees) on a branch
+     named NAME and runs the session inside it. Bare --worktree names it
+     after the prompt (or a random slug) and the branch gets a vibe/
+     prefix; put the prompt first (`vibe "Fix the login bug" --worktree`)
+     because --worktree reads the next argument as the name. --worktree
+     trusts the worktree for that run. Cleanup: when an interactive
+     session ends, Vibe removes a worktree it created if it holds no
+     changes and asks otherwise; reused worktrees and pre-existing
+     branches are kept unless the user confirms removal; programmatic (-p) runs always keep the worktree.
+     worktree_limit (default 15) caps how many recent Vibe-managed
+     worktrees are kept. On macOS, worktree_copy_on_write (default true)
+     clones new worktrees of a trusted repo from a template checkout to
+     save disk; set it to false for regular checkouts. Plain git works
+     too: git worktree list, git worktree add, git worktree remove.
+
+  3. Subagents and Desktop: the main agent can spawn subagents in
+     parallel (up to 32 at once by default; max_subagents and
+     max_concurrent_subagents in config.toml; enable_subagents = false
+     turns them off). The built-in explore subagent is read-only; custom
+     subagents use agent_type = "subagent" (see the Agents lesson). They
+     return text-only results, can't ask the user questions, and don't
+     isolate files, so they suit read-only fan-out. In Vibe Desktop, the
+     Local / Worktree / Cloud selector under the input starts a session
+     in a new worktree; a main session can start sub-sessions (nested in
+     the sidebar, "Started a session", reporting back with "Received a
+     message from ...") and subagents ("Started subagent", read-only
+     views with status Running, Waiting for input, Idle, or Failed,
+     opened from Subagents in the top-right panel).
+
+  4. Cloud sessions and bringing work together: in Vibe Code Web (and
+     Desktop cloud sessions) every session gets its own isolated cloud
+     sandbox and works on its own branch, usually ending in a pull
+     request, so several sessions can run at once; the number of
+     concurrent sessions per user is plan-dependent, with daily quotas
+     (2 sessions per day on Free where enabled, 100 on paid plans).
+     Bringing results together is ordinary git: review each branch's
+     diff on its own (git -C <worktree> diff, Desktop's Git Changes, or
+     the PR on GitHub), run its tests, commit, then merge or open a PR
+     per branch. Pick independent tasks that touch different files.
+     Mention the lesson's comparison table of which tool fits which job.
+
+  Then the hands-on part: two agents add two commands to vibe-todo in
+  parallel, each in its own worktree, then you merge them. Check
+  prerequisites: vibe-todo is a git repository with a clean working
+  tree (`git status`); commit anything pending first, because a new
+  worktree starts from a commit, so uncommitted .vibe/ files wouldn't be
+  there. Which commit: if the repo has a remote (`git remote` prints a
+  name), `vibe --worktree` fetches and starts new branches from the
+  remote's default branch, not local HEAD, so push first or unpushed
+  commits are missing. A local-only vibe-todo (no remote) starts from
+  HEAD, the last local commit. If the folder is missing, fetch the starter and
+  commit it as in the Configuration lesson. The new-command skill and
+  builder agent help but aren't required. Ask the student which path
+  they want:
+  - CLI, two terminals: in the vibe-todo root run `vibe --worktree stats`
+    in one and `vibe --worktree edit` in the other. Ask the first for "a
+    stats command that prints how many tasks are open and done" and the
+    second for "an edit command that changes a task's title by id". Each
+    session should run the tests and then commit its change (approve
+    the git commit). Tell the student not to discard the worktrees when
+    they exit: an unchanged worktree is removed automatically, so the
+    commit matters.
+  - CLI, quick path you can run yourself if you're in a terminal
+    session: from the vibe-todo root start two programmatic runs at once,
+      vibe --worktree stats -p "Add a stats command that prints how many tasks are open and done, with a test. Run the tests." --max-turns 15 &
+      vibe --worktree edit -p "Add an edit command that changes a task's title by id, with tests. Run the tests." --max-turns 15 &
+      wait
+    (`&` and `wait` are POSIX shell syntax. On Windows PowerShell, drop
+    the trailing `&` and run each command in its own terminal at the
+    same time. --worktree trusts the worktree, so project config such as
+    default_agent = "builder" loads; programmatic runs keep their
+    worktrees). Approvals can't be answered in -p, so commit for each
+    worktree afterwards: find the paths with `git worktree list`, then
+    `git -C <path> add -A && git -C <path> commit -m "Add stats command"`
+    (and the same for edit).
+  - Desktop: in the Code tab, start two New Sessions on vibe-todo with
+    Worktree selected under the input, one task each, and ask each to
+    commit.
+  Then, together: run `git worktree list` and explain each line (path,
+  commit, branch). Review each diff on its own
+  (`git -C <path> diff HEAD~1`) and run `python3 -m unittest` in each
+  worktree. Merge in the main checkout: `git merge stats`, run the tests,
+  then `git merge edit`. Both branches edit todo/cli.py and
+  tests/test_cli.py, so expect a conflict where both added code at the
+  same spot; ask Vibe to resolve it keeping both commands, explain the
+  resolution, run the tests, and commit. Offer to remove the worktrees
+  afterwards with `git worktree remove <path>` (keep the branches or
+  delete them with `git branch -d`).
+
+  Verify completion by running, in vibe-todo,
+  `git worktree list` (expect the worktrees, or confirm the student
+  removed them after merging) and `git branch --list` (a branch per
+  worktree, such as stats and edit, or vibe/... or Desktop names), then
+  `git log --oneline --graph -n 15` showing both branches merged into
+  the main branch, and `python3 -m unittest` passing with tests for both
+  new commands. If the student used Vibe Code Web instead, ask for the
+  repo and run `gh pr list --repo <owner/repo>` (or ask them to paste
+  the branch names) to confirm two sessions produced two branches or
+  pull requests. Report artifacts: worktree stats, worktree edit (use
+  the actual branch names).
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+One agent at a time is fine until you have three small tasks queued up. Vibe can run several agents at once, but only if each one has its own place to work. In this lesson you'll learn the ways to split work in Vibe (worktrees, subagents, sub-sessions, and cloud sessions), when to use each, and how to bring the results back together.
+
+## In your project
+
+Two agents add two commands to `vibe-todo` at the same time, each in its own worktree and branch, then you merge both:
+
+```text
+vibe-todo/                  # main checkout, on your main branch
+~/.vibe/worktrees/…/stats   # worktree on branch stats: adds cmd_stats + test
+~/.vibe/worktrees/…/edit    # worktree on branch edit: adds cmd_edit + tests
+```
+
+After the merge, `todo/cli.py` has both commands. Commit everything first: a new worktree starts from a commit, so uncommitted files (like a new skill) wouldn't be in it. In a local-only repository like `vibe-todo`, that's your last commit (`HEAD`). If the repository has a remote, the CLI's `--worktree` starts new branches from the remote's default branch instead, so push your commits first or they won't be in the worktree.
+
+
+## Why agents step on each other
+
+Two sessions started in the same folder edit the same files. If both touch `README.md`, the last write wins, and a half-finished change from one session can break the other's tests. Opening a second conversation doesn't help: separate conversations share the same checkout.
+
+The fix is a [worktree](/glossary#worktree): a second checkout of the same repository, in its own folder, on its own branch. Worktrees share the git history, so merging later is ordinary git.
+
+<div class="callout">
+Worktrees isolate <strong>files</strong>, not everything a task uses. Dependencies, environment variables, external services, and server ports may still need separate setup. Two development servers can't both use port 3000 just because they run in different worktrees.
+</div>
+
+## Which tool for which job
+
+| Job | Use | Where |
+|---|---|---|
+| Two tasks that edit the same repo on your machine | Worktrees | CLI `--worktree`, Desktop **Worktree** |
+| A read-only investigation that would flood the context | [Subagents](/glossary#subagent), such as `explore` | CLI, VS Code, Desktop |
+| One big task split into visible, coordinated conversations | Sub-sessions (pair with worktrees if they edit) | Desktop |
+| Tasks that don't need your machine and should end in a PR | Cloud sessions, one sandbox each | Code Web, Desktop **Cloud** |
+| The same unattended task in a script or CI | `vibe -p` with `--worktree` | CLI (see the previous lesson, [Automation](/lessons/automation)) |
+
+## Worktrees
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+Start a session in its own worktree with `--worktree`:
+
+```bash
+vibe --worktree parser-tests
+```
+
+Vibe creates the worktree under `~/.vibe/worktrees/` (or `$VIBE_HOME/worktrees/`) on a branch named `parser-tests`, or reuses it if it already exists. `--worktree` also trusts the worktree for that run, so project config loads without `--trust`.
+
+Leave out the name and Vibe names the worktree after your prompt (or picks a random slug), on a branch with a `vibe/` prefix. Put the prompt first, because `--worktree` reads the next argument as the name:
+
+```bash
+vibe "Fix the login bug" --worktree
+```
+
+To work on two things at once, open two terminals in the repository and start one session in each:
+
+```bash
+# terminal 1, in vibe-todo
+vibe --worktree stats
+
+# terminal 2, in vibe-todo
+vibe --worktree edit
+```
+
+**Cleanup.** When an interactive session ends, Vibe removes a worktree it created in that run if it holds no changes, and asks you otherwise. Worktrees it reused, and branches that already existed, are kept unless you confirm their removal. Programmatic runs (`-p`) always keep the worktree. `-c` and `--resume` combine with `--worktree` to pick a session back up inside that worktree.
+
+Two settings in `~/.vibe/config.toml` control worktrees:
+
+| Key | Default | What it does |
+|---|---|---|
+| `worktree_limit` | `15` | Maximum number of recent Vibe-managed worktrees kept locally |
+| `worktree_copy_on_write` | `true` | macOS only. Creates new worktrees of a trusted repo from a template checkout under `~/.vibe/worktrees/.templates`, so they use less disk and are created faster. Set it to `false` for regular checkouts |
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+In the **Code** tab, click **New Session**, pick the project, and choose **Worktree** in the **Local / Worktree / Cloud** selector under the input. The session works in its own checkout, so your current one stays untouched. Start a second session the same way for a second task.
+
+You can also ask for a worktree in words, before Vibe edits anything:
+
+```text
+Use a new Git worktree for this task. Fix the failing authentication tests,
+leaving my current checkout unchanged.
+```
+
+Keep a worktree until its changes are committed and delivered, or until you've decided to discard them. Archiving a session doesn't deliver its changes.
+
+</SurfaceTab>
+<SurfaceTab surface="code-web">
+
+You don't manage worktrees in Vibe Code Web. Every session runs in its own isolated cloud [sandbox](/glossary#sandbox) with a fresh clone of the repository, and the agent commits to its own branch. A session typically opens a **draft pull request** from a `vibe/...` branch, authored by you.
+
+So running tasks in parallel means starting several sessions, one per task. The number of concurrent sessions per user is plan-dependent, and there are daily quotas (2 sessions a day on Free plans where access is enabled, 100 on paid plans). Sessions are personal: to collaborate, share the branch or pull request.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+Whichever surface you use, plain git sees every worktree:
+
+```bash
+git worktree list
+```
+
+Each line shows a worktree's path, its current commit, and its branch. `git worktree remove <path>` deletes one you no longer need.
+
+## Subagents
+
+A [subagent](/glossary#subagent) is an agent the main agent starts to handle part of a task. It doesn't give you a separate checkout; it gives the main agent extra hands while keeping its [context window](/glossary#context-window) small.
+
+- Vibe ships `explore`, a **read-only** subagent for searching and reading code.
+- You can define your own with `agent_type = "subagent"` (see the [Agents](/lessons/agents) lesson).
+- The main agent can run several at once: up to 32 by default. `max_subagents` and `max_concurrent_subagents` in `config.toml` change the limits, and `enable_subagents = false` turns subagents off.
+- Subagents return **text-only results**, can't ask you questions, and never get broader permissions than the parent.
+
+Ask for them in plain language:
+
+```text
+Use subagents in parallel: one lists every command in todo/cli.py and
+its test coverage, the other checks which functions touch the file
+system. Summarize both, then propose a plan. Don't edit anything yet.
+```
+
+<div class="callout">
+Subagents don't isolate files. A read-only fan-out is safe; parallel <em>edits</em> belong in separate worktrees.
+</div>
+
+### Sub-sessions and subagents in Desktop
+
+Desktop shows delegation in the sidebar and panels:
+
+- A main session can start **sub-sessions**: separate conversations shown as **Started a session** and nested under the main session in the sidebar. They report back with **Received a message from …** entries. Each has its own files, terminal, and **+ → Git Changes**, so select the right conversation before you inspect anything. Ask for separate worktrees when sub-sessions edit the same repo.
+- **Subagents** show up as **Started subagent** entries; open one from **Subagents** in the session's top-right panel. Their views are read-only, with a status of `Running`, `Waiting for input`, `Idle`, or `Failed`. To redirect a subagent, talk to the main agent.
+
+## Bring the results together
+
+A finished session isn't a finished task. For each branch:
+
+1. **Review the diff on its own.** `git -C <worktree path> diff`, Desktop's **+ → Git Changes** (**Unified** or **Split**), or the pull request on GitHub.
+2. **Run the tests in that worktree.** Two branches can each pass and still conflict once merged.
+3. **Commit, then merge or open a PR.** Merge one branch, rerun the tests, then merge the next. If they conflict, ask Vibe to resolve it and explain the resolution, then review it yourself. In `vibe-todo`, `stats` and `edit` both add code to `todo/cli.py` and `tests/test_cli.py`, so the second merge may conflict where both added a function or a test: keep both.
+4. **Clean up** worktrees you no longer need.
+
+Parallel work pays off when tasks touch different files. Two agents editing the same function will collide no matter how isolated their checkouts are.
+
+## Go deeper
+
+The [Run parallel agents](/exercises/run-parallel-agents) exercise does the same on one of your own repositories, with Desktop sub-sessions as an option.
+
+More in the docs on [CLI worktrees](https://docs.mistral.ai/vibe/code/cli/work-with-cli#worktrees), [Desktop parallel tasks](https://docs.mistral.ai/vibe/code/desktop/parallel-tasks), [custom subagents](https://docs.mistral.ai/vibe/code/cli/agents#custom-subagents), and [Code Web limits](https://docs.mistral.ai/vibe/code/web/limits-and-lifecycle).

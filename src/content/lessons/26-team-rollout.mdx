@@ -1,0 +1,312 @@
+---
+title: "Team rollout"
+slug: team-rollout
+description: "Roll Vibe out to a team: share a setup in the repo, add guardrails, and measure usage."
+order: 26
+track: team
+surfaces: [cli, vscode, desktop]
+quiz: true
+goals:
+  - "Share a project setup through the repo"
+  - "Set guardrails with admin config"
+  - "Use the Admin Panel and usage data"
+  - "Follow a rollout checklist"
+minutes: 30
+checklist: []
+agentInstructions: |
+  This lesson is for team leads and Change Champions bringing Vibe to a
+  team. Cover these four topics:
+
+  1. Share the setup through the repository. This is the capstone of
+     the course project: the student's vibe-todo already holds a team
+     setup built lesson by lesson: AGENTS.md and tests/AGENTS.md
+     (Instructions), .vibe/config.toml with default_agent, a [tools.bash]
+     allowlist and an MCP server (Configuration, Permissions, Agents,
+     MCP), .vibe/skills/ (Skills), .vibe/agents/ (Agents),
+     .vibe/hooks.toml (Hooks) and .vibe/plugins/ (Plugins). All of it
+     loads only in a trusted folder: the first time a teammate starts the
+     CLI there, it asks Trust folder / Trust full repo / Don't trust, and
+     trust is remembered in ~/.vibe/trusted_folders.toml. Teammates should
+     review .vibe/ like any code before trusting it. Never commit
+     secrets: point at an env var (api_key_env for MCP servers). For
+     skills and subagents used across many repos, a plugin in
+     ~/.vibe/plugins/ or a shared repo travels better than copies. Keep
+     this topic short: the student built each piece already.
+
+  2. Admin config (managed config): Organization or Workspace admins
+     enter TOML under "Vibe Code Clients managed config" in Admin Panel >
+     Vibe > Preferences (Organization) or a Workspace's Settings. The CLI
+     (2.24.2+) and VS Code extension (1.16+) fetch it with the user's API
+     key, cache it in ~/.vibe/managed_config_cache.json, check every 10
+     minutes, and /reload fetches it now. It is the highest-priority
+     layer: admin config > agent settings > CLI flags > VIBE_* env vars >
+     project config.toml > user config.toml, and it shows read-only in
+     /config. The Workspace config replaces the Organization one (no
+     merge), or a Workspace can disable it. Useful keys: active_model,
+     [[providers]], [[models]], allowed_models (exact, glob, or re:
+     patterns; if nothing matches, the whole admin config is rejected),
+     enable_mcp = false, enable_connectors = false or a [[connectors]]
+     entry with disabled = true, default_agent plus enabled_agents /
+     disabled_agents, enable_auto_approve = false, disabled_tools.
+     Secrets must be env var references (api_key_env_var). Managing it
+     needs the manage_code_config permission. Activation: none needed on
+     Serverless; contact the account team for Dedicated or Self-hosted.
+     Stress that it is a distribution mechanism, not a security control:
+     users who control their machine can bypass it, so pair it with
+     server-side controls (API key and Workspace permissions).
+
+  3. Admin Panel basics for a rollout: an Organization contains
+     Workspaces (members, roles, API keys, usage, limits, Vibe feature
+     toggles, Connector permissions per Workspace). Roles are additive at
+     two scopes; new Workspace members start as Workspace contributor;
+     the "Mistral Vibe Code User" role (mistral_code_user) requires a seat.
+     Groups (Enterprise) assign many users to a Workspace with roles;
+     SCIM provisioning (private preview) syncs users and groups from an
+     identity provider. Workspace usage tab and monthly spending limit;
+     Admin API (Enterprise only) has Vibe Code analytics. API keys are
+     Workspace-scoped and meant for people; service accounts are
+     non-human identities for workloads. Connector permissions per
+     Workspace: Allowed, Restricted, Blocked. Keep it short and link to
+     docs.mistral.ai/admin for depth.
+
+  4. Observability and a rollout checklist: enable_otel = true exports
+     OpenTelemetry traces for agent, model, and tool operations over
+     OTLP/HTTP (needs enable_telemetry); otel_endpoint points at another
+     collector (Vibe appends /v1/traces; auth via OTEL_EXPORTER_OTLP_*
+     env vars); otel_redaction is default, strict, or none (none only for
+     a trusted collector). enable_telemetry = false opts out of anonymous
+     usage and error telemetry to Mistral (no prompts, file contents, or
+     model outputs are sent). Then the checklist: start with a pilot
+     group, commit the shared repo setup, set guardrails, measure usage,
+     gather feedback and iterate before widening.
+
+  Ask the student whether they have admin access to their Mistral
+  Organization or a Workspace. If they don't, describe the admin steps
+  only and move on. If they do, they may open Admin Panel > Vibe >
+  Preferences to look at the managed config field, but tell them not to
+  save anything during the lesson; this part is not verified.
+
+  Then the hands-on part: turn vibe-todo into the team starter. Work
+  in the student's vibe-todo folder. If it's missing, fetch the starter
+  as in the Configuration lesson; if pieces from earlier lessons are
+  missing, list them and offer to add short versions (at minimum
+  AGENTS.md, .vibe/config.toml and one skill), or to compare against
+  the reference instead.
+
+  1. Review what a teammate would get, like a reviewer would. Run
+     `git status` (commit anything pending) and `git ls-files AGENTS.md
+     tests/AGENTS.md .vibe`, then walk through each tracked file with the
+     student: what it does, whether it's safe to share (no secrets, no
+     absolute paths, no personal preferences such as theme or
+     active_model in the project config, no destructive commands in an
+     allowlist), and whether the hook's commands are ones teammates have
+     (python3, uvx).
+
+  2. Compare with the reference at
+     {origin}/examples/agents-skills-instructions, which shows the
+     project as it stands after the Agents lesson (zip at
+     {origin}/examples/agents-skills-instructions.zip). Note what
+     vibe-todo adds beyond it (the allowlist, the fetch MCP server, the
+     run-tests hook, the plugin) and any differences worth keeping.
+
+  3. Add a short "Working with Vibe" section to vibe-todo/README.md:
+     review .vibe/ before trusting the folder, then trust it on first
+     start; the default agent is builder; ask for a new command in plain
+     words or with /new-command; run /code-review before opening a pull
+     request; tests run with `python3 -m unittest` and also after each
+     edit through the run-tests hook; the fetch MCP server needs uvx.
+     Commit it.
+
+  4. Draft admin config guidance, without saving anything to the Admin
+     Panel: ask whether the student has admin access to their Mistral
+     Organization or a Workspace. Either way, write a short TOML
+     snippet in the chat (not in the repo) that would back the repo setup
+     centrally, for example default_agent = "accept-edits",
+     enable_auto_approve = false, and allowed_models patterns, and
+     explain why it's a distribution mechanism, not a security control.
+     If they have access, they may open Admin Panel > Vibe > Preferences
+     to look at the managed config field, but tell them not to save
+     anything during the lesson; this part is not verified.
+
+  5. Optional: push vibe-todo to a team repository (for example with
+     `gh repo create <name> --private --source . --push`) so teammates
+     can clone it. Ask before creating anything remote.
+
+  Verify completion by running, in vibe-todo, `git ls-files AGENTS.md
+  .vibe README.md` and confirming that AGENTS.md, .vibe/config.toml and
+  at least one .vibe/skills/*/SKILL.md are tracked; parsing
+  .vibe/config.toml with
+  `python3 -c "import tomllib; print(tomllib.load(open('.vibe/config.toml','rb')))"`
+  (Python 3.11+; if tomllib is missing, run the same code with
+  `uv run --python 3.12 python -c`, and use `python` on Windows) and
+  confirming it parses and holds no secret-looking values; checking that
+  each .vibe/skills/*/SKILL.md has a name equal to its folder name and a
+  non-empty description; and checking that README.md mentions trusting
+  the folder. Optionally, if the CLI is installed, confirm with
+  `vibe --trust -p "List the skills and agents available in this project" --max-turns 3`.
+  Report artifacts: rollout vibe-todo (plus rollout pushed if they
+  pushed it to a team repository).
+---
+
+import StarterPack from '../../components/StarterPack.astro'
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Getting one person productive with Vibe is a setup job. Getting a team productive is a rollout: everyone should start from the same instructions and workflows, with the same guardrails, and you should be able to tell whether it's working. This lesson is for team leads and Change Champions. It covers what goes in the repository, what admins set centrally, what to measure, and a checklist for the first few weeks.
+
+## In your project
+
+This is the capstone for `vibe-todo`. By now it holds a full team setup, built one lesson at a time:
+
+```text
+vibe-todo/
+├── AGENTS.md                          # Instructions
+├── README.md                          # gains a "Working with Vibe" section in this lesson
+├── tests/AGENTS.md                    # Instructions
+└── .vibe/
+    ├── config.toml                    # Configuration, Permissions, MCP, Agents
+    ├── hooks.toml, hooks/run_tests.py # Hooks
+    ├── agents/builder.toml, reviewer.toml          # Agents
+    ├── skills/new-command/, skills/code-review/    # Skills
+    └── plugins/todo-review/           # Plugins
+```
+
+In this lesson you review it the way a teammate would, compare it with the [reference project](/examples/agents-skills-instructions) (where `vibe-todo` stands after the Agents lesson: instructions, skills, and agents), add a README note about trusting the folder, draft the admin config that would back it, and optionally push it to a team repository.
+
+## Layer 1: share the setup through the repo
+
+Everything above is ordinary files in the repository. Anyone who clones it and trusts the folder gets the same agents, skills, instructions, hooks, and MCP server in the CLI and the VS Code extension. Desktop local sessions use the same engine, but tools and prompts can differ, so test there too.
+
+Before you share it, check what a teammate would get:
+
+- `git ls-files AGENTS.md tests/AGENTS.md .vibe` lists exactly what's shared.
+- The project config holds team choices only. Personal settings such as `theme` or `active_model` stay in each person's `~/.vibe/config.toml`.
+- Allowlists name harmless commands, and hooks call tools teammates have installed.
+
+<div class="callout">
+<p>Project files load only in a <a href="/glossary#trusted-folder">trusted folder</a>, so tell people in your README to review <code>.vibe/</code> like any other code before they trust it. Never commit a secret: point MCP servers at an environment variable with <code>api_key_env</code>.</p>
+</div>
+
+For setups shared across many repositories, ship the reusable parts as a [plugin](/lessons/plugins), like `todo-review`, instead of copying files around. To apply the same layout to another repository of yours, do the [Package a team setup](/exercises/package-a-team-setup) exercise.
+
+## Layer 2: admin config
+
+Repo files are opt-in: they apply in that repo, once trusted. **Admin config** (also called managed config) applies to everyone in an Organization or Workspace, in every project. Admins write it once as TOML, and the CLI and VS Code extension apply it.
+
+### How it works
+
+1. An admin enters TOML under **Vibe Code Clients managed config**, in **Admin Panel › Vibe › Preferences** for the Organization, or in a Workspace's **Settings**.
+2. The client fetches it with the user's Mistral API key and keeps a copy in `~/.vibe/managed_config_cache.json`. It checks for changes every 10 minutes; `/reload` fetches it right away. It never writes admin config into `config.toml`.
+3. Admin-managed settings show as read-only in `/config`, with the administrator listed as a source.
+
+A Workspace can inherit the Organization's config, **replace** it with its own (the two aren't merged), or turn admin config off for its members. Managing it needs the `manage_code_config` permission at the Organization scope; Workspace admins can manage their own Workspace's config.
+
+**Minimum versions:** CLI `2.24.2`, VS Code extension `1.16`. Older clients ignore admin config, so upgrade everyone first. **Activation:** nothing to do on Serverless; on Dedicated or Self-hosted deployments, ask your account team.
+
+### Precedence
+
+Admin config is the top layer:
+
+```text
+admin config  >  agent settings  >  CLI flags  >  VIBE_* env vars  >  project config.toml  >  user config.toml
+```
+
+### What admins can set
+
+Most `config.toml` keys work. The ones a rollout usually needs:
+
+```toml
+# Everyone starts in a safe agent, and auto-approve is off the menu
+default_agent = "accept-edits"
+disabled_agents = ["auto-approve"]
+enable_auto_approve = false
+
+# Only these models are selectable
+allowed_models = ["mistral-vibe-cli-*"]
+
+# No MCP servers, and no web search connector
+enable_mcp = false
+
+[[connectors]]
+name = "web_search"
+disabled = true
+```
+
+| Key | Effect |
+|---|---|
+| `active_model`, `[[providers]]`, `[[models]]` | Ship a working model and provider on first launch, for example your enterprise endpoint |
+| `allowed_models` | Limits the model picker to names matching exact, glob, or `re:` patterns. If no model matches, the **whole** admin config is rejected |
+| `default_agent`, `enabled_agents`, `disabled_agents` | The agent every session starts in, and which ones users can switch to |
+| `enable_auto_approve = false` | Hides `auto-approve` and any agent with `safety = "yolo"`, and ignores `--auto-approve`, `--yolo`, and `bypass_tool_permissions`. Per-tool `always` and allowlists still apply |
+| `enable_mcp = false` | Blocks adding, signing in to, and loading tools from MCP servers, including plugin ones |
+| `enable_connectors = false` or `[[connectors]]` with `disabled = true` | Blocks all [connectors](/glossary#connector), or one |
+| `disabled_tools` | Removes tools, for example `["bash"]` |
+
+Admin config never holds a literal secret: credentials must be an environment variable reference, such as `api_key_env_var = "MISTRAL_API_KEY"`. The server rejects literal keys. To stop applying admin config, submit an empty configuration. Test it in a test Organization first: if it can't be applied, users fall back to the last one they received, then to their own config, with the message `Your administrator-managed configuration could not be applied: <reason>`.
+
+<div class="callout">
+Admin config is a <strong>distribution mechanism, not a security control</strong>. It sets safe defaults, but someone who controls their own machine can get around it. Anything people must never reach also needs a server-side control, such as Workspace permissions or API key scope.
+</div>
+
+## Starter pack builder
+
+Draft an admin config and a team `AGENTS.md` together. Nothing is sent anywhere: copy or download the files, review them with your team, and try the admin config in a test Workspace first.
+
+<StarterPack />
+
+## Layer 3: the Admin Panel
+
+The [Admin Panel](https://admin.mistral.ai) is where an Organization admin or Workspace admin manages people, access, and spend. You need one of those roles to open it. The parts that matter for a Vibe rollout:
+
+- **Workspaces.** An Organization contains Workspaces, each with its own members, roles, API keys, usage, and limits. Everything in Vibe is Workspace-scoped. Per Workspace, admins can turn Vibe features on or off (Work mode, Web Search, Code Interpreter, and others) and set a chat retention policy. A separate Workspace for the pilot keeps its usage and settings apart.
+- **Roles.** Roles apply at the Organization scope and the Workspace scope, and they add up. New Workspace members start as **Workspace Contributor**. The **Mistral Vibe Code User** role (`mistral_code_user`) grants Mistral Code access and requires a seat.
+- **Groups and SCIM.** On Enterprise plans, a **group** assigns many users to a Workspace with chosen roles. **SCIM provisioning** (private preview) syncs users and groups from your identity provider, such as Microsoft Entra ID.
+- **Usage and limits.** Each Workspace has a **Usage** tab (spend, tokens, usage by model) and an optional **Monthly spending limit** under **Settings**. On Enterprise plans, the Admin API also reports Vibe Code analytics: sessions, active users, tokens, tool calls, and session durations.
+- **API keys vs service accounts.** API keys belong to the Workspace they were created in and use its quota. Use a personal key for interactive work, and a **service account** (a non-human identity with its own roles and credentials) for workloads, so they keep running when a person leaves.
+- **Connectors.** Under **Administration › Connectors**, admins set each connector to **Allowed**, **Restricted** (selected tools only), or **Blocked** per Workspace, and can connect GitHub or Slack once for the whole Organization.
+
+Each of these has more detail in the [Admin docs](https://docs.mistral.ai/admin/overview): [Workspaces in Vibe](https://docs.mistral.ai/admin/workspaces/workspaces-in-vibe), [roles and permissions](https://docs.mistral.ai/admin/identity-access/roles-permissions), [groups](https://docs.mistral.ai/admin/identity-access/groups), [SCIM](https://docs.mistral.ai/admin/identity-access/scim/overview), [Workspace usage and limits](https://docs.mistral.ai/admin/workspaces/usage-limits), [usage metrics API](https://docs.mistral.ai/admin/admin-api/usage-metrics), [API keys](https://docs.mistral.ai/admin/identity-access/api-keys), [service accounts](https://docs.mistral.ai/admin/identity-access/service-accounts), and [connectors](https://docs.mistral.ai/admin/identity-access/connectors).
+
+## Observability
+
+To see what agents do across the team, Vibe can export **OpenTelemetry** traces for agent, model, and tool operations over OTLP/HTTP:
+
+```toml
+enable_otel = true
+otel_endpoint = "https://collector.example.com:4318"
+otel_redaction = "default"
+```
+
+- `enable_otel` needs `enable_telemetry` on as well.
+- Without `otel_endpoint`, Vibe derives the endpoint from the configured Mistral provider. With it, Vibe sends to `<otel_endpoint>/v1/traces`; set collector auth with the standard `OTEL_EXPORTER_OTLP_*` environment variables.
+- `otel_redaction`: `default` redacts sensitive values, `strict` drops sensitive attributes entirely, and `none` turns redaction off. Use `none` only with a collector you trust with prompts, responses, and tool data.
+
+Separately, `enable_telemetry` (default `true`) sends anonymous usage and error telemetry to Mistral. No prompts, file contents, or model outputs are sent. Set `enable_telemetry = false` to opt out, for example for offline-only setups.
+
+## A rollout checklist
+
+1. **Pick a pilot group.** A handful of people on one or two repos, ideally in their own Workspace so usage is easy to read.
+2. **Commit the shared setup.** `AGENTS.md`, `.vibe/config.toml`, and one or two skills that match how the team already works, as in `vibe-todo`. Add a README note about trusting the folder.
+3. **Set guardrails.** Start everyone in `accept-edits` or `ask`, consider `enable_auto_approve = false` and `allowed_models` in admin config, and back them with Workspace roles and connector permissions.
+4. **Measure usage.** Watch the Workspace **Usage** tab and spending limit; on Enterprise, pull Vibe Code analytics; add OpenTelemetry if you run a collector.
+5. **Gather feedback, then widen.** Ask which rules the agent ignored, which skills got used, and what people still did by hand. Fix the shared setup, then add the next group.
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+Check what a teammate will get: start a fresh session in the repo, accept the trust prompt, then run `/config` (admin-managed values are read-only there), `/skills`, and `/status`.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+The extension reads the same `AGENTS.md` and `.vibe/` files as the CLI, and applies admin config from version 1.16. Open the **Mistral Vibe** tab, start a new chat in the repo, and check that the project skill shows up in the `/` picker.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Desktop local sessions share the CLI's core engine, but tools and prompts can differ. Open the repo with **New Session** in the **Code** tab and check that your skill and rules apply before you tell the team it works.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+More in the docs on [admin config](https://docs.mistral.ai/vibe/code/cli/admin-config), [configuration precedence](https://docs.mistral.ai/vibe/code/cli/configuration#precedence), [trusted folders](https://docs.mistral.ai/vibe/code/safety-approvals-permissions#trusted-folders), and [plugins](https://docs.mistral.ai/vibe/code/cli/plugins).

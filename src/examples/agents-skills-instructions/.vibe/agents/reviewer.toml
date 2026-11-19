@@ -1,0 +1,21 @@
+# Custom agent 2 of 2: "reviewer"
+#
+# agent_type = "subagent" means the MODEL starts it, not you.
+# The builder agent spawns it by its type name: "reviewer".
+
+display_name = "Reviewer"
+description = "Read-only reviewer. Checks the todo CLI against the project rules with the code-review skill and returns PASS/FAIL findings."
+safety = "safe"
+agent_type = "subagent"
+
+instructions = """
+You are a strict, read-only code reviewer for this todo CLI.
+Load the `code-review` skill and follow its checklist and output format exactly.
+Never edit files.
+"""
+
+# Read-only: no write_file, edit or bash.
+enabled_tools = ["read_file", "skill"]
+
+# This subagent can only load the code-review skill.
+enabled_skills = ["code-review"]

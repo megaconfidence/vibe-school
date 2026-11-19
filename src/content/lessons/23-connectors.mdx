@@ -1,0 +1,188 @@
+---
+title: "Connectors"
+slug: connectors
+description: "Connect Vibe Work to your tools, control what it can do there, and use them in the CLI."
+order: 23
+track: work
+surfaces: [work, cli]
+quiz: true
+goals:
+  - "Connect a featured connector"
+  - "Pick a connector for a task from the + menu"
+  - "Set per-function permissions"
+  - "Find the same connectors in the Vibe CLI"
+minutes: 15
+checklist:
+  - "Open chat.mistral.ai in Work and open Connectors in the sidebar"
+  - "Click New connector, then Browse marketplace, and connect one service you use"
+  - "Check that the green Connected indicator appears"
+  - "In a new chat, click + then Connectors and pick the connector you added"
+  - "Ask a read-only question, such as What meetings do I have tomorrow?"
+  - "Open the connector under My connectors and look at its read-only and interactive functions"
+  - "Don't approve any write action for now"
+agentInstructions: |
+  Cover these four topics:
+
+  1. What connectors are: secure bridges that let Work read from and act
+     in external services (Gmail, Google Calendar, GitHub, Notion, Slack,
+     Linear, and more) as part of a task. Featured connectors use a direct
+     OAuth flow: open the Connectors page from the sidebar, click Connect
+     on a card, and authenticate. A green Connected indicator confirms it.
+     Work picks the connector from the request, or you can pick one for
+     a task from the + menu > Connectors in the chat input. The live +
+     menu has Upload Files, Skills, Knowledge, Connectors, Projects,
+     Libraries, Workflows and Reset input. There is no Tools entry, so
+     never tell the student to look for one.
+
+  2. Approvals and per-function permissions: before any action that
+     creates, modifies, sends, posts, or deletes, Work asks for approval
+     with Continue, Always allow, or Decline. Each connector exposes many
+     functions, split into read-only and interactive. In Connectors > My
+     connectors tab > (connector), each function has a permission menu
+     (for example Ask or Allow).
+     Pre-authorize read-only functions you use often; keep interactive
+     ones on manual approval. These choices are per-user.
+
+  3. Custom MCP connectors: an administrator can add connectors from the
+     MCP directory or a custom server with New connector > Add custom
+     connector (name, server URL, optional description). Work auto-detects
+     the auth method: none, HTTP Bearer Token / Basic Auth, or OAuth 2.1
+     with dynamic client registration. On Free, Pro, and Student plans the
+     account owner is the administrator. MCP connectors aren't Mistral
+     products: vet every server, watch for changes and prompt injection,
+     and grant only the permissions you need. Featured connector data is
+     never used to train models.
+
+  4. Connectors in Vibe Code: Code and Work share the same integrations.
+     In the CLI, connectors are auto-discovered when the active provider
+     is Mistral. /connectors (an alias for /mcp) lists connectors and MCP
+     servers; Enter shows tools or connects, e and d enable or disable, r
+     refreshes. Their tools are named connector_<name>_<tool>.
+     enable_connectors = false in config.toml turns them all off, and a
+     [[connectors]] entry with disabled = true or disabled_tools hides one
+     connector or some of its tools. Contrast with MCP servers, which you
+     configure yourself (see the MCP lesson at {origin}/lessons/mcp).
+
+  Then guide the hands-on part. Ask which services the student uses and
+  help them connect one featured connector at https://chat.mistral.ai
+  (or, if they're an admin with a trusted MCP server, a custom MCP
+  connector). Have them run a read-only task, such as "What meetings do I
+  have tomorrow?" or "List my five most recent GitHub issues", and look at
+  the connector's page under My connectors to see which functions are
+  read-only.
+  Remind them not to approve any write action during this exercise.
+
+  Verify completion by asking the student to confirm the connector shows
+  Connected in Work and to paste a short excerpt of the read-only task's
+  answer. If they also use the CLI, ask them to run /connectors in a Vibe
+  CLI session and paste the list, and check the connected service
+  appears. You can also read ~/.vibe/config.toml (never ~/.vibe/.env) and
+  report whether enable_connectors or any [[connectors]] entries are set.
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+[Connectors](/glossary#connector) let Vibe Work read from and act in the services you already use. Instead of switching apps, you ask: *"Check my Gmail for unread messages about the quarterly report and summarize them."* Work decides which connector to call, asks you to sign in if needed, and asks for approval before anything sensitive. The same connectors show up in Vibe Code too.
+
+## Featured connectors
+
+Featured connectors use a direct OAuth flow. Your password is never shared with Mistral.
+
+| Connector | What it does |
+|---|---|
+| Atlassian | Search, summarize, and act in Confluence and Jira |
+| Box | Search and analyze Box files |
+| GitHub App | Search repositories, review issues, manage pull requests |
+| Gmail / Outlook | Read (and with Outlook, send) email |
+| Google Calendar / Outlook Calendar | Include your calendar in chats, manage events |
+| Linear | Search and manage issues and projects |
+| Notion | Search, summarize, and write content |
+| SharePoint Search API | Search and open SharePoint content |
+| Slack | Search messages, read channels, send messages |
+| Stripe | Access payments, customers, and transactions |
+
+To connect one:
+
+1. Open `Context` then `Connectors` in the sidebar.
+2. Click `New connector` then `Browse marketplace`, find the card, and click `Connect`.
+3. Complete the sign-in flow.
+
+Connected services appear under the `My connectors` tab (with `Shared with me` and `All` next to it).
+
+A green `Connected` indicator confirms it. Disconnect from the same page at any time. Administrators can disable specific connectors for the whole organization.
+
+## Using connectors in tasks
+
+Once connected, Work uses a connector when the task calls for it. To pick one for a task explicitly, click `+` in the chat input, open `Connectors`, and choose it. You can also click `Connect` there for a service you haven't connected yet. Then ask naturally:
+
+```text
+What meetings do I have tomorrow?
+```
+
+## Approvals and per-function permissions
+
+When a connector would send, create, modify, or delete something, Work stops and asks:
+
+| Option | Behavior |
+|---|---|
+| `Continue` | Approve this action only |
+| `Always allow` | Pre-authorize this function for the session |
+| `Decline` | Cancel the action |
+
+You can also set permissions ahead of time. Go to `Connectors`, open the `My connectors` tab, and click the connector. Its page lists every function in two groups, each with a permission menu (for example `Ask` or `Allow`):
+
+- **Read-only tools**: get, list, search. Lower risk, usually safe to pre-authorize.
+- **Interactive tools**: create, update, delete, send, post. Keep these on manual approval until you trust the connector.
+
+<div class="callout">
+Per-function permissions are per user: your choices don't affect teammates. Read what Work is about to do before you click <code>Continue</code>. Once an action reaches the external system, treat it as done.
+</div>
+
+## Custom MCP connectors
+
+Any service with an [MCP](/glossary#mcp) server can be a connector. Adding one requires an administrator (on Free, Pro, and Student plans, that's the account owner).
+
+1. Open the `Connectors` page and click `New connector`.
+2. Pick `Browse marketplace` for the directory, or `Add custom connector` for your own server.
+3. For a custom server, enter a **Connector name** (no spaces or special characters), the **Server URL**, and an optional **Description**.
+4. Click `Connect` and complete sign-in if prompted.
+
+Work detects the auth method from the URL: no authentication, HTTP Bearer Token / Basic Auth, or OAuth 2.1 with dynamic client registration.
+
+<div class="callout">
+MCP connectors aren't Mistral products. Connect only to servers you trust, watch for behavior changes after server updates, look out for prompt injection in tool output, and pre-authorize only what you need.
+</div>
+
+## Connectors in Vibe Code
+
+Vibe Code and Vibe Work share the same integrations. Unlike [MCP servers](/lessons/mcp), which you configure yourself, connectors are managed by Mistral.
+
+<SurfaceTabs>
+<SurfaceTab surface="work">
+
+Manage connectors from the `Connectors` page in the sidebar, as above.
+
+</SurfaceTab>
+<SurfaceTab surface="cli">
+
+Run `/connectors` (an alias for `/mcp`) to list connectors and MCP servers. With one highlighted, `Enter` shows its tools or connects it, `e` / `d` enables or disables it, and `r` refreshes. Connector tools are named `connector_<name>_<tool>`.
+
+To turn connectors off, or hide one connector or some of its tools, edit `~/.vibe/config.toml`:
+
+```toml
+enable_connectors = false          # turn off all connectors
+
+[[connectors]]
+name = "github"
+disabled = true                    # hide this connector
+
+[[connectors]]
+name = "linear"
+disabled_tools = ["delete_issue"]  # hide selected tools only
+```
+
+</SurfaceTab>
+</SurfaceTabs>
+
+Learn more in the docs: [Connectors in Work](https://docs.mistral.ai/vibe/work/web/connectors), [MCP connectors](https://docs.mistral.ai/vibe/work/web/connectors/mcp-connectors), [Safety and approvals](https://docs.mistral.ai/vibe/work/web/safety-and-approvals), and [Connectors in the CLI](https://docs.mistral.ai/vibe/code/cli/connectors).

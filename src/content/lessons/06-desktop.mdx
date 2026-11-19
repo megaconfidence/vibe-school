@@ -1,0 +1,152 @@
+---
+title: "Desktop"
+slug: desktop
+description: "Run local and cloud sessions in Vibe Desktop and review the diff before you ship."
+order: 6
+track: surfaces
+surfaces: [desktop]
+quiz: true
+goals:
+  - "Choose between local and cloud sessions"
+  - "Follow the work in the Files, Git Changes, and Terminal panels"
+  - "Review a diff in Unified and Split views"
+  - "Organize conversations and switch between Work and Code"
+minutes: 20
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. Local vs cloud sessions: Vibe Desktop (macOS and Windows; Linux is
+     coming soon) runs both. A local session works on a checkout on the
+     student's machine, with their shell and services, and shares the
+     CLI's core agent engine and session logs without embedding the CLI
+     (tools and prompts can differ). A cloud session runs in an isolated
+     sandbox against GitHub or GitLab repositories connected to a project, the same
+     model as Vibe Code Web (see {origin}/lessons/code-web).
+
+  2. Following the work: the right-hand panels belong to the selected
+     conversation. The merge icon lists pull requests, the globe icon
+     opens the integrated browser, and the + menu (Open panel) opens
+     Files, Git Changes, Terminal and Debug, plus Background processes
+     while one is running. The merge icon only appears once the session
+     has a pull request. A background
+     process has its own Stop button; interrupting the conversation does
+     not stop it.
+
+  3. Parallel work, briefly: the Local, Worktree, Cloud selector under
+     the input starts a session in its own Git worktree (a separate
+     checkout sharing Git history), and a main session can start
+     sub-sessions and subagents. Keep this short and point to
+     {origin}/lessons/parallel, which covers worktrees, sub-sessions
+     and subagents in depth.
+
+  4. Reviewing and organizing: + > Git Changes shows the diff in Unified
+     or Split view; read it against the request, then verify with tests
+     in + > Terminal. The Pull requests panel shows each PR's status, such
+     as Conflicts. Projects group conversations; sessions can be pinned
+     or archived (archiving is not a Git operation). On macOS, Cmd+K
+     opens the command palette, Cmd+1 to Cmd+9 switch conversations, and
+     Shift+Cmd+1 switches to Work and Shift+Cmd+2 to Code. Don't swap
+     these: 1 is Work, 2 is Code.
+
+  Then the hands-on part. If you are already running in a Vibe Desktop
+  local session (the student pasted the prompt into Desktop), use this
+  session: make one small change in its working directory yourself,
+  such as adding a line to the README (create one if needed), then have
+  the student open + > Git Changes (the + is Open panel at the top
+  right) to look at the diff in both Unified and Split views. Don't send
+  them to start another session. If you are running in the CLI or VS
+  Code instead, have the student open Vibe Desktop, select the Code tab,
+  click New Session, pick a small Git repository (a scratch folder with
+  git init is fine), and ask for that change there. Optionally, ask
+  Vibe to do the change in a new Git worktree instead (the Local,
+  Worktree, Cloud selector under the input).
+
+  Verify completion by asking the student which repository they used,
+  what the diff showed (file name and the added lines), and which view
+  they preferred. If they give you the repository path, run git -C <path>
+  status or git -C <path> diff to confirm the change is there. If they
+  used a worktree, run git -C <path> worktree list and confirm there is
+  more than one entry.
+---
+
+
+Vibe Desktop is an app for macOS and Windows (Linux is coming soon) that runs coding sessions on your machine and in the cloud, side by side. It wraps each conversation in panels for files, a terminal, a browser, and pull requests, so you can follow and check the agent's work without leaving the app. Desktop also hosts [Vibe Work](/lessons/work), and you switch between the two modes with `Shift+Cmd+1` and `Shift+Cmd+2` on macOS.
+
+## Local or cloud
+
+A **session** is a conversation opened against a repository. Desktop gives you two kinds:
+
+| | Local session | Cloud session |
+|---|---|---|
+| Runs on | Your machine, in your checkout | An isolated cloud sandbox |
+| Uses | Your files, shell, services, dev environment | GitHub or GitLab repositories connected to a project |
+| Pick it when | You have a checkout or need local dependencies | You don't have the repo locally, or want it to run without your machine |
+
+Local sessions share the CLI's core agent engine and session logs, but Desktop doesn't embed or launch the CLI, and you don't need to install it. Tools and prompts can differ between the two. Cloud sessions work the same way as [Vibe Code Web](/lessons/code-web).
+
+## Your first task
+
+1. Download Vibe Desktop for [macOS](https://chat.mistral.ai/download/vibe-desktop/mac) or [Windows](https://chat.mistral.ai/download/vibe-desktop/windows) (also linked from the [Vibe product page](https://mistral.ai/products/vibe/)), install it, and sign in with your Mistral account.
+2. Select the **Code** tab at the top of the sidebar.
+3. Click **New Session**, pick the project folder, and check the controls under the input:
+   - **Local**, **Worktree**, or **Cloud**: where the session runs. Use **Local** for your first task.
+   - **Select approval policy**: **Ask**, **Accept Edits**, **Smart Approve**, or **Auto Approve**. These are the same built-in agents as the CLI. You'll learn more in the [Permissions](/lessons/permissions) lesson.
+   - **Select model**: the model and its **Thinking** level.
+
+Give it a small, checkable job. A failing test is ideal:
+
+```text
+The authentication test rejects a valid login. Reproduce the failure
+with the project's test command, identify the cause, and make the
+smallest fix. Do not weaken the test or change unrelated behavior.
+Leave the changes uncommitted for me to review.
+```
+
+Answer approval requests as they come. If Vibe drifts into unrelated code, interrupt it and say what to keep in scope.
+
+## Follow the work
+
+The upper-right controls open panels for the **selected conversation**. Switching conversations switches the panels. Some controls only appear when there's something to show: the merge icon once the session has a pull request, and **Background processes** once a background command is running.
+
+| Panel | Open it with | Use it to |
+|---|---|---|
+| Pull requests | **Merge icon** | Find a PR and read its status |
+| Browser | **Globe icon** | Keep docs, issues, or dashboards beside the work |
+| Files | **+ → Files** | Browse the repo and read files |
+| Git Changes | **+ → Git Changes** | Inspect the diff for this session |
+| Terminal | **+ → Terminal** | Run your own commands |
+| Debug | **+ → Debug** | Open the Debug panel |
+| Background processes | **+ → Background processes** | Watch long-running commands |
+
+Ask Vibe to run builds or dev servers in the background so the conversation can continue. The chat shows a **Started a background process** entry; click it to see live output.
+
+<div class="callout">
+Interrupting the conversation doesn't stop a background process. Use the <strong>Stop</strong> button in the process panel, then check its status.
+</div>
+
+## Parallel tasks
+
+To keep a task's edits away from your checkout, pick **Worktree** in the selector under the input before you start: the session runs in its own [Git worktree](/glossary#worktree). A main session can also start nested **sub-sessions** and read-only **subagents**. The [Parallel work](/lessons/parallel) lesson covers all three in depth.
+
+## Review changes
+
+A task isn't done because the agent stopped. Select the conversation, open **+ → Git Changes**, and pick a file. Toggle between **Unified** (one column) and **Split** (before and after side by side). Check that the diff solves the problem, stays in scope, and doesn't weaken tests. Then run the tests yourself in **+ → Terminal**.
+
+If your workflow uses pull requests, ask Vibe to open one and leave it for review. The **merge icon** lists PRs with their status. If one shows **Conflicts**, ask Vibe to resolve them by PR number, then review again. Opening or fixing a PR is not merging it.
+
+## Organize conversations
+
+- **Projects** group conversations for the same repository or task.
+- **Pin** a session (hover, left button) to move it into **Pinned**; **archive** it (hover, right button) when you're done. Archiving doesn't touch Git.
+- On macOS, hold `Cmd` to see numbers next to sessions, then press `Cmd+1` to `Cmd+9` to jump.
+- `Cmd+K` opens the command palette. It shows shortcuts such as `Cmd+N` (**New session**), `Cmd+B` (**Toggle sidebar**), `Cmd+J` (**Toggle Panels**), and `Cmd+,` (**Open settings**).
+- `Shift+Cmd+1` switches to **Work**, `Shift+Cmd+2` to **Code**.
+
+Shortcuts can differ by keyboard layout and OS; check **Keyboard shortcuts** in the palette.
+
+## Work in Desktop
+
+Switch to **Work** for non-coding tasks. Work on Desktop shares the web app's conversations, projects, skills, connected tools, and scheduled tasks, and adds one thing: **local folders as context**. In the Work composer, click **+**, open **Folders**, and choose **Add a folder**. The [Work](/lessons/work) lesson covers this in detail.
+
+Learn more in the [Vibe Desktop docs](https://docs.mistral.ai/vibe/code/desktop/overview).

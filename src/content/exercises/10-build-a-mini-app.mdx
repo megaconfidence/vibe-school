@@ -1,0 +1,108 @@
+---
+title: "Build a mini app"
+slug: build-a-mini-app
+description: "Describe a small interactive app in Vibe Work, iterate on it in Canvas, and share or download it."
+order: 10
+surfaces: [work]
+agentInstructions: |
+  Guide the student through building an interactive mini app in Vibe
+  Work's Canvas. You are the tutor running locally; the work happens in
+  their browser at chat.mistral.ai (or Work in Vibe Desktop). Explain
+  each step, then ask them to confirm or paste what they see. Adapt
+  depth to their profile: no coding is required, but curious students
+  can read and edit the code.
+
+  Steps:
+
+  1. Pick something small and useful: a monthly budget calculator, a
+     quiz on a topic they're learning, a unit converter, a Pomodoro
+     timer, a habit tracker, a tip splitter. Agree on two or three
+     features for the first version.
+
+  2. Canvas opens on its own for mini apps; if it doesn't, ask Vibe to
+     open it in a canvas or type /canvas. There is no Tools entry in the
+     live + menu.
+
+  3. Describe the app in plain language, including what the user sees
+     and does. Example: "Build a monthly budget calculator. I enter my
+     income and expenses by category; it shows the total, what's left,
+     and a bar chart by category. Use a clean, light design." Work
+     generates a React app and renders it inline; Expand opens it in the
+     side Canvas view.
+
+  4. Use it. Have the student click through it and find at least one
+     thing to improve (a bug, a missing feature, the look).
+
+  5. Iterate at least twice by chatting: "Add a reset button", "Save my
+     numbers so they're still there on reload", "Match these colors".
+     Work updates the code and re-renders.
+
+  6. Look under the hood: toggle from Preview (eye icon) to Code (`<>`
+     icon) in the top-left of the Canvas panel. Open a file from the
+     list. Students who want to can edit a value directly, like a label
+     or a color.
+
+  7. Keep it: click the download icon in the top-right of the Canvas
+     panel for a ZIP of the source (index.js, styles.css, and any other
+     files). Or click Share, toggle "Link accessible to anyone" on, and
+     Copy link. Only the app is shared, not the chat. To stop sharing,
+     toggle the link off.
+
+  The exercise is complete when the student has a working mini app
+  that went through at least two rounds of changes, and has downloaded
+  or shared it. Verify by checking for the downloaded ZIP (for example
+  `ls -t ~/Downloads | head`, or the equivalent on Windows) or by asking the student to paste the
+  share link and describe the two changes they made. Then mark the
+  exercise complete with exerciseSlug "build-a-mini-app".
+---
+
+
+You don't need a code editor to build a small app. In this exercise, you'll describe one to Vibe Work, use it right in the chat, improve it by talking to it, and then share it or download the code.
+
+## What's a mini app
+
+A mini app is a self-contained React application that runs in the **Canvas** panel. Work writes the code and renders it live, so you can click buttons and fill in forms straight away.
+
+## Build it
+
+Canvas opens on its own when you ask for an app (if it doesn't, ask Vibe to open it in a canvas). Describe what you want, including what you see and what you do:
+
+```text
+Build a monthly budget calculator. I enter my income and my expenses by category.
+Show the total spent, what's left, and a bar chart by category. Use a clean, light design.
+```
+
+Other ideas:
+
+- A quiz with ten questions on a topic you're learning, with a score at the end.
+- A tip splitter for a group dinner.
+- A Pomodoro timer with start, pause, and reset.
+
+The app appears inline. Click `Expand` at the bottom of the panel to open it in the side Canvas view.
+
+## Iterate
+
+Use the app, then ask for changes in the chat:
+
+- "Add a reset button that clears all inputs."
+- "Add a dark mode toggle."
+- "Show a warning when expenses exceed income."
+
+Work updates the code and re-renders it. To see the code, switch from **Preview** (eye icon) to **Code** (`<>` icon) in the top-left corner of the Canvas panel. You can edit files there too.
+
+## Share or download
+
+- **Share**: click `Share` in the top-right corner of the Canvas panel, toggle `Link accessible to anyone` on, and click `Copy link`. Anyone with the link can use the app. Your chat messages aren't shared.
+- **Download**: click the download icon in the top-right corner for a ZIP of the source files, ready to open in any code editor or deploy to a static host.
+
+<div class="callout">
+To stop sharing, open the <code>Share</code> dialog again and toggle <code>Link accessible to anyone</code> off.
+</div>
+
+## Tips
+
+- **One feature per message.** Small steps are easier to check and easier to undo.
+- **Describe behavior, not code.** "When I click Add, the new row goes to the top" works better than naming React hooks.
+- **Take it further in Vibe Code.** Download the ZIP and keep building it locally with the CLI or VS Code, like in the [Build a website](/exercises/build-a-website) exercise.
+
+More in the [Canvas](/lessons/canvas) lesson and the [mini apps docs](https://docs.mistral.ai/vibe/work/web/mini-apps).

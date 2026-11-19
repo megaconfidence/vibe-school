@@ -1,0 +1,179 @@
+---
+title: "Interview"
+slug: interview
+description: "Tell Vibe a bit about yourself so it can tailor the course to you."
+order: 2
+track: start
+surfaces: [cli, vscode, desktop]
+quiz: false
+agentOnly: true
+goals:
+  - "Pick fast track or thorough for the course"
+  - "Share your background so Vibe can tailor lessons"
+  - "Change any answer later just by asking"
+minutes: 5
+checklist: []
+agentInstructions: |
+  This lesson is a short, optional interview. The student's answers are
+  used to personalize the rest of the course. Tell the student they can
+  update any answer later just by asking you to change it.
+
+  Before asking anything, auto-detect two things and don't ask about them:
+
+  - The operating system: inspect the environment (for example `uname`,
+    or the OS environment variable on Windows). Report "macos", "linux"
+    or "windows".
+  - The surface you are running in, if you can tell: the CLI, the VS Code
+    extension, or a local session in Vibe Desktop. Use what your own
+    context says about your client and environment. Note that the CLI
+    can run inside VS Code's integrated terminal, so a VS Code terminal
+    alone doesn't mean you are the extension. If you can't tell with
+    reasonable confidence, don't guess and don't report a surface yet.
+
+  Also read the current profile first with
+  `curl -s {origin}/api/profile/<studentId>`. The student may already
+  have picked a role on the homepage (role: "developer", "team-lead" or
+  "knowledge-worker"). If role is set, don't ask about it: mention it in
+  one line ("You told us you're a team lead") and use it to tailor the
+  course. Developers and team leads will build one project, vibe-todo,
+  through the Code lessons; knowledge workers may prefer the Work
+  lessons and can skip the Code track.
+
+  Report what you detected in a single call, for example:
+  `curl -s -X PUT {origin}/api/profile/<studentId> -H 'Content-Type: application/json' -d '{"os":"macos","surfaces":["cli"]}'`
+  (omit "surfaces" if you couldn't detect it).
+
+  Use your ask_user_question tool for multiple choice questions when it
+  is available, otherwise ask in plain text. For questions marked
+  multi-select below, set multiSelect to true on that question so the
+  student can pick several options; if your question tool has no
+  multi-select, tell the student they can type several answers in the
+  free-text field. Every question is optional: always let the student
+  skip.
+
+  Never ask for something the student already told you. If a reply
+  already covers a later question (for example they give their pace and
+  their background in one message), use it, don't ask that question
+  again, and move on. Accept "skip" at any point: when they say it, stop
+  asking, submit what you have, and mark the lesson complete.
+
+  This interview has two steps. Don't ask everything at once: step 1 is
+  a single standalone question, and step 2 depends on the answer.
+
+  ## Step 1: pace (ask this alone, wait for a reply)
+
+  Ask only this question first, by itself:
+
+  How do you want to move through the course?
+  - Fast track (default): blaze through, skip quizzes, short
+    explanations, move on as soon as each lesson is done.
+  - Thorough: quizzes after each topic, fuller explanations.
+
+  Make clear fast track is the default: if they skip this question or the
+  whole interview, they get fast track. API value for pace: "fast" or
+  "thorough". Don't submit a pace value if they pick fast or skip, the
+  API already defaults to "fast". Only PUT pace if they explicitly choose
+  "thorough".
+
+  Wait for their reply before continuing to step 2.
+
+  ## Step 2: depends on their step 1 answer
+
+  ### If they chose fast track (or skipped, or gave an unclear answer)
+
+  If their step 1 reply already included their background, AI tools,
+  surfaces or goals, don't ask the question below: infer the fields from
+  what they wrote, submit them, and mark the lesson complete.
+
+  Otherwise, ask exactly one more question, and keep it low-effort, in
+  plain text:
+
+  "Optional: give me a brief summary of your experience with AI tools,
+  your background, which Vibe surfaces you want to use, and your learning
+  goals, or just type 'skip' to get started."
+
+  If they reply with a summary, infer whatever profile fields you
+  reasonably can (codingExperience, aiTools, terminalComfort, editor,
+  languages, surfaces, and role if it isn't set yet) and submit them in a single PUT. Don't ask
+  follow-up questions to fill gaps: infer what you can, leave the rest
+  unset, and move on. When adding surfaces, keep any surface you already
+  detected.
+
+  If they reply "skip" or with nothing usable, don't call the profile API.
+  Acknowledge and move on.
+
+  Then mark the lesson complete.
+
+  ### If they chose thorough
+
+  Ask the following questions. With ask_user_question, you can group
+  them into one or two calls (it shows several questions as tabs); in
+  plain text, ask them all in one message. Make clear each one is
+  skippable.
+
+  Question 0 (only if role is not set yet): What best describes you?
+  Developer, Team lead, Knowledge worker.
+  API value for role: "developer", "team-lead", "knowledge-worker".
+
+  Question 1: How much programming experience do you have?
+  Rookie (never written code), Dabbler (tinkered a bit), Builder (builds
+  things regularly), Sage (lives in the code).
+  API value for codingExperience: "rookie", "dabbler", "builder", "sage".
+
+  Question 2 (multi-select): Which Vibe surfaces do you use or want to
+  learn? CLI, VS Code extension, Vibe Desktop, Vibe Code Web, Vibe Work.
+  API value for surfaces: array of "cli", "vscode", "desktop",
+  "code-web", "work". Include the surface you detected.
+
+  Question 3 (multi-select): Which AI tools have you used?
+  Le Chat, ChatGPT, Gemini, Claude, Claude Code, OpenAI Codex, GitHub
+  Copilot, Cursor, OpenCode, or none of these.
+  API value for aiTools: array of "le-chat", "chatgpt", "gemini",
+  "claude", "claude-code", "openai-codex", "copilot", "cursor",
+  "opencode", or an empty array.
+
+  Question 4: Which editor do you mostly use?
+  VS Code, JetBrains, Cursor, Windsurf, Zed, Vim, Emacs, other, none.
+  API value for editor: "vscode", "jetbrains", "cursor", "windsurf",
+  "zed", "vim", "emacs", "other", "none".
+
+  Question 5: How comfortable are you with the terminal?
+  Not at all, I can get around, Very comfortable.
+  API value for terminalComfort: "none", "some", "very".
+
+  Question 6: How do you prefer to learn?
+  Explain concepts first, Jump into hands-on tasks, Show me examples.
+  API value for learningStyle: "concepts-first", "hands-on", "examples".
+
+  Question 7: How much detail do you want in explanations?
+  Keep it brief, Some context is nice, Give me all the details.
+  API value for depthPreference: "brief", "some-context", "all-details".
+
+  Question 8 (conditional, only if Q1 was Builder or Sage; multi-select):
+  What programming languages do you use?
+  JavaScript, TypeScript, Python, Go, Rust.
+  API value for languages: array of "javascript", "typescript",
+  "python", "go", "rust".
+
+  After the student responds, submit all answered fields, including
+  `"pace": "thorough"`, in a single PUT to {origin}/api/profile/<studentId>,
+  omitting skipped fields. Then briefly acknowledge their answers in a
+  friendly way. If they skipped everything else, that's fine: say you'll
+  teach at a general level, with quizzes since they chose thorough. If
+  they use JetBrains or Zed, mention that Vibe runs there too through ACP
+  (covered in the Surfaces lesson).
+
+  Then mark the lesson complete.
+---
+
+
+Vibe will start by asking how you want to move through the course: fast track (blaze through, no quizzes, short answers) or thorough (quizzes, fuller explanations). Fast track is the default, so if you skip this question, or the whole interview, that's what you get.
+
+If you go fast track, Vibe asks one more optional, free-form question about your background, or you can type "skip" and get started right away. If you go thorough, Vibe asks a few multiple choice questions about your experience, the Vibe surfaces you want to learn, and how you like to learn. All of them are optional.
+
+Vibe also detects your operating system and, when it can, which surface you're using, so you don't have to tell it.
+
+If you picked a role on the homepage (developer, team lead, or knowledge worker), Vibe already knows it and won't ask again.
+
+You can change any answer later just by asking Vibe to update it.
+

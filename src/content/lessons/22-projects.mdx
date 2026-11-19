@@ -1,0 +1,161 @@
+---
+title: "Projects"
+slug: projects
+description: "Give Vibe Work the right context with projects, instructions, Knowledge, and Libraries."
+order: 22
+track: work
+surfaces: [work]
+quiz: true
+goals:
+  - "Group chats in a project with its own instructions and files"
+  - "Write custom instructions that apply everywhere"
+  - "Know what Knowledge remembers and how to manage it"
+  - "Build a Library you can attach to any chat"
+minutes: 20
+checklist:
+  - "Open chat.mistral.ai in Work and go to Context, then Instructions"
+  - "Write one or two specific sentences about your role and preferred output style, and save"
+  - "Click New Project next to Projects in the sidebar and give it a name"
+  - "In the project, click Customize and write project instructions"
+  - "Click Upload files and add one document"
+  - "Start a chat inside the project and ask a question only that document can answer"
+  - "Open Libraries, create a library, and attach it to a chat with + then Libraries"
+agentInstructions: |
+  Cover these four topics:
+
+  1. Projects group chats into collections, each with its own context.
+     Create one with New Project next to the Projects header in the left
+     sidebar. Inside a project you can set a Tone (or keep Default
+     (Global)), write Instructions with Customize, attach files with
+     Upload files so every chat can use them, and toggle "Include other
+     projects' chats as context". A chat belongs to one project at a time;
+     deleting a project doesn't delete its chats.
+
+  2. Custom instructions are account-wide preferences (role, domain,
+     output format, language), set from Context > Instructions in the
+     sidebar. They apply to new tasks only. Inside a project, project
+     instructions and custom instructions apply together; an active Skill
+     takes precedence over custom instructions. Good ones are short and
+     specific; never put secrets in them, and don't use them as a project
+     brief.
+
+  3. Knowledge is what Vibe remembers from conversations (the successor to
+     Chat Memories). It saves facts you explicitly ask it to ("Remember
+     that...") and recurring details it detects on its own, and shows read
+     and write pills when it uses or saves knowledge. Manage entries from
+     Context > Knowledge; edits go through the model in chat, and you can
+     turn it off under Privacy. Sensitive data isn't saved unless you turn
+     on "Sensitive data in Knowledge".
+
+  4. Libraries are persistent document knowledge bases. Create one from
+     the Libraries page with New library, upload files (up to 100 at once,
+     100 MB each) or index web pages, then attach it to any chat with
+     + > Libraries. Answers cite sources with numbered footnotes. Libraries
+     are private by default and can be shared as Collaborator or Viewer.
+     Contrast them with uploads, which last for one chat, and with project
+     files, which are scoped to one project.
+
+  Then walk the student through the hands-on part in their browser at
+  https://chat.mistral.ai:
+  - Set a custom instruction from Context > Instructions. Help them write
+    one or two specific sentences about their role and preferred output
+    style.
+  - Create a project, write project instructions with Customize, and
+    upload one file. If they don't have a suitable file, offer to write a
+    short Markdown file on their machine (for example a one-page brief
+    about something they're working on) and tell them its path.
+  - In a new chat inside the project, ask a question that can only be
+    answered from the uploaded file.
+
+  Verify completion by asking the student to paste their custom
+  instruction text and the name of their project. Check that the
+  instruction is specific (a role, domain, format, or language rule), not
+  vague like "be helpful", and contains no secrets; if it's vague, suggest
+  a sharper version and ask them to update it. Then ask them to confirm
+  the project chat answered from the uploaded file.
+---
+
+
+Every time you start a task in Vibe Work, it pulls in context: your prompt, any files, and whatever standing context you've given it. This lesson covers the four places that standing context lives: [projects](/glossary#project), [custom instructions](/glossary#custom-instructions), [Knowledge](/glossary#knowledge), and [Libraries](/glossary#library). Set them up once and you stop repeating yourself.
+
+New to Work? Start with the [Work](/lessons/work) lesson first.
+
+## Which one to use
+
+| | Scope | Best for |
+|---|---|---|
+| **Custom instructions** | Every new task in your account | Your role, format, language, tone |
+| **Projects** | Chats inside one project | Per-client or per-initiative instructions and files |
+| **Knowledge** | Recalled when relevant | Facts about you that come up in chat |
+| **Libraries** | Any chat you attach them to | Document sets you query again and again |
+
+## Projects
+
+A project groups chats and gives them shared context. You can switch from a client engagement to a launch plan without re-uploading files or rewriting prompts.
+
+1. Click `New Project` next to the `Projects` header in the left sidebar.
+2. In **Create a new project**, type a name (or pick a suggestion such as **Research** or **Writing**), optionally choose an icon, then click `Create`.
+
+Open the project to set:
+
+- **Tone**: pick one, or keep `Default (Global)` to inherit your custom instructions' tone.
+- **Instructions**: click `Customize` to write rules for every chat in the project.
+- **Files**: click `Upload files` to attach documents, spreadsheets, PDFs, or images. Every chat in the project can use them.
+- **Other chats**: toggle `Include other projects' chats as context` to let Work draw on the project's other chats.
+
+Add an existing chat by dragging it onto the project in the sidebar, or click the folder icon in the chat header and pick a project. A chat belongs to one project at a time.
+
+<div class="callout">
+Deleting a project is permanent, but its chats aren't deleted. They go back to your main chat history.
+</div>
+
+## Custom instructions
+
+Custom instructions are a short profile Work applies to every new task. Set them from `Context` then `Instructions` in the left sidebar: choose a **Tone**, write your text under **Additional Instructions** (or click a suggestion to add it), and click `Save`. A preview on the right shows how replies will sound. Existing tasks aren't affected.
+
+Good instructions are short and tell Work something it can't guess:
+
+```text
+I'm a compliance officer at a European bank. Reference EU regulations
+(MiFID II, GDPR) when relevant. Keep responses concise and use bullet
+points instead of paragraphs.
+```
+
+How they combine with other features:
+
+- **Projects**: project instructions and custom instructions apply together.
+- **Skills**: an active [skill](/lessons/automations)'s instructions take precedence over yours.
+- **Connectors**: instructions shape how Work talks to you, not how tools run.
+
+Avoid task details (put those in the prompt or a project), rules that contradict how you actually prompt, and secrets or credentials.
+
+<div class="callout">
+Custom instructions are Work's equivalent of <code>AGENTS.md</code> in Vibe Code. See the <a href="/lessons/instructions">Instructions</a> lesson for the Code side.
+</div>
+
+## Knowledge
+
+Knowledge is what Vibe remembers about you across chats. It's the successor to Memories in the legacy Chat (your memories migrate into it) and is on by default.
+
+- **Explicit saving**: say *"Remember that I work with TypeScript."* This is the reliable way.
+- **Implicit saving**: Vibe also notices recurring details, like your preferred formats, and saves them itself.
+
+A **read** pill shows when Vibe consults your knowledge and a **write** pill when it saves something. Retrieval isn't guaranteed: an entry is used only when it fits the request.
+
+Manage it from `Context` then `Knowledge`. You can't edit an entry's text directly; ask in chat instead (*"Add that I now use PostgreSQL"*, *"Forget that I mentioned my location"*). To turn Knowledge off, click your organization name at the bottom left of the sidebar, then `Privacy`. Turning it off doesn't delete entries.
+
+<div class="callout">
+Sensitive personal information (health, political opinions, and similar) isn't saved unless you turn on <code>Sensitive data in Knowledge</code> in <code>Privacy</code>. Passwords, credentials, and financial account numbers are never saved.
+</div>
+
+## Libraries
+
+A Library is a persistent knowledge base built from your documents and web pages. Uploads in a chat last for that chat; a Library works in any chat you attach it to.
+
+1. Open `Context` then `Libraries` in the sidebar and click `New library` (or `Index website` to start from web pages).
+2. Drag in files or click `Upload` (up to 100 files at once, 100 MB per file). To add a web page, click `Webpage`, enter URLs, and click `Index`. Only the page's text is indexed.
+3. In any chat, click `+`, select `Libraries`, and pick one or more.
+
+Answers include numbered footnotes linked to the source passage, and a `Sources` button lists every reference. New Libraries are private; click `Share` to add people as **Collaborator** (can edit) or **Viewer** (can use), or toggle `Entire organization`.
+
+Learn more in the docs: [Projects](https://docs.mistral.ai/vibe/work/web/projects), [Custom instructions](https://docs.mistral.ai/vibe/work/web/custom-instructions), [Knowledge](https://docs.mistral.ai/vibe/work/web/knowledge), and [Libraries](https://docs.mistral.ai/vibe/work/web/libraries).

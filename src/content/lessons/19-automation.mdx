@@ -1,0 +1,205 @@
+---
+title: "Automation"
+slug: automation
+description: "Run Vibe from scripts and CI, schedule recurring prompts, and set long-running goals."
+order: 19
+track: code
+surfaces: [cli]
+quiz: true
+goals:
+  - "Run Vibe non-interactively with vibe -p"
+  - "Pick an output format and set limits"
+  - "Run Vibe in CI with the GitHub Action"
+  - "Schedule prompts with /loop and set goals"
+minutes: 20
+checklist: []
+agentInstructions: |
+  Cover these four topics:
+
+  1. Programmatic mode: `vibe -p "<prompt>"` (or --prompt) runs one task
+     without the chat interface and exits. The prompt can also come from
+     --prompt-file PATH or stdin (-p with no text). It runs with
+     default_agent (accept-edits unless changed); --agent NAME picks
+     another. Nobody can answer an approval prompt, so any tool call that
+     needs approval is denied and reported on stderr. --auto-approve
+     (alias --yolo) approves everything; a safer pattern is a custom
+     agent with a [tools.bash] allowlist plus --enabled-tools to restrict
+     the tool set. Project config only loads in trusted folders: pass
+     --trust to trust the working directory for that run only.
+
+  2. Output and limits: --output text (default, final answer), json
+     (all session messages as a JSON array at the end) or streaming
+     (one JSON object per message, newline-delimited). Bound runs with
+     --max-turns N (recommended), --max-tokens N, --max-price DOLLARS
+     (indicative only, based on model prices in config) and
+     --time-limit SECONDS. --output-dir DIR writes export.json (version,
+     usage, cost, outcome) plus a session copy. Exit codes: 0 finished,
+     1 couldn't start, 2 model API or runtime failure, 3 stopped before
+     finishing (a limit, a stop, or a refusal).
+
+  3. CI and worktrees: the mistral-vibe repository ships a GitHub Action
+     (action.yml) whose inputs include prompt and MISTRAL_API_KEY
+     (pass it from a repository secret); it installs Vibe with uv and
+     runs `vibe -p` with the prompt in the workspace. Mention briefly
+     that `vibe --worktree` keeps an unattended run's changes apart
+     from the checkout (programmatic runs leave the worktree in place),
+     and that the next lesson, {origin}/lessons/parallel, covers
+     worktrees in depth.
+
+  4. Inside a session: `/loop` schedules a recurring prompt in plain
+     language (for example "/loop every two minutes check the build");
+     bare /loop opens a loop manager (d deletes, n adds). Loops run only
+     while the session is open and idle, with a 30-second minimum
+     interval. `/goal <objective>` (new in 3.1.3) gives the session a
+     durable goal that Vibe keeps working on, turn after turn, until it's
+     done; /goal edit, pause, resume and clear manage it. /goal is not
+     available in programmatic mode.
+
+  Then the hands-on part, a programmatic run in vibe-todo. Check
+  prerequisites: the folder (else fetch the starter as in the
+  Configuration lesson) and .vibe/agents/builder.toml with a
+  [tools.bash] allowlist that includes `python3 -m unittest` (else
+  create it as in the Agents lesson). If you are running in the
+  student's CLI session you may run these commands yourself.
+
+  1. From the vibe-todo root, run a bounded, read-only test report.
+     Write the output outside the repository so it isn't committed:
+       vibe --trust -p "Run python3 -m unittest and report how many tests ran and whether they all passed, in one sentence. Do not edit any file." --agent builder --enabled-tools bash --max-turns 5 --output json > ../vibe-run.json
+     Explain each flag: --trust loads the project config, agents and
+     AGENTS.md for this run (programmatic mode never shows the trust
+     prompt); --agent builder brings the allowlist, so the test command
+     runs without approval; --enabled-tools bash turns every other tool
+     off in programmatic mode, so the run can't edit files; --max-turns
+     bounds it. On Windows, use the command name and shell tool that
+     work there (for example python and the tool name from the
+     Permissions lesson).
+
+  2. Read the result: check the exit code with `echo $?` (or
+     $LASTEXITCODE in PowerShell), then extract the final answer, for
+     example with
+     jq -r '[.[] | select(.role == "assistant")] | last | .content[0].text' ../vibe-run.json
+     (or a short python3 json snippet if jq is missing). Explain the
+     shape: a JSON array of messages, each with a role and a content
+     list. If a tool call was denied, it shows on stderr.
+
+  3. Optional: add a GitHub Action for the repository, for example a
+     .github/workflows/vibe-tests.yml that runs on pull_request, using
+     the official action (`mistralai/mistral-vibe@<tag>`, inputs prompt
+     and MISTRAL_API_KEY from a repository secret) or the CLI directly
+     with the flags above. Only if the student has pushed vibe-todo to
+     GitHub; point to {origin}/exercises/automate-ci for the full
+     walkthrough. Never commit or paste an API key.
+
+  Verify completion by confirming the command exited 0, that the JSON
+  output parses as a JSON array containing at least one message with role
+  "assistant", and that the extracted text reports the test result. If
+  the student ran it themselves, ask them to paste the extracted answer
+  and the exit code. Remove ../vibe-run.json afterwards if the student
+  agrees. Report artifacts: automation vibe-p (plus automation
+  github-action if they added the workflow).
+---
+
+
+So far you've worked with Vibe in a conversation. The CLI can also run with no one watching: one prompt in, one result out, ready for a shell script, a cron job, or a CI pipeline. And inside a session, it can repeat a prompt on a schedule or keep chasing a goal until it's done.
+
+## In your project
+
+No new files are required. You'll run `vibe -p` in `vibe-todo` to run the tests and report the result, with the `builder` agent's allowlist and no file tools:
+
+```bash
+cd ~/vibe-school/vibe-todo
+vibe --trust -p "Run python3 -m unittest and report the result in one sentence. Do not edit any file." \
+  --agent builder --enabled-tools bash --max-turns 5 --output json > ../vibe-run.json
+```
+
+Optionally, if you've pushed the project to GitHub, add a workflow under `.github/workflows/` that does the same on every pull request.
+
+
+## Programmatic mode
+
+Pass `-p` (or `--prompt`) to run a single task and exit:
+
+```bash
+vibe -p "Analyze the codebase" --max-turns 5 --output json
+```
+
+You can also read the prompt from a file with `--prompt-file PATH`, or pipe it on stdin with `-p` and no text.
+
+Programmatic mode has no chat interface, so **nobody can answer an approval prompt**. Vibe denies any tool call that needs approval and reports it on `stderr`. You have two ways to let a run do real work:
+
+- `--auto-approve` (alias `--yolo`) approves every tool call. Use it in disposable environments.
+- A [custom agent](/lessons/agents) whose allowlist covers what the run needs, plus `--enabled-tools` to switch off everything else:
+
+In `vibe-todo`, the `builder` agent from the [Agents](/lessons/agents) lesson already has the allowlist:
+
+```toml
+# vibe-todo/.vibe/agents/builder.toml (excerpt)
+[tools.bash]
+allowlist = ["python3 -m unittest", "python3 -m todo", "ls", "cat"]
+```
+
+```bash
+vibe --trust -p "Run the tests and report any failures." --agent builder --enabled-tools bash
+```
+
+`--enabled-tools` disables every other tool in programmatic mode, so this run can run tests but not read or edit files. To let it fix failures too, repeat the flag for the file tools it needs (`--enabled-tools read_file --enabled-tools edit`). The builder already allows edits.
+
+A chained command such as `pytest; rm -rf build` is denied unless every part is allowlisted.
+
+<div class="callout">
+Project config, skills, and agents only load in a <a href="/glossary#trusted-folder">trusted folder</a>, and the trust prompt never appears in programmatic mode. Pass <code>--trust</code> to trust the working directory for that one run.
+</div>
+
+## Output formats
+
+| `--output` | What you get |
+|---|---|
+| `text` (default) | The final answer. |
+| `json` | Every message in the session, as a JSON array, when the run ends. |
+| `streaming` | One JSON object per message, newline-delimited, as the run progresses. |
+
+With `json`, the last message with `"role": "assistant"` holds the answer:
+
+```bash
+vibe -p "Summarize README.md in one line" --output json --trust > out.json
+jq -r '[.[] | select(.role == "assistant")] | last | .content[0].text' out.json
+```
+
+For a machine-readable report, add `--output-dir DIR`: Vibe writes `DIR/export.json` (version, effective config, token usage, cost, stop reason, outcome) and a copy of the session, however the run ends.
+
+## Limits and exit codes
+
+| Flag | Stops the run when |
+|---|---|
+| `--max-turns N` | N assistant turns have run. **Recommended** for every scripted run. |
+| `--max-tokens N` | Prompt plus completion tokens reach N, subagents included. |
+| `--max-price DOLLARS` | Cost reaches the limit, subagents included. |
+| `--time-limit SECONDS` | The deadline passes. The session can be resumed later. |
+
+`--max-price` uses the model prices in your config, which can be missing or outdated. Treat it as indicative, not a hard budget.
+
+| Exit code | Meaning |
+|---|---|
+| `0` | The agent finished. |
+| `1` | The run couldn't start (bad flag or config). |
+| `2` | The model API or the runtime failed. |
+| `3` | The agent stopped early: a limit, a stop, or a refusal. |
+
+Other useful flags: `--model ALIAS` and `--thinking LEVEL` change the model and its thinking level for one run without saving them, and `-c` or `--resume SESSION_ID` continue a saved session.
+
+## GitHub Action
+
+The [mistral-vibe repository](https://github.com/mistralai/mistral-vibe) ships an `action.yml`. It installs Vibe with uv and runs `vibe -p` in your workspace. You set two inputs: `prompt`, and `MISTRAL_API_KEY`, which you pass from a repository secret. The [Automate CI](/exercises/automate-ci) exercise builds a workflow with it.
+
+## Worktrees
+
+Add `--worktree` to keep an unattended run's changes apart from your checkout: the run works in its own [git worktree](/glossary#worktree), and programmatic runs leave it in place for you to review. The next lesson, [Parallel work](/lessons/parallel), covers worktrees in depth.
+
+## Loops and goals
+
+Two commands keep an interactive session working without you typing:
+
+- **`/loop`** schedules a recurring prompt in plain language, for example `/loop every two minutes check the build`. Run `/loop` on its own to open the loop manager: `d` deletes a loop, `n` adds one. Loops only run while the session is open and idle.
+- **`/goal <objective>`** gives the session a durable goal, such as `/goal make every test in tests/api pass`. Vibe keeps starting new turns until the goal is done or blocked. Manage it with `/goal edit`, `/goal pause`, `/goal resume`, and `/goal clear`. Pressing `Escape` pauses it. `/goal` is new in Vibe 3.1.3 and doesn't work in programmatic mode.
+
+Learn more about [programmatic mode](https://docs.mistral.ai/vibe/code/cli/work-with-cli#programmatic-mode) and [worktrees](https://docs.mistral.ai/vibe/code/cli/work-with-cli#worktrees).

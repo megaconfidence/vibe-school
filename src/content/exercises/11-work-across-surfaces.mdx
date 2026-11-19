@@ -1,0 +1,162 @@
+---
+title: "Work across surfaces"
+slug: work-across-surfaces
+description: "Carry one piece of work from the CLI to VS Code, Vibe Desktop, and Vibe Code Web, and end with a draft pull request."
+order: 11
+surfaces: [cli, vscode, desktop, code-web]
+agentInstructions: |
+  Guide the student through one small piece of work that moves across
+  every Vibe Code surface they have: CLI, VS Code extension, Vibe Desktop,
+  and Vibe Code Web. Check their profile first and skip any surface they
+  don't have, saying what that step would have shown. They need at least
+  two surfaces for this to be useful. You are the tutor running locally:
+  explain each step, then ask the student to confirm what they see where
+  you can't check it yourself. Adapt depth to their profile.
+
+  Steps:
+
+  1. Start in the CLI. Pick a small GitHub repository the student owns
+     and can push to, cloned locally with a clean working tree
+     (`git status`). If they have none, help them create a throwaway repo
+     with a tiny project and push it with `gh` or git. In that folder,
+     have them run `vibe`, give it a small task (for example "add a
+     slugify helper with a test"), and run `/rename <title>` with a title
+     they'll recognize. Explain that the session is saved under
+     ~/.vibe/logs/session/ and scoped to this folder. If you, the tutor,
+     are already running in the CLI (or VS Code, or Desktop), don't have
+     the student start a second session for this: do step 1's task
+     yourself in the repository folder, and have the student run
+     /rename in this session (in the CLI) or rename it from the panel
+     UI. Then continue with the other surfaces, opening this session
+     there.
+
+  2. Continue in VS Code. Have them open the same folder in VS Code, open
+     the Mistral Vibe tab in the secondary side bar, click the session
+     history icon, and open the session from step 1. Explain why it's
+     there: the CLI and the VS Code extension share configuration and
+     sessions through ~/.vibe/. Have them select a few lines of the code
+     Vibe wrote (the panel attaches it as a chip such as
+     "file.js · L1-6") and ask a follow-up about the selection, for
+     example "add input validation here". Approve edits with the approval
+     card (1 Allow once, 2 Allow for remainder of this session, 3 Always
+     allow, 4 Deny).
+
+  3. Review in Vibe Desktop. Have them open Vibe Desktop, switch to Code
+     (Shift+Cmd+2 on macOS), and find the same session in the Sessions
+     list. Explain that Desktop local sessions share the CLI's core engine
+     and session logs, but Desktop doesn't embed the CLI, so its tools and
+     prompts can differ (the docs page "Choose CLI, VS Code, web, or
+     Desktop sessions" says so). Have them open + (Open panel) > Git
+     Changes and read the diff in both Unified and Split views. Ask them
+     to check it against the request and run the tests in + > Terminal.
+
+  4. Commit, push, and hand off to Vibe Code Web. Have them commit the
+     change (from any surface, or with git) and push it to the default
+     branch of their repo. Explain why pushing comes first: Code Web runs
+     in a cloud sandbox that clones the repository from GitHub and can't
+     see their machine, so unpushed work doesn't exist for it. Then, at
+     chat.mistral.ai, in the Code tab: New Project > Using GitHub > pick
+     the account > search the repo > Next > Create project (or pick an
+     existing project for that repo). The first time, they install and
+     authorize the Mistral GitHub App; recommend access to selected
+     repositories only. Have them ask for a small follow-up that builds on
+     the pushed commit and ends in a pull request, for example "Document
+     the slugify helper in the README and open a pull request." Code Web
+     typically opens a draft pull request on a vibe/... branch, authored
+     by the student, and the sidebar shows something like
+     "#1: Draft · 1 pull request".
+
+  5. Review the pull request. If `gh` is installed and authenticated, help
+     them inspect it: `gh pr view <number> --repo <owner>/<repo>` and
+     `gh pr diff <number> --repo <owner>/<repo>`. Check that it builds on
+     the earlier commit and stays in scope. Merging is their decision, in
+     GitHub. Don't merge for them.
+
+  The exercise is complete when the student used at least two surfaces
+  and the repository has the commit from the local work, plus a pull
+  request from the Code Web session if they did step 4. Verify with
+  `git log --oneline -n 5` in the repository (the commit from steps 1 to
+  4 is there). If they did step 4, also check
+  `gh pr list --repo <owner>/<repo> --state all` when gh is
+  authenticated (a PR from a vibe/... branch is listed), or ask the
+  student to paste the pull request URL. If they skipped Code Web, the
+  pushed commit is enough. Ask which
+  surfaces they used and what carried over between them. Then mark the
+  exercise complete with exerciseSlug "work-across-surfaces".
+---
+
+import SurfaceTabs from '../../components/SurfaceTabs.astro'
+import SurfaceTab from '../../components/SurfaceTab.astro'
+
+Real work doesn't stay in one place. You start a task in the terminal, polish it in your editor, review it in a desktop app, and hand the next step to a cloud agent while you do something else. In this exercise, you'll carry one small change through every Vibe Code [surface](/glossary#surface) you have, and end with a draft pull request.
+
+## The flow
+
+```text
+CLI                 VS Code               Vibe Desktop           Vibe Code Web
+start the task  ->  resume the session -> review Git Changes ->  follow-up in the cloud
+/rename it          select code, iterate  commit and push        draft pull request
+```
+
+You only need the surfaces you have (at least two). Skip a step if you don't use that surface; your tutor will explain what it would have shown. If you skip Code Web, you finish with a pushed commit instead of a pull request.
+
+## What you'll need
+
+- A small GitHub repository you own and can push to, cloned locally. A throwaway repo is fine.
+- At least two of: the CLI, the VS Code extension, Vibe Desktop, and Vibe Code Web at chat.mistral.ai.
+
+## What's shared, and what isn't
+
+- **CLI and VS Code extension** share configuration and [sessions](/glossary#session) through `~/.vibe/`. A session you start in the terminal shows up in the extension's session history, and the other way around.
+- **Desktop local sessions** share the CLI's core engine and session logs, so CLI and VS Code sessions appear in Desktop's Sessions list. Desktop doesn't embed the CLI, though, and its tools and prompts can differ.
+- **Vibe Code Web** runs in a cloud [sandbox](/glossary#sandbox) that clones your repository from GitHub. It can't see your machine or your local sessions.
+
+<div class="callout">
+<strong>Push before you hand off.</strong> Code Web only knows what's on GitHub. If your commit is still local, the cloud session starts without it.
+</div>
+
+## Steps on each surface
+
+<SurfaceTabs>
+<SurfaceTab surface="cli">
+
+In your repository, run `vibe`, give it a small task, then name the session so you can find it later:
+
+```text
+/rename slugify helper
+```
+
+The session is saved under `~/.vibe/logs/session/` and scoped to this folder.
+
+</SurfaceTab>
+<SurfaceTab surface="vscode">
+
+Open the same folder, open the **Mistral Vibe** tab in the secondary side bar, and click the session history icon. Open the session you started in the CLI. Select a few lines of code: the panel attaches them as a chip such as **slugify.js · L1-6**. Ask a follow-up about the selection and answer the approval card with `1` to `4`.
+
+</SurfaceTab>
+<SurfaceTab surface="desktop">
+
+Switch to **Code** (`Shift+Cmd+2` on macOS) and find the session in the Sessions list. Open **+ → Git Changes** and read the diff in **Unified** and **Split** views. Run the tests in **+ → Terminal**, then commit and push.
+
+</SurfaceTab>
+<SurfaceTab surface="code-web">
+
+At chat.mistral.ai, open the **Code** tab. Click **New Project**, pick **Using GitHub**, choose your account, search for the repository, click **Next**, then **Create project**. Ask for a small follow-up that builds on your pushed commit and ends in a pull request. Vibe typically opens a **draft** pull request on a `vibe/…` branch, authored by you.
+
+</SurfaceTab>
+</SurfaceTabs>
+
+## What you'll learn
+
+- How a session moves between the CLI and VS Code without losing context.
+- Where Desktop fits: reviewing local work in one place, with Git Changes beside the conversation.
+- Why the handoff to the cloud goes through GitHub, and how to review what comes back.
+
+## Tips
+
+- **Name it early.** A `/rename` title makes the session easy to spot in every list.
+- **Keep the task small.** The point is the handoff, not the feature.
+- **Expect small differences.** Sharing an engine doesn't mean every command, tool, or setting is the same on every surface.
+- **Review before you merge.** The pull request is yours. Mark it ready for review in GitHub when you're happy with it.
+
+More in the [Surfaces](/lessons/surfaces), [Sessions](/lessons/sessions), [VS Code](/lessons/vscode), [Desktop](/lessons/desktop), and [Code Web](/lessons/code-web) lessons, and the docs on [choosing CLI, VS Code, web, or Desktop sessions](https://docs.mistral.ai/vibe/code/choose-cli-vscode-web-sessions).
