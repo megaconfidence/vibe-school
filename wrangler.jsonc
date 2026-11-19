@@ -13,7 +13,7 @@
     "SITE_URL": "https://vibe-school.mistraldemo.workers.dev"
   },
   // KV namespace for student progress, created with
-  // `npx wrangler kv namespace create PROGRESS`. Local dev (`script/dev`)
+  // `npx wrangler kv namespace create PROGRESS`. Local dev (`npm run dev`)
   // uses a local Miniflare KV instead, so this id is only used when deployed.
   "kv_namespaces": [
     {

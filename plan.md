@@ -12,8 +12,8 @@ the course offers VS Code and Desktop paths for every Code concept lesson.
 
 ## Decisions
 
-- Name: Vibe School. Deployed to Cloudflare Workers with `script/deploy`
-  (see README); `SITE_URL` and the KV id live in `wrangler.jsonc`.
+- Name: Vibe School. Deployed to Cloudflare Workers, built by Cloudflare from
+  the Git repo (see README); `SITE_URL` and the KV id live in `wrangler.jsonc`.
 - Scope: Code + Work.
 - Surface-agnostic: shared concept lessons with `<SurfaceTabs>` where steps
   differ, plus one dedicated lesson per surface.
@@ -159,10 +159,5 @@ internal models. Check menus again with a public account.
 
 ### Keeping the example in sync
 
-`src/examples/agents-skills-instructions/` and the zip are copies of
-`../agents-skills-instructions/`. After editing the example, refresh both:
-
-```sh
-rsync -a --delete --exclude __pycache__ --exclude .DS_Store --exclude .todo.json ../agents-skills-instructions/ src/examples/agents-skills-instructions/
-(cd .. && rm -f vibe-school/public/examples/agents-skills-instructions.zip && zip -rq vibe-school/public/examples/agents-skills-instructions.zip agents-skills-instructions -x '*__pycache__*' '*.DS_Store' '*.todo.json')
-```
+`src/examples/agents-skills-instructions/` is the source of the example page
+and its zip. After editing it, run `npm run zips` and commit the zip.

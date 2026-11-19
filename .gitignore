@@ -9,5 +9,5 @@ dist/
 .DS_Store
 worker-configuration.d.ts
 
-# Licensed brand font, internal use only (script/fetch-brand-fonts)
+# Licensed brand font, internal use only (npm run fonts)
 public/fonts/ALTMistral-*.woff2

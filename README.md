@@ -29,7 +29,7 @@ from [OpenCode School](https://github.com/agentschools/opencode.school) and
 
 ```bash
 npm install
-script/dev            # http://localhost:4321
+npm run dev           # http://localhost:4321
 ```
 
 Student progress uses a local KV store in dev, so no Cloudflare account is
@@ -63,14 +63,12 @@ See [plan.md](plan.md) for the full curriculum.
 
 | Script | What it does |
 |---|---|
-| `script/dev` | Dev server |
-| `script/build` | Production build |
-| `script/lint` | Biome + `astro check` |
-| `script/test` | Vitest |
-| `script/build-assets` | Rebuild the plugin, starter and example zips in `public/` |
-| `script/check-assets` | Fail if those zips are out of date (`script/deploy` runs it) |
-| `script/fetch-brand-fonts` | Copy the licensed ALT Mistral font in (git-ignored) |
-| `script/deploy` | Build a clean copy of the current commit and deploy it to Cloudflare |
+| `npm run dev` | Dev server |
+| `npm run build` | Production build |
+| `npm run lint` | Biome + `astro check` |
+| `npm test` | Vitest |
+| `npm run zips` | Rebuild the plugin, starter and example zips in `public/` |
+| `npm run fonts` | Copy the licensed ALT Mistral font in (git-ignored) |
 
 ## Deploy
 
@@ -85,17 +83,9 @@ One-time setup:
    `wrangler.jsonc` (`kv_namespaces[0].id`).
 3. Set `vars.SITE_URL` in `wrangler.jsonc` to the deployed address.
 
-Then commit and run:
-
-```bash
-script/deploy --dry-run   # build and check, upload nothing
-script/deploy             # deploy
-```
-
-`script/deploy` clones the current commit into a temp folder, copies in the
-ALT Mistral font, runs lint, tests and the asset check, builds, and deploys.
-It refuses to run with uncommitted changes, so the live site always matches a
-commit. Logs and traces are on (`observability` in `wrangler.jsonc`).
+Cloudflare builds and deploys the site from the Git repository on each push
+(`npm run build`). Logs and traces are on (`observability` in
+`wrangler.jsonc`).
 
 ## Repository layout
 
@@ -107,6 +97,7 @@ vibe-school/
 ├── src/pages/          site and API routes
 ├── plugin/vibe-school/ the Vibe School plugin (source of the zip)
 ├── starter/vibe-todo/  the course project starter (source of the zip)
+├── src/examples/       the reference example (source of its page and zip)
 └── public/             fonts, pixel icons, school.js, built zips
 ```
 
@@ -115,9 +106,9 @@ vibe-school/
 Pixel icons, cat sprites and the M come from Mistral's brand kit. Headings use
 **ALT Mistral**, a typeface licensed to Mistral for its own use. It is **not
 in this repository** (`public/fonts/ALTMistral-*.woff2` is git-ignored).
-Inside Mistral, run `script/fetch-brand-fonts` to copy it in for local
-development; `script/deploy` copies it into the deployed site. Without it, headings fall back to Inter 500, which is the
-brand's documented fallback. Inter and Space Mono are OFL.
+Inside Mistral, run `npm run fonts` to copy it in for local development.
+Without it, headings fall back to Inter 500, which is the brand's documented
+fallback. Inter and Space Mono are OFL.
 
 ## License
 

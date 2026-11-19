@@ -13,4 +13,4 @@ pasting a prompt per lesson. Skills:
 `student.json` (student ID and site origin) is written by the install command
 on the site's `/plugin` page. It is not part of the zip.
 
-Rebuild the zip after editing: `script/build-assets` (from `vibe-school/`).
+Rebuild the zip after editing: `npm run zips` (from `vibe-school/`).

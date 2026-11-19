@@ -50,7 +50,7 @@ fills in the "Your Vibe setup" panel. Students can also install the
 When a lesson adds to vibe-todo, its verification step names the artifacts
 to report (one short line). If the student skipped a lesson, the tutor
 creates missing prerequisites. After editing `plugin/`, `starter/` or
-`../agents-skills-instructions/`, run `script/build-assets`.
+`src/examples/agents-skills-instructions/`, run `npm run zips`.
 
 Vibe Work and Vibe Code Web lessons happen in the browser at
 chat.mistral.ai, but the student's local Vibe Code session is still the tutor:
@@ -68,15 +68,18 @@ pull request), then asks the student to confirm the rest.
 
 ## Scripts
 
+All scripts live in `package.json`; there is no `script/` folder.
+
 | Script | What it does |
 |---|---|
-| `script/dev` | `astro dev` on http://localhost:4321 |
-| `script/build` | `astro build` |
-| `script/lint` | `biome check .` + `astro check` |
-| `script/test` | `vitest run` |
-| `script/deploy` | Clean build of the current commit, then `wrangler deploy` |
+| `npm run dev` | `astro dev` on http://localhost:4321 |
+| `npm run build` | `astro build` |
+| `npm run lint` | `biome check .` + `astro check` |
+| `npm test` | `vitest run` |
+| `npm run zips` | Rebuild the zips in `public/` from their sources |
+| `npm run fonts` | Copy the licensed ALT Mistral font into `public/fonts/` |
 
-Run `script/lint` and `script/test` before committing. Keep test files in
+Run `npm run lint` and `npm test` before committing. Keep test files in
 `src/lib/`: anything under `src/pages/` becomes a public route.
 
 ## Content authoring

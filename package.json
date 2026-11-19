@@ -8,7 +8,11 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "lint": "biome check . && astro check",
+    "test": "vitest run",
+    "zips": "mkdir -p public/plugin public/examples && rm -f public/plugin/vibe-school.zip public/examples/starter.zip public/examples/agents-skills-instructions.zip && (cd plugin && zip -qrX ../public/plugin/vibe-school.zip vibe-school -x '*__pycache__*' '*.DS_Store' '*.todo.json' '*.pyc' '*student.json') && (cd starter && zip -qrX ../public/examples/starter.zip vibe-todo -x '*__pycache__*' '*.DS_Store' '*.todo.json' '*.pyc' '*student.json') && (cd src/examples && zip -qrX ../../public/examples/agents-skills-instructions.zip agents-skills-instructions -x '*__pycache__*' '*.DS_Store' '*.todo.json' '*.pyc' '*student.json')",
+    "fonts": "mkdir -p public/fonts && cp \"$HOME/.agents/skills/mistral-pixel-design/assets/fonts/ALTMistral-Regular.woff2\" \"$HOME/.agents/skills/mistral-pixel-design/assets/fonts/ALTMistral-Medium.woff2\" public/fonts/"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.0.0",
